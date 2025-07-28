@@ -1,0 +1,59 @@
+name,path,item,type,Description
+config.py,config/config.py,config.py,module,Module-level docstring missing
+API_KEY.py,core/API_KEY.py,API_KEY.py,module,Module-level docstring missing
+forms.py,core/forms.py,forms.py,module,Module-level docstring missing
+forms.py,core/forms.py,EthicalizerInputForm,class,EthicalizerInputForm class without docstring at line 7
+forms.py,core/forms.py,EthicalizerReviewerForm,class,EthicalizerReviewerForm class without docstring at line 38
+models.py,core/models.py,models.py,module,Module-level docstring missing
+models.py,core/models.py,GeneralGuidelines,class,GeneralGuidelines class without docstring at line 5
+models.py,core/models.py,Countries,class,Countries class without docstring at line 16
+models.py,core/models.py,Categories,class,Categories class without docstring at line 25
+models.py,core/models.py,Regulations,class,Regulations class without docstring at line 34
+models.py,core/models.py,CategoryCountry,class,CategoryCountry class without docstring at line 47
+models.py,core/models.py,CategoryCountryGuidelines,class,CategoryCountryGuidelines class without docstring at line 52
+routes.py,core/routes.py,routes.py,module,Module-level docstring missing
+routes.py,core/routes.py,home,function,home function without docstring at line 30
+routes.py,core/routes.py,contact,function,contact function without docstring at line 35
+routes.py,core/routes.py,upload,function,upload function without docstring at line 40
+routes.py,core/routes.py,list_reports,function,list_reports function without docstring at line 132
+routes.py,core/routes.py,ethicalizer,function,ethicalizer function without docstring at line 150
+routes.py,core/routes.py,download_file,function,download_file function without docstring at line 244
+671ef77ab200_initial.py,migrations/versions/671ef77ab200_initial.py,upgrade,function,upgrade function without docstring at line 21
+671ef77ab200_initial.py,migrations/versions/671ef77ab200_initial.py,downgrade,function,downgrade function without docstring at line 84
+env.py,migrations/env.py,env.py,module,Module-level docstring missing
+env.py,migrations/env.py,get_engine,function,get_engine function without docstring at line 18
+env.py,migrations/env.py,get_engine_url,function,get_engine_url function without docstring at line 27
+env.py,migrations/env.py,get_metadata,function,get_metadata function without docstring at line 48
+env.py,migrations/env.py,process_revision_directives,function,process_revision_directives function without docstring at line 86
+ExtractContent.py,utils/ExtractContent.py,ExtractContent.py,module,Module-level docstring missing
+ExtractContent.py,utils/ExtractContent.py,__init__,function,__init__ function without docstring at line 16
+FolderCleanUp.py,utils/FolderCleanUp.py,FolderCleanUp.py,module,Module-level docstring missing
+GenerateAnswers.py,utils/GenerateAnswers.py,GenerateAnswers.py,module,Module-level docstring missing
+GenerateAnswers.py,utils/GenerateAnswers.py,GenerateAnswers,class,GenerateAnswers class without docstring at line 11
+GenerateAnswers.py,utils/GenerateAnswers.py,__init__,function,__init__ function without docstring at line 12
+GenerateAnswers.py,utils/GenerateAnswers.py,Translation,class,Translation class without docstring at line 18
+GenerateAnswers.py,utils/GenerateAnswers.py,generate,function,generate function without docstring at line 73
+GenerateAnswers.py,utils/GenerateAnswers.py,__init__,function,__init__ function without docstring at line 19
+GenerateAnswers.py,utils/GenerateAnswers.py,detect_language,function,detect_language function without docstring at line 31
+GenerateAnswers.py,utils/GenerateAnswers.py,translate,function,translate function without docstring at line 58
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,QuestionAnswerPair.py,module,Module-level docstring missing
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,QuestionAnswerPair,class,QuestionAnswerPair class without docstring at line 23
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,__init__,function,__init__ function without docstring at line 24
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,create_file_output,function,create_file_output function without docstring at line 33
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,create_file_output_eng,function,create_file_output_eng function without docstring at line 48
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,tabular_document,function,tabular_document function without docstring at line 63
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,_save_raw,function,_save_raw function without docstring at line 103
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,process_pair,function,process_pair function without docstring at line 125
+QuestionAnswerPair.py,utils/QuestionAnswerPair.py,log_time,function,log_time function without docstring at line 189
+Reviewer.py,utils/Reviewer.py,Reviewer.py,module,Module-level docstring missing
+Reviewer.py,utils/Reviewer.py,get_poppler_path,function,get_poppler_path function without docstring at line 131
+logging_conf.py,utils/logging_conf.py,logging_conf.py,module,Module-level docstring missing
+logging_conf.py,utils/logging_conf.py,DebugFilter,class,DebugFilter class without docstring at line 15
+logging_conf.py,utils/logging_conf.py,InfoFilter,class,InfoFilter class without docstring at line 19
+logging_conf.py,utils/logging_conf.py,ErrorFilter,class,ErrorFilter class without docstring at line 23
+logging_conf.py,utils/logging_conf.py,filter,function,filter function without docstring at line 16
+logging_conf.py,utils/logging_conf.py,filter,function,filter function without docstring at line 20
+logging_conf.py,utils/logging_conf.py,filter,function,filter function without docstring at line 24
+app.py,app.py,app.py,module,Module-level docstring missing
+seeder.py,seeder.py,seeder.py,module,Module-level docstring missing
+seeder.py,seeder.py,seed_data,function,seed_data function without docstring at line 22
