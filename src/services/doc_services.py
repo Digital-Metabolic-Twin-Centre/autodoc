@@ -1,7 +1,9 @@
 from utils.git_utils import fetch_repo_tree, detect_tech_stack, fetch_content_from_github, fetch_content_from_gitlab
 from utils.code_block_extraction import GenericCodeBlockExtractor
-from utils.docstring_validation import analyze_docstring_in_blocks
+from utils.llm_docstring_generation import generate_docstring_with_gemini, format_docstring_for_language
+from utils.docstring_validation import analyze_docstring_in_blocks, analyze_docstring_in_module
 import pandas as pd
+import os
 
 def analyze_repo(provider, repo_url, token, branch):
     """
@@ -22,9 +24,17 @@ def analyze_repo(provider, repo_url, token, branch):
             - files_missing_docstring (list): List of dicts for files/items missing docstring.
             - file_present_docstring (list): List of dicts for files/items with docstring.
     """
-    files_missing_docstring = []
-    file_present_docstring = []
     block_analysis_list = []
+    
+    # delete the suggested docstring file and block analysis file if it exists
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files')
+    os.makedirs(output_dir, exist_ok=True)
+    suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
+    block_analysis_file = os.path.join(output_dir, "block_analysis.csv")
+    if os.path.exists(suggested_file):
+        os.remove(suggested_file)
+    if os.path.exists(block_analysis_file):
+        os.remove(block_analysis_file)
 
     # Fetch repo tree and detect tech stack
     file_list = fetch_repo_tree(repo_url, token, branch=branch, provider=provider.lower())
@@ -69,36 +79,109 @@ def analyze_repo(provider, repo_url, token, branch):
         # Create a code blocks in the file to analyze
         extractor = GenericCodeBlockExtractor(content, file_name)
         code_blocks = extractor.code_block_extractor()
+        #if not code_blocks:
+        #    print(f"Warning!! No code blocks found in {file_name}. Cannot validate docstring.")
+        #    continue
+
+        for block in code_blocks:
+            print(block)
+            
+        # If no code blocks found, check for module-level docstring
         if not code_blocks:
-            print(f"Warning!! No code blocks found in {file_name}. Cannot validate docstring.")
+            print(f"No code blocks found in {file_name}. Checking for module-level docstring...")
+            module_docstring = analyze_docstring_in_module(content, language)
+            if module_docstring:
+                block_analysis = {
+                    'file_name': file_name,
+                    'file_path': file_path,
+                    'total_blocks': 1,
+                    'blocks_with_docstring': 1,
+                    'blocks_without_docstring': 0,
+                    'docstring_analysis': [{
+                        'function_name': f"Module: {file_name}",
+                        'block_type': 'module',
+                        'docstring_content': module_docstring,
+                        'missing_docstring': False,
+                        'block_number': 1,
+                        'language': language,
+                        'line_number': 1
+                    }]
+                }
+            else:
+                # No module docstring found either
+                block_analysis = {
+                    'file_name': file_name,
+                    'file_path': file_path,
+                    'total_blocks': 1,
+                    'blocks_with_docstring': 0,
+                    'blocks_without_docstring': 1,
+                    'docstring_analysis': [{
+                        'function_name': f"Module: {file_name}",
+                        'block_type': 'module',
+                        'docstring_content': None,
+                        'missing_docstring': True,
+                        'block_number': 1,
+                        'language': language,
+                        'line_number': 1
+                    }]
+                }
+                generated_docstring = generate_docstring_with_gemini(content, language)
+
+                if generated_docstring:
+                    print("Generated Docstring:")
+                    print(format_docstring_for_language(generated_docstring, language))
+                    # Save the generated docstring to a suggested docstring file
+                    #output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files')
+                    #os.makedirs(output_dir, exist_ok=True)
+                    suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
+                    #suggested_file = "suggested_docstring.txt"
+                    with open(suggested_file, 'a') as f:
+                        f.write(f"\n# File: {file_name}, Path: {file_path}, Function: {block_analysis['function_name']}, Line: {block_analysis['line_number']}\n")
+                        f.write(f"{format_docstring_for_language(generated_docstring, language)}\n")
+                        f.write(f"{'-'*100}\n")
+                else:
+                    print("Docstring generation failed.")
+
+            block_analysis_list.append(block_analysis)
             continue
+
         print(f"Analyzing {file_name} with {len(code_blocks)} code blocks.")
         #print(code_blocks)
         # Analyze docstring in the code blocks
         block_analysis = analyze_docstring_in_blocks(code_blocks, file_name=file_name, file_path=file_path, language=language)
         block_analysis_list.append(block_analysis)
-        """if block_analysis['blocks_with_docstring'] > 0:
-            print(f"Analysis for {file_name}: {block_analysis}")
-            file_present_docstring.append({
-                'name': file_name,
-                'path': file_path,
-                'item': block_analysis['function_name'],
-                'type': block_analysis['block_type'],
-                'Description': block_analysis['docstring_content']
-            })
-        else:
-            files_missing_docstring.append({
-                'name': file_name,
-                'path': file_path,
-                'item': block_analysis['function_name'],
-                'type': block_analysis['block_type'],
-                'Description': "Missing docstring"
-            })"""
-            
 
-    #save the missing docstring files in csv
-    #if files_missing_docstring:
-    #    df_missing = pd.DataFrame(files_missing_docstring, columns=['name', 'path', 'item', 'type', 'Description'])
-    #    df_missing.to_csv("files_missing_docstring.csv", index=False)
+    #save details in csv
+    if block_analysis_list:
+
+        #save details in csv
+        flattened_data = []
+        
+        for block_analysis in block_analysis_list:
+            # Extract main keys
+            file_name = block_analysis.get('file_name', '')
+            file_path = block_analysis.get('file_path', '')
+            
+            # Extract nested dictionary data from docstring_analysis
+            docstring_analysis = block_analysis.get('docstring_analysis', [])
+            for analysis in docstring_analysis:
+                row = {
+                    'file_name': file_name,
+                    'file_path': file_path,
+                    'function_name': analysis.get('function_name', ''),
+                    'block_type': analysis.get('block_type', ''),
+                    'missing_docstring': analysis.get('missing_docstring', True),
+                    'language': analysis.get('language', ''),
+                    'line_number': analysis.get('line_number', 0)
+                }
+                flattened_data.append(row)
+        
+        # Create DataFrame with flattened data
+        df = pd.DataFrame(flattened_data)
+        #output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files')
+        #os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, "block_analysis.csv")
+        #output_path = "block_analysis_detailed.csv"
+        df.to_csv(output_path, index=False)
 
     return block_analysis_list
