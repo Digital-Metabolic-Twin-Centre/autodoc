@@ -4,6 +4,9 @@ from utils.docstring_generation import generate_docstring_with_openai, format_do
 from utils.docstring_validation import analyze_docstring_in_blocks, analyze_docstring_in_module
 import pandas as pd
 import os
+from config.log_config import get_logger
+
+logger = get_logger(__name__)
 
 def analyze_repo(provider, repo_url, token, branch):
     """
@@ -25,7 +28,7 @@ def analyze_repo(provider, repo_url, token, branch):
             - file_present_docstring (list): List of dicts for files/items with docstring.
     """
     block_analysis_list = []
-    
+    logger.info(f"Analyzing repo: provider={provider}, url={repo_url}, branch={branch}")
     # delete the suggested docstring file and block analysis file if it exists
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files')
     os.makedirs(output_dir, exist_ok=True)
@@ -33,11 +36,18 @@ def analyze_repo(provider, repo_url, token, branch):
     block_analysis_file = os.path.join(output_dir, "block_analysis.csv")
     if os.path.exists(suggested_file):
         os.remove(suggested_file)
+        logger.debug(f"Deleted {suggested_file}")
     if os.path.exists(block_analysis_file):
         os.remove(block_analysis_file)
+        logger.debug(f"Deleted {block_analysis_file}")
 
     # Fetch repo tree and detect tech stack
-    file_list = fetch_repo_tree(repo_url, token, branch=branch, provider=provider.lower())
+    try:
+        file_list = fetch_repo_tree(repo_url, token, branch=branch, provider=provider.lower())
+        logger.info(f"Fetched repo tree, {len(file_list)} files found.")
+    except Exception as e:
+        logger.error(f"Error fetching repo tree: {e}")
+        raise
     tech = detect_tech_stack(file_list)
 
     # Determine file type key for provider
@@ -61,7 +71,7 @@ def analyze_repo(provider, repo_url, token, branch):
             language = 'matlab'
         # File type not supported
         else:
-            print(f"File {file_name} is not supported for docstring validation. Skipping...")
+            logger.warning(f"File {file_name} is not supported for docstring validation. Skipping...")
             continue
         file_path = file.get('path', '')
 
@@ -73,22 +83,15 @@ def analyze_repo(provider, repo_url, token, branch):
         else:
             content = ""
         if content is None or content == "":
-            print(f"Warning!! Empty file {file_name}. Cannot validate docstring.")
+            logger.warning(f"Empty file {file_name}. Cannot validate docstring.")
             continue
 
         # Create a code blocks in the file to analyze
         extractor = GenericCodeBlockExtractor(content, file_name)
         code_blocks = extractor.code_block_extractor()
-        #if not code_blocks:
-        #    print(f"Warning!! No code blocks found in {file_name}. Cannot validate docstring.")
-        #    continue
-
-        #for block in code_blocks:
-            #print(block)
-            
         # If no code blocks found, check for module-level docstring
         if not code_blocks:
-            print(f"No code blocks found in {file_name}. Checking for module-level docstring...")
+            logger.warning(f"No code blocks found in {file_name}. Checking for module-level docstring...")
             module_docstring = analyze_docstring_in_module(content, language)
             if module_docstring:
                 block_analysis = {
@@ -128,27 +131,20 @@ def analyze_repo(provider, repo_url, token, branch):
                 generated_docstring = generate_docstring_with_openai(content, language)
 
                 if generated_docstring:
-                    print("Generated Docstring:")
-                    print(format_docstring_for_language(generated_docstring, language))
-                    # Save the generated docstring to a suggested docstring file
-                    #output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files')
-                    #os.makedirs(output_dir, exist_ok=True)
+                    logger.info("Generated Docstring:")
+                    logger.info(format_docstring_for_language(generated_docstring, language))
                     suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
-                    #suggested_file = "suggested_docstring.txt"
-                    #print(block_analysis)
                     with open(suggested_file, 'a') as f:
                         f.write(f"\n# File: {file_name}, Path: {file_path}, Function: {block_analysis['docstring_analysis'][0]['function_name']}, Line: {block_analysis['docstring_analysis'][0]['line_number']}\n")
                         f.write(f"{format_docstring_for_language(generated_docstring, language)}\n")
                         f.write(f"{'-'*100}\n")
                 else:
-                    print("Docstring generation failed.")
+                    logger.warning("Docstring generation failed.")
 
             block_analysis_list.append(block_analysis)
             continue
 
-        print(f"Analyzing {file_name} with {len(code_blocks)} code blocks.")
-        #print(code_blocks)
-        # Analyze docstring in the code blocks
+        logger.info(f"Analyzing {file_name} with {len(code_blocks)} code blocks.")
         block_analysis = analyze_docstring_in_blocks(code_blocks, file_name=file_name, file_path=file_path, language=language)
         block_analysis_list.append(block_analysis)
 

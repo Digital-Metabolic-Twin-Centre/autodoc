@@ -6,7 +6,9 @@ import os
 from typing import Optional
 from tqdm import tqdm
 from dotenv import load_dotenv
+from config.log_config import get_logger
 
+logger = get_logger(__name__)
 load_dotenv()
 
 def configure_openai(api_key: str = None):
@@ -109,10 +111,10 @@ def generate_docstring_with_openai(code: str, language: str = "python", api_key:
             response_json = json.loads(response_text)
             return response_json.get('docstring', '')
         else:
-            print("No response from OpenAI API")
+            logger.warning("No response from OpenAI API")
             return None
     except Exception as e:
-        print(f"Error generating docstring with OpenAI: {e}")
+        logger.error(f"Error generating docstring with OpenAI: {e}")
         return None
 
 def generate_docstrings_for_code_blocks_openai(code_blocks_data: list, language: str = "python", model: str = "gpt-3.5-turbo") -> list:
@@ -135,7 +137,7 @@ def generate_docstrings_for_code_blocks_openai(code_blocks_data: list, language:
         function_name = code_blocks_data[i].get('function_name', f'Block_{i}')
 
         if not code_block.strip():
-            print(f"Skipping empty code block for {function_name}")
+            logger.warning(f"Skipping empty code block for {function_name}")
             continue
 
         try:
@@ -146,8 +148,8 @@ def generate_docstrings_for_code_blocks_openai(code_blocks_data: list, language:
                 code_blocks_data[i]['generated_docstring'] = 'Failed to generate'
             time.sleep(1.5)
         except Exception as e:
-            print(f"Error processing code block {i}: {function_name}")
-            print(f"Exception: {e}")
+            logger.error(f"Error processing code block {i}: {function_name}")
+            logger.error(f"Exception: {e}")
             code_blocks_data[i]['generated_docstring'] = f'Error: {str(e)}'
 
     return code_blocks_data

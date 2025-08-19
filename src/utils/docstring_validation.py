@@ -3,6 +3,9 @@ import re
 import os
 from typing import Optional, Tuple, List, Dict
 from utils.docstring_generation import generate_docstring_with_openai, format_docstring_for_language
+from config.log_config import get_logger
+
+logger = get_logger(__name__)
 
 def analyze_docstring_in_blocks(code_blocks: list, file_name: str = "unknown", file_path: str = "unknown", language: str = None) -> dict:
     """
@@ -180,8 +183,8 @@ def analyze_docstring_in_blocks(code_blocks: list, file_name: str = "unknown", f
             results['blocks_without_docstring'] += 1
             generated_docstring = generate_docstring_with_openai(clean_code, language)
             if generated_docstring:
-                print("Generated Docstring:")
-                print(format_docstring_for_language(generated_docstring, language))
+                logger.info("Generated Docstring:")
+                logger.info(format_docstring_for_language(generated_docstring, language))
                 # Save the generated docstring to a suggested docstring file
                 output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files')
                 os.makedirs(output_dir, exist_ok=True)
@@ -193,7 +196,7 @@ def analyze_docstring_in_blocks(code_blocks: list, file_name: str = "unknown", f
                     f.write(f"\n{format_docstring_for_language(generated_docstring, language)}\n")
                     f.write(f"\n{'-'*100}\n")
             else:
-                print("Docstring generation failed.")
+                logger.warning("Docstring generation failed.")
 
         results['docstring_analysis'].append(block_analysis)
 

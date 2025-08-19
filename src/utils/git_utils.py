@@ -5,6 +5,9 @@ import urllib.parse
 import gitlab
 from typing import List, Dict, Optional, Tuple
 from config.config import GITHUB_API_URL, GITLAB_API_URL, STACK_FILES
+from config.log_config import get_logger
+
+logger = get_logger(__name__)
 
 def get_gitignore_patterns(repo_path: str, access_token: str, branch: str = "main", provider: str = "github") -> List[str]:
     """
@@ -82,10 +85,9 @@ def fetch_content_from_github(repo_path: str, branch: str, file_path: str, acces
             timeout=10
         )
         response.raise_for_status()
-        #print("response text: ", response.text)
         return response.text if response.text else None
     except Exception as e:
-        print(f"GitHub fetch error: {e}")
+        logger.error(f"GitHub fetch error: {e}")
     return None
 
 
@@ -115,10 +117,9 @@ def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, priva
             timeout=10
         )
         response.raise_for_status()
-        #print("response text:: ", response.text)
         return response.text if response.text else None
     except Exception as e:
-        print(f"GitLab fetch error: {e}")
+        logger.error(f"GitLab fetch error: {e}")
     return None
 
 
@@ -138,7 +139,7 @@ def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", pro
 
     repository_files = []
     gitignore_patterns = get_gitignore_patterns(repo_path, access_token, branch, provider)
-    print(f"Gitignore patterns: {gitignore_patterns}")
+    logger.info(f"Gitignore patterns: {gitignore_patterns}")
 
     def _fetch_tree(path: str = "") -> List[Dict]:
 
@@ -156,7 +157,7 @@ def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", pro
                 if isinstance(items, dict):
                     items = [items]
             except Exception as e:
-                print(f"GitHub tree fetch error: {e}")
+                logger.error(f"GitHub tree fetch error: {e}")
                 return []
         elif provider == "gitlab":
             gl = gitlab.Gitlab(GITLAB_API_URL, private_token=access_token)
@@ -164,7 +165,7 @@ def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", pro
                 project = gl.projects.get(repo_path)
                 items = project.repository_tree(path=path, ref=branch)
             except Exception as e:
-                print(f"GitLab tree fetch error: {e}")
+                logger.error(f"GitLab tree fetch error: {e}")
                 return []
         else:
             return []
@@ -183,7 +184,7 @@ def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", pro
     try:
         repository_files = _fetch_tree()
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        logger.error(f"An unexpected error occurred: {e}")
     return repository_files
 
 def detect_tech_stack(files: List[Dict]) -> str:
@@ -234,10 +235,10 @@ def validate_docstring(tech_stack: str, repo_path: str, branch: str, file_path: 
     else:
         content = None
     if content is None or content == "":
-        print(f"Warning!! Empty file {file_name}. Cannot validate docstring.")
+        logger.warning(f"Empty file {file_name}. Cannot validate docstring.")
         return False, None, None
     if tech_stack.lower() == "python":
         python_validator = docstring_validation(content, file_name)
         return python_validator.python_validate_docstring()
-    print("Unknown technology stack. Cannot validate docstring.")
+    logger.warning("Unknown technology stack. Cannot validate docstring.")
     return False, None, None

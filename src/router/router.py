@@ -1,17 +1,26 @@
+
 from fastapi import APIRouter, HTTPException, status
 from models.repo_request import RepoRequest
 #from services.doc_service import analyze_repo
 from services.doc_services import analyze_repo
+from config.log_config import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter()
 
+
 @router.get("/")
 async def root():
+    logger.info("Root endpoint accessed.")
     return {"message": "Welcome to the Markdown Generator API. Visit /docs for API documentation."}
+
 
 @router.post("/generate")
 async def generate_docs(req: RepoRequest):
+    logger.info(f"/generate endpoint called with provider={req.provider}, repo_url={req.repo_url}, branch={req.branch}")
     if not req.repo_url or not req.token or not req.branch or not req.provider:
+        logger.warning("Missing required parameters in request.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing required parameters: repo_url, token, branch, or provider."
@@ -19,6 +28,7 @@ async def generate_docs(req: RepoRequest):
     try:
         #files_missing_docstring, file_present_docstring = analyze_repo(req.provider, req.repo_url, req.token, req.branch)
         docstring_analysis = analyze_repo(req.provider, req.repo_url, req.token, req.branch)
+        logger.info("Docstring analysis completed successfully.")
         return {
             "status": "success",
             "Docstring_analysis": docstring_analysis,
@@ -26,16 +36,19 @@ async def generate_docs(req: RepoRequest):
             #"files_with_present_docstring": file_present_docstring
         }
     except ValueError as ve:
+        logger.error(f"ValueError: {ve}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(ve)
         )
     except PermissionError as pe:
+        logger.error(f"PermissionError: {pe}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(pe)
         )
     except Exception as e:
+        logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred: " + str(e)
