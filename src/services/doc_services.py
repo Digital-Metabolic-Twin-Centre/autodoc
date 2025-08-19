@@ -1,6 +1,6 @@
 from utils.git_utils import fetch_repo_tree, detect_tech_stack, fetch_content_from_github, fetch_content_from_gitlab
 from utils.code_block_extraction import GenericCodeBlockExtractor
-from utils.llm_docstring_generation_openai import generate_docstring_with_openai, format_docstring_for_language
+from utils.docstring_generation import generate_docstring_with_openai, format_docstring_for_language
 from utils.docstring_validation import analyze_docstring_in_blocks, analyze_docstring_in_module
 import pandas as pd
 import os
@@ -179,10 +179,7 @@ def analyze_repo(provider, repo_url, token, branch):
         
         # Create DataFrame with flattened data
         df = pd.DataFrame(flattened_data)
-        #output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'files')
-        #os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(output_dir, "block_analysis.csv")
-        #output_path = "block_analysis_detailed.csv"
         df.to_csv(output_path, index=False)
 
     return block_analysis_list
