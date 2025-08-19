@@ -1,6 +1,6 @@
 from utils.git_utils import fetch_repo_tree, detect_tech_stack, fetch_content_from_github, fetch_content_from_gitlab
 from utils.code_block_extraction import GenericCodeBlockExtractor
-from utils.llm_docstring_generation import generate_docstring_with_gemini, format_docstring_for_language
+from utils.llm_docstring_generation_openai import generate_docstring_with_openai, format_docstring_for_language
 from utils.docstring_validation import analyze_docstring_in_blocks, analyze_docstring_in_module
 import pandas as pd
 import os
@@ -83,8 +83,8 @@ def analyze_repo(provider, repo_url, token, branch):
         #    print(f"Warning!! No code blocks found in {file_name}. Cannot validate docstring.")
         #    continue
 
-        for block in code_blocks:
-            print(block)
+        #for block in code_blocks:
+            #print(block)
             
         # If no code blocks found, check for module-level docstring
         if not code_blocks:
@@ -125,7 +125,7 @@ def analyze_repo(provider, repo_url, token, branch):
                         'line_number': 1
                     }]
                 }
-                generated_docstring = generate_docstring_with_gemini(content, language)
+                generated_docstring = generate_docstring_with_openai(content, language)
 
                 if generated_docstring:
                     print("Generated Docstring:")
@@ -135,8 +135,9 @@ def analyze_repo(provider, repo_url, token, branch):
                     #os.makedirs(output_dir, exist_ok=True)
                     suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
                     #suggested_file = "suggested_docstring.txt"
+                    #print(block_analysis)
                     with open(suggested_file, 'a') as f:
-                        f.write(f"\n# File: {file_name}, Path: {file_path}, Function: {block_analysis['function_name']}, Line: {block_analysis['line_number']}\n")
+                        f.write(f"\n# File: {file_name}, Path: {file_path}, Function: {block_analysis['docstring_analysis'][0]['function_name']}, Line: {block_analysis['docstring_analysis'][0]['line_number']}\n")
                         f.write(f"{format_docstring_for_language(generated_docstring, language)}\n")
                         f.write(f"{'-'*100}\n")
                 else:

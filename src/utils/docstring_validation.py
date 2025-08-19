@@ -2,7 +2,7 @@ import ast
 import re
 import os
 from typing import Optional, Tuple, List, Dict
-from utils.llm_docstring_generation import generate_docstring_with_gemini, format_docstring_for_language
+from utils.llm_docstring_generation_openai import generate_docstring_with_openai, format_docstring_for_language
 
 def analyze_docstring_in_blocks(code_blocks: list, file_name: str = "unknown", file_path: str = "unknown", language: str = None) -> dict:
     """
@@ -178,7 +178,7 @@ def analyze_docstring_in_blocks(code_blocks: list, file_name: str = "unknown", f
             results['blocks_with_docstring'] += 1
         else:
             results['blocks_without_docstring'] += 1
-            generated_docstring = generate_docstring_with_gemini(clean_code, language)
+            generated_docstring = generate_docstring_with_openai(clean_code, language)
             if generated_docstring:
                 print("Generated Docstring:")
                 print(format_docstring_for_language(generated_docstring, language))

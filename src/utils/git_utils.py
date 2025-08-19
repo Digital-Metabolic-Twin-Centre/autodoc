@@ -4,7 +4,6 @@ import fnmatch
 import urllib.parse
 import gitlab
 from typing import List, Dict, Optional, Tuple
-#from utils.doc_string_validation import docstring_validation
 from config.config import GITHUB_API_URL, GITLAB_API_URL, STACK_FILES
 
 def get_gitignore_patterns(repo_path: str, access_token: str, branch: str = "main", provider: str = "github") -> List[str]:
