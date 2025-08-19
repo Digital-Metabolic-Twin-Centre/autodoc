@@ -4,7 +4,7 @@ import fnmatch
 import urllib.parse
 import gitlab
 from typing import List, Dict, Optional, Tuple
-from config.config import GITHUB_API_URL, GITLAB_API_URL, STACK_FILES
+from config.config import GITHUB_API_URL, GITLAB_API_URL
 from config.log_config import get_logger
 
 logger = get_logger(__name__)
@@ -187,26 +187,6 @@ def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", pro
         logger.error(f"An unexpected error occurred: {e}")
     return repository_files
 
-def detect_tech_stack(files: List[Dict]) -> str:
-    """
-    Detects the technology stack of a repository based on its files.
-
-    Args:
-        files (List[Dict]): List of file dictionaries from the repository.
-
-    Returns:
-        str: Detected technology stack (e.g., "python"), or "Unknown" if not detected.
-    """
-
-    if not files or not all('name' in file for file in files):
-        return "Unknown"
-    file_names = [file['name'] for file in files]
-    stack_files = STACK_FILES
-    for filename, tech in stack_files.items():
-        if filename in file_names:
-            return tech
-
-    return "Unknown"
 
 def validate_docstring(tech_stack: str, repo_path: str, branch: str, file_path: str, access_token: str, provider: str = "github") -> Optional[Tuple[bool, List[Dict[str, str]], List[Dict[str, str]]]]:
     """

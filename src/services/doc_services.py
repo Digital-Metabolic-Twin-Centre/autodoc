@@ -1,4 +1,4 @@
-from utils.git_utils import fetch_repo_tree, detect_tech_stack, fetch_content_from_github, fetch_content_from_gitlab
+from utils.git_utils import fetch_repo_tree, fetch_content_from_github, fetch_content_from_gitlab
 from utils.code_block_extraction import GenericCodeBlockExtractor
 from utils.docstring_generation import generate_docstring_with_openai, format_docstring_for_language
 from utils.docstring_validation import analyze_docstring_in_blocks, analyze_docstring_in_module
@@ -41,14 +41,14 @@ def analyze_repo(provider, repo_url, token, branch):
         os.remove(block_analysis_file)
         logger.debug(f"Deleted {block_analysis_file}")
 
-    # Fetch repo tree and detect tech stack
+    # Fetch repo tree
     try:
         file_list = fetch_repo_tree(repo_url, token, branch=branch, provider=provider.lower())
         logger.info(f"Fetched repo tree, {len(file_list)} files found.")
     except Exception as e:
         logger.error(f"Error fetching repo tree: {e}")
         raise
-    tech = detect_tech_stack(file_list)
+    #tech = detect_tech_stack(file_list)
 
     # Determine file type key for provider
     file_type_key = "blob" if provider.lower() == "gitlab" else "file"
@@ -59,7 +59,6 @@ def analyze_repo(provider, repo_url, token, branch):
         if file.get('type', '') != file_type_key:
             continue
         file_name = file.get('name', '')
-        #check the file type (tech stack)
         language = None
         if file_name.endswith(('.py', '.pyw')):
             language = 'python'
