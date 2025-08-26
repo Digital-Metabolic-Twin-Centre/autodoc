@@ -177,4 +177,7 @@ def analyze_repo(provider, repo_url, token, branch):
         output_path = os.path.join(output_dir, "block_analysis.csv")
         df.to_csv(output_path, index=False)
 
-    return block_analysis_list
+    if not block_analysis_list:
+        logger.warning("No files with docstring analysis found.")
+        return output_path, None
+    return output_path, block_analysis_list

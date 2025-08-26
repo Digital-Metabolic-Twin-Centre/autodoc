@@ -1,14 +1,12 @@
-
 from fastapi import APIRouter, HTTPException, status
 from models.repo_request import RepoRequest
-#from services.doc_service import analyze_repo
 from services.doc_services import analyze_repo
 from config.log_config import get_logger
+from services.sphinx_services import create_sphinx_setup
 
 logger = get_logger(__name__)
 
 router = APIRouter()
-
 
 @router.get("/")
 async def root():
@@ -26,14 +24,24 @@ async def generate_docs(req: RepoRequest):
             detail="Missing required parameters: repo_url, token, branch, or provider."
         )
     try:
-        #files_missing_docstring, file_present_docstring = analyze_repo(req.provider, req.repo_url, req.token, req.branch)
-        docstring_analysis = analyze_repo(req.provider, req.repo_url, req.token, req.branch)
+        # 1. ANALYZE REPO
+        docstring_analysis_file, docstring_analysis = analyze_repo(req.provider, req.repo_url, req.token, req.branch)
         logger.info("Docstring analysis completed successfully.")
+        print(docstring_analysis_file)
+
+        # 2. CREATE SPHINX SETUP
+        sphinx_setup_created = create_sphinx_setup(req.provider, req.repo_url, req.token, req.branch, docstring_analysis_file)
+        if not sphinx_setup_created:
+            logger.error("Sphinx setup creation failed.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Sphinx setup creation failed."
+            )
+
         return {
             "status": "success",
+            "sphinx_setup_created": sphinx_setup_created,
             "Docstring_analysis": docstring_analysis,
-            #"files_with_missing_docstring": files_missing_docstring,
-            #"files_with_present_docstring": file_present_docstring
         }
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")

@@ -8,10 +8,14 @@ and `uvicorn`. Use `get_logger(name)` to retrieve a module-specific logger.
 
 import logging
 import os
+from datetime import datetime
 
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO').upper()
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
-LOG_FILE = os.getenv('LOG_FILE', 'app.log')
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'log')
+os.makedirs(LOG_DIR, exist_ok=True)
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+LOG_FILE = os.path.join(LOG_DIR, f'app_{timestamp}.log')
 
 logging.basicConfig(
     level=LOG_LEVEL,
