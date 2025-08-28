@@ -127,7 +127,7 @@ CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 
 ```sh
 # Start the FastAPI server
-$ fastapi dev main.py
+$ fastapi dev src/main.py
 ```
 
 - The API will be available at: http://localhost:8000
