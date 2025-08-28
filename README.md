@@ -127,7 +127,7 @@ CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 
 ```sh
 # Start the FastAPI server
-$ python src/main.py
+$ fastapi dev main.py
 ```
 
 - The API will be available at: http://localhost:8000
@@ -175,7 +175,7 @@ Analyze a repository and set up documentation.
 - **AI Docstring Quality:** Generated docstrings depend on the quality/context of the code and OpenAI's model; manual review is recommended.
 - **Private Repositories:** Requires valid access tokens for private repositories; token permissions must allow cloning and reading.
 - **GitHub Actions Integration:**
-  - ⚠️ Currently, there is **no support for GitHub Actions**. The system does **not** generate, commit, or trigger any workflow files for GitHub repositories.
+  - Currently, there is **no support for GitHub Actions**. The system does **not** generate, commit, or trigger any workflow files for GitHub repositories.
   - As a result, **automated Sphinx documentation setup is also missing for GitHub repositories**. Only GitLab CI/CD pipeline creation and Sphinx automation are implemented and supported at this time.
 
 ---
@@ -185,7 +185,7 @@ Analyze a repository and set up documentation.
 - **Web UI Dashboard:** Build a frontend for easier project management, visualization, and configuration.
 - **Enhanced Sphinx Integration:** Support for custom Sphinx themes, plugins, and advanced configuration options.
 - **Parallel Processing:** Optimize for faster analysis of large repositories using concurrency.
-- **Pluggable AI Models:** Allow users to select or bring their own LLMs for docstring generation.
+- **Pluggable AI Models:** Allow users to select or bring their own LLMs for docstring generation from Web UI.
 
 ---
 
