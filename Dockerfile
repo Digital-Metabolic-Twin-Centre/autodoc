@@ -12,9 +12,7 @@ RUN python -m pip install -r requirements.txt
 WORKDIR /app
 COPY . /app
 
-RUN mkdir -p files
-
-RUN mkdir -p /app/files /app/log && \
+RUN mkdir -p /app/src/files /app/log && \
     useradd -m -u 5678 autodoc_user && chown -R autodoc_user:autodoc_user /app
 
 USER autodoc_user
