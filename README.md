@@ -27,7 +27,9 @@ A FastAPI-based service that analyzes code repositories (GitHub/GitLab), detects
 
 ```
 .
-├── src/
+├── .gitlab
+│   ├── ci
+│       └── build.yml
 │   ├── main.py
 │   ├── router/
 │   │   └── router.py
@@ -49,6 +51,7 @@ A FastAPI-based service that analyzes code repositories (GitHub/GitLab), detects
 ├── files/           # Output and suggested docstrings
 ├── log/             # Log files
 ├── requirements.txt
+├── .gitlab-ci.yml
 ├── Dockerfile
 ├── docker-compose.yaml
 └── README.md
