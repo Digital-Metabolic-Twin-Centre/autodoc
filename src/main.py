@@ -4,7 +4,6 @@ from config.log_config import get_logger
 import uvicorn
 
 logger = get_logger(__name__)
-
 app = FastAPI()
 app.include_router(docs_router)
 
