@@ -1,0 +1,14 @@
+services:
+  autodocs:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: autodocs
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./files:/app/src/files
+      - ./log:/app/log
+    environment:
+      - ENV=development
+    restart: unless-stopped

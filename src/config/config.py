@@ -1,0 +1,12 @@
+GITHUB_API_URL = 'https://api.github.com'
+GITLAB_API_URL = 'https://gitlab.com'
+AUTOAPI_DIRECTORY = 'autoapi_include'
+CONFIGURATION_UPDATE_FILE = 'update_conf.py'
+DOCS_SRC = "docs/source"
+BUILD_DIR = "docs/build/html"
+CONF_PY = "docs/source/conf.py"
+GITLAB_YML_FILE = ".gitlab-ci.yml"
+PIPELINE_USERNAME = "CI-USER"
+PIPELINE_EMAIL = "CI-USER@example.com"
+PROJECT_NAME = "Project_Name"
+PROJECT_AUTHOR = "Project_Author"
