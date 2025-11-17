@@ -6,23 +6,38 @@ import requests
 from config.config import AUTOAPI_DIRECTORY, CONFIGURATION_UPDATE_FILE, GITLAB_API_URL, GITLAB_YML_FILE, PROJECT_AUTHOR
 from config.config import DOCS_SRC, BUILD_DIR, CONF_PY, PIPELINE_USERNAME, PIPELINE_EMAIL, PROJECT_NAME
 from config.log_config import get_logger
-from utils.git_utils import create_directory_and_add_files, create_a_file
+from utils.git_utils import create_directory_and_add_files, create_a_file, extract_repo_path
 from utils.generate_yml_content import generate_gitlab_ci_file
 
 logger = get_logger(__name__)
 
 def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file):
 
+    # Extract repo path from URL
+    repo_path = extract_repo_path(repo_url, provider)
+    logger.info(f"Extracted repo path: {repo_path}")
+
     #FETCH FILES WITH NO MISSING DOCSTRING
     files_with_all_docstrings = []
     df = pd.read_csv(docstring_analysis_file)
+    
+    # Handle empty dataframe
+    if df.empty:
+        logger.warning("No files to analyze. Docstring analysis file is empty.")
+        return False
+    
     for file_path, group in df.groupby('file_path'):
         if (~group['missing_docstring']).all():
             files_with_all_docstrings.append(file_path)
     logger.info(f"Files with all docstrings: {files_with_all_docstrings}")
 
+    # Skip directory creation if no files with complete docstrings
+    if not files_with_all_docstrings:
+        logger.warning("No files with complete docstrings found. Skipping Sphinx setup.")
+        return False
+
     #CREATE DIRECTORY AND ADD FILES WITH NO MISSING DOCSTRINGS
-    dir = create_directory_and_add_files(repo_url, AUTOAPI_DIRECTORY, files_with_all_docstrings, branch, token, provider)
+    dir = create_directory_and_add_files(repo_path, AUTOAPI_DIRECTORY, files_with_all_docstrings, branch, token, provider)
     if not dir:
         logger.error("Directory creation failed.")
         return False
@@ -32,7 +47,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     conf_file_path = os.path.abspath(conf_file_path)
     with open(conf_file_path, "r") as f:
         conf_content = f.read()
-    config_file_created = create_a_file(repo_url, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider)
+    config_file_created = create_a_file(repo_path, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider)
     if not config_file_created:
         logger.error(f"{CONFIGURATION_UPDATE_FILE} file creation failed.")
         return False
@@ -40,7 +55,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     if provider == "gitlab":
         #CREATE A .gitlab-ci.yml FILE
         gitlab_ci_content = generate_gitlab_ci_file()
-        yml_file_created = create_a_file(repo_url, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider)
+        yml_file_created = create_a_file(repo_path, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider)
         if not yml_file_created:
             logger.error(f"{GITLAB_YML_FILE} file creation failed.")
             return False
@@ -56,7 +71,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
             "GIT_USER_EMAIL": PIPELINE_EMAIL,
             "GIT_USER_NAME": PIPELINE_USERNAME
         }
-        success = trigger_gitlab_pipeline(repo_url, branch, token, variables)
+        success = trigger_gitlab_pipeline(repo_path, branch, token, variables)
         if not success:
             logger.error("GitLab pipeline trigger failed.")
             return False

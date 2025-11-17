@@ -10,6 +10,23 @@ from config.log_config import get_logger
 
 logger = get_logger(__name__)
 
+def extract_repo_path(repo_url: str, provider: str = "github") -> str:
+    """
+    Extracts the repository path from a full URL.
+    Args:
+        repo_url (str): Full repository URL (e.g., 'https://github.com/user/repo' or 'user/repo').
+        provider (str): Git provider ("github" or "gitlab").
+    Returns:
+        str: Repository path (e.g., 'user/repo').
+    """
+    if repo_url.startswith(("http://", "https://")):
+        parsed = urllib.parse.urlparse(repo_url)
+        path = parsed.path.strip('/')
+        if path.endswith('.git'):
+            path = path[:-4]
+        return path
+    return repo_url
+
 def get_gitignore_patterns(repo_path: str, access_token: str, 
     branch: str = "main", provider: str = "github") -> List[str]:
     """

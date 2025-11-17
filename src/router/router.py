@@ -29,13 +29,21 @@ async def generate_docs(req: RepoRequest):
         logger.info("Docstring analysis completed successfully.")
         print(docstring_analysis_file)
 
+        # Check if analysis found any files
+        if not docstring_analysis:
+            logger.warning("No files were analyzed. Repository may be empty or inaccessible.")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No files found to analyze. Please check repository URL, token permissions, and branch name."
+            )
+
         # 2. CREATE SPHINX SETUP
         sphinx_setup_created = create_sphinx_setup(req.provider, req.repo_url, req.token, req.branch, docstring_analysis_file)
         if not sphinx_setup_created:
             logger.error("Sphinx setup creation failed.")
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Sphinx setup creation failed."
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Sphinx setup creation failed. No files with complete docstrings found or repository access denied."
             )
 
         return {
@@ -43,6 +51,8 @@ async def generate_docs(req: RepoRequest):
             "sphinx_setup_created": sphinx_setup_created,
             "Docstring_analysis": docstring_analysis,
         }
+    except HTTPException:
+        raise
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
         raise HTTPException(
