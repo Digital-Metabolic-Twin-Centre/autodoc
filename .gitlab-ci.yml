@@ -1,5 +1,18 @@
 stages:
   - build
-  
+  - docs
+
 include:
   - local: '.gitlab/ci/build.yml'
+
+docs:
+  image: python:3.11
+  stage: docs
+  before_script:
+    - pip install -r docs/requirements.txt
+  script:
+    - sphinx-build -b html docs/source docs/build/html
+  artifacts:
+    paths:
+      - docs/build/html
+    expire_in: 1 week
