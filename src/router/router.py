@@ -42,8 +42,8 @@ async def generate_docs(req: RepoRequest):
         if not sphinx_setup_created:
             logger.error("Sphinx setup creation failed.")
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Sphinx setup creation failed. No files with complete docstrings found or repository access denied."
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Sphinx setup creation failed. Token may lack 'write_repository' scope, or branch '{req.branch}' is protected. Check token permissions and GitLab branch settings."
             )
 
         return {

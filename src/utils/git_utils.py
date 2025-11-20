@@ -316,12 +316,26 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
         # GitLab: Use the "commit multiple actions" API
         project_path_encoded = urllib.parse.quote_plus(repo_url)
         api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/commits"
-        actions = [{
-            "action": "create",
-            "file_path": f"{dir_path}/.gitkeep",
-            "content": ""
-        }]
+        actions = []
         existing_names = set()
+        
+        # Check if .gitkeep already exists
+        gitkeep_path = f"{dir_path}/.gitkeep"
+        gitkeep_exists = False
+        try:
+            check_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{urllib.parse.quote_plus(gitkeep_path)}"
+            check_resp = requests.get(check_url, headers={"PRIVATE-TOKEN": token}, params={"ref": branch}, timeout=10)
+            gitkeep_exists = check_resp.status_code == 200
+        except:
+            pass
+        
+        if not gitkeep_exists:
+            actions.append({
+                "action": "create",
+                "file_path": gitkeep_path,
+                "content": ""
+            })
+        
         for file_path in file_paths:
             content = fetch_content_from_gitlab(repo_url, branch, file_path, token)
             if content is None:
@@ -333,22 +347,44 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
                 parent_folder = os.path.basename(os.path.dirname(file_path))
                 file_name = f"{parent_folder}_{file_name}"
             existing_names.add(file_name)
-            logger.info(f"Adding file {file_name} to commit actions.")
+            
+            # Check if file already exists in target directory
+            target_path = f"{dir_path}/{file_name}"
+            file_exists = False
+            try:
+                check_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{urllib.parse.quote_plus(target_path)}"
+                check_resp = requests.get(check_url, headers={"PRIVATE-TOKEN": token}, params={"ref": branch}, timeout=10)
+                file_exists = check_resp.status_code == 200
+            except:
+                pass
+            
+            action_type = "update" if file_exists else "create"
+            logger.info(f"{'Updating' if file_exists else 'Adding'} file {file_name} to commit actions.")
             actions.append({
-                "action": "create",
-                "file_path": f"{dir_path}/{file_name}",
+                "action": action_type,
+                "file_path": target_path,
                 "content": content
             })
+        
+        if not actions:
+            logger.warning("No actions to commit.")
+            return True
+            
         logger.info(f"Prepared {len(actions)} actions for commit.")
         data = {
             "branch": branch,
-            "commit_message": f"Create {dir_path} directory and add files",
+            "commit_message": f"Update {dir_path} directory with documentation files",
             "actions": actions
         }
         headers = {"PRIVATE-TOKEN": token}
         resp = requests.post(api_url, headers=headers, json=data)
         if resp.status_code not in (200, 201):
-            logger.error(f"GitLab commit error: {resp.text}")
+            error_msg = resp.text
+            logger.error(f"GitLab commit error: {error_msg}")
+            if "insufficient_scope" in error_msg.lower():
+                logger.error(f"Token has insufficient permissions. Make sure the token includes 'write_repository' scope in addition to 'api' and 'read_api'.")
+            elif "not allowed to push" in error_msg.lower() or "protected" in error_msg.lower():
+                logger.error(f"Branch '{branch}' is protected. Either use a different branch, unprotect the branch, or add yourself as an allowed pusher in GitLab settings.")
             return False
         return True
 

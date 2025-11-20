@@ -17,8 +17,11 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
 
-    #FETCH FILES WITH NO MISSING DOCSTRING
+    #FETCH FILES WITH COMPLETE OR HIGH DOCSTRING COVERAGE
+    DOCSTRING_THRESHOLD = 0.75  # 75% threshold for including files
     files_with_all_docstrings = []
+    files_with_high_coverage = []
+    
     df = pd.read_csv(docstring_analysis_file)
     
     # Handle empty dataframe
@@ -27,17 +30,29 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
         return False
     
     for file_path, group in df.groupby('file_path'):
-        if (~group['missing_docstring']).all():
+        total = len(group)
+        with_docs = (~group['missing_docstring']).sum()
+        coverage = with_docs / total if total > 0 else 0
+        
+        if coverage == 1.0:
             files_with_all_docstrings.append(file_path)
-    logger.info(f"Files with all docstrings: {files_with_all_docstrings}")
+        elif coverage >= DOCSTRING_THRESHOLD:
+            files_with_high_coverage.append(file_path)
+    
+    # Combine files with 100% and high coverage
+    files_to_document = files_with_all_docstrings + files_with_high_coverage
+    
+    logger.info(f"Files with 100% docstrings ({len(files_with_all_docstrings)}): {files_with_all_docstrings}")
+    logger.info(f"Files with ≥{DOCSTRING_THRESHOLD*100:.0f}% docstrings ({len(files_with_high_coverage)}): {files_with_high_coverage}")
+    logger.info(f"Total files to document: {len(files_to_document)}")
 
-    # Skip directory creation if no files with complete docstrings
-    if not files_with_all_docstrings:
-        logger.warning("No files with complete docstrings found. Skipping Sphinx setup.")
+    # Skip directory creation if no files meet criteria
+    if not files_to_document:
+        logger.warning(f"No files with ≥{DOCSTRING_THRESHOLD*100:.0f}% docstring coverage found. Skipping Sphinx setup.")
         return False
 
-    #CREATE DIRECTORY AND ADD FILES WITH NO MISSING DOCSTRINGS
-    dir = create_directory_and_add_files(repo_path, AUTOAPI_DIRECTORY, files_with_all_docstrings, branch, token, provider)
+    #CREATE DIRECTORY AND ADD FILES WITH ADEQUATE DOCSTRING COVERAGE
+    dir = create_directory_and_add_files(repo_path, AUTOAPI_DIRECTORY, files_to_document, branch, token, provider)
     if not dir:
         logger.error("Directory creation failed.")
         return False
@@ -61,7 +76,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
             return False
         logger.info(f"{GITLAB_YML_FILE} file created successfully.")
 
-        #Trigger GitLab pipeline
+        #Trigger GitLab pipeline (optional)
         variables = {
             "DOCS_SRC": DOCS_SRC,
             "BUILD_DIR": BUILD_DIR,
@@ -73,9 +88,11 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
         }
         success = trigger_gitlab_pipeline(repo_path, branch, token, variables)
         if not success:
-            logger.error("GitLab pipeline trigger failed.")
-            return False
-        print("Pipeline triggered successfully!")
+            logger.warning("GitLab pipeline trigger failed. Pipeline must be triggered manually or CI_TRIGGER_PIPELINE_TOKEN environment variable is not set.")
+        else:
+            logger.info("Pipeline triggered successfully!")
+        
+        # Return True since Sphinx setup files were created successfully
         return True
     #logic for github actions similar to pipeline in gitlab
 
@@ -107,15 +124,18 @@ def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: d
             data[f"variables[{key}]"] = value
             
 
+    if not trigger_token:
+        logger.warning("CI_TRIGGER_PIPELINE_TOKEN environment variable not set. Cannot trigger pipeline.")
+        return False
+    
     try:
         response = requests.post(api_url, headers=headers, data=data, timeout=10)
         if response.status_code in (200, 201):
-            print(f"Pipeline triggered for {repo_url} on branch {branch}.")
+            logger.info(f"Pipeline triggered for {repo_url} on branch {branch}.")
             return True
         else:
-            print(f"Failed to trigger pipeline: {response.text}")
-            print(response.reason)
+            logger.error(f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})")
             return False
     except Exception as e:
-        print(f"Exception while triggering pipeline: {e}")
+        logger.error(f"Exception while triggering pipeline: {e}")
         return False
