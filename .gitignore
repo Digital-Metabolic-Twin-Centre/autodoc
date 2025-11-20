@@ -65,6 +65,13 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
+# Sphinx build outputs
+docs/build/
+docs/build/html/
+docs/source/_autosummary/
+docs/source/autoapi/
+
+
 # Scrapy stuff:
 .scrapy
 
