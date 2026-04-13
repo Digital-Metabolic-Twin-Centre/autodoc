@@ -27,5 +27,5 @@ html_static_path = ["_static"]
 autoapi_type = "python"
 autoapi_dirs = ["../../src"]
 
-autoapi_keep_files = True
+autoapi_keep_files = False
 autoapi_generate_api_docs = True
