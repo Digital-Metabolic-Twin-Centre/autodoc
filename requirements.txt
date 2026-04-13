@@ -1,3 +1,4 @@
+# Runtime dependencies for the FastAPI application.
 fastapi==0.116.1
 openai==1.99.9
 pandas==2.3.1
