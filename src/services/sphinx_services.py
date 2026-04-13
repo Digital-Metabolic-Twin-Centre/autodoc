@@ -3,11 +3,11 @@ import pandas as pd
 import urllib
 
 import requests
-from config.config import AUTOAPI_DIRECTORY, CONFIGURATION_UPDATE_FILE, GITLAB_API_URL, GITLAB_YML_FILE, PROJECT_AUTHOR
+from config.config import AUTOAPI_DIRECTORY, CONFIGURATION_UPDATE_FILE, GITLAB_API_URL, GITLAB_YML_FILE, GITHUB_ACTIONS_FILE, PROJECT_AUTHOR
 from config.config import DOCS_SRC, BUILD_DIR, CONF_PY, PIPELINE_USERNAME, PIPELINE_EMAIL, PROJECT_NAME
 from config.log_config import get_logger
 from utils.git_utils import create_directory_and_add_files, create_a_file, extract_repo_path
-from utils.generate_yml_content import generate_gitlab_ci_file
+from utils.generate_yml_content import generate_gitlab_ci_file, generate_github_actions_file
 
 logger = get_logger(__name__)
 
@@ -94,7 +94,18 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
         
         # Return True since Sphinx setup files were created successfully
         return True
-    #logic for github actions similar to pipeline in gitlab
+
+    if provider == "github":
+        github_actions_content = generate_github_actions_file()
+        workflow_file_created = create_a_file(repo_path, branch, GITHUB_ACTIONS_FILE, github_actions_content, token, provider)
+        if not workflow_file_created:
+            logger.error(f"{GITHUB_ACTIONS_FILE} file creation failed.")
+            return False
+        logger.info(f"{GITHUB_ACTIONS_FILE} file created successfully.")
+        return True
+
+    logger.error(f"Unsupported provider for Sphinx setup: {provider}")
+    return False
 
 def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: dict = None) -> bool:
     """

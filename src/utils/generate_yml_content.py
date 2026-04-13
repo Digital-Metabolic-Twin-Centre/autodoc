@@ -38,7 +38,7 @@ build_sphinx:
     # Update conf.py with autoapi settings
     - |
       if [ -f "update_conf.py" ]; then
-        python update_conf.py
+        python update_conf.py "$CONF_PY"
       fi
     # Build the documentation
     - sphinx-build -b html "$DOCS_SRC" "$BUILD_DIR"
@@ -67,3 +67,66 @@ pages:
 """
 
   return gitlab_ci_content
+
+
+def generate_github_actions_file() -> str:
+  """
+    Generates a GitHub Actions workflow file for building Sphinx docs.
+
+    Returns:
+        str: Workflow file content.
+  """
+  github_actions_content = """name: Build Docs
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install documentation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install sphinx sphinx-autoapi sphinx-rtd-theme
+
+      - name: Ensure docs scaffolding exists
+        run: |
+          mkdir -p docs/source
+          if [ ! -f "docs/source/conf.py" ]; then
+            sphinx-quickstart --quiet --project "API Documentation" --author "Development Team" --sep --makefile --batchfile --ext-autodoc docs
+          fi
+
+      - name: Update Sphinx AutoAPI configuration
+        run: |
+          if [ -f "update_conf.py" ]; then
+            python update_conf.py "docs/source/conf.py"
+          fi
+
+      - name: Build documentation
+        run: sphinx-build -b html docs/source docs/build/html
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-html
+          path: docs/build/html
+"""
+
+  return github_actions_content

@@ -6,28 +6,32 @@ stages:
 include:
   - local: '.gitlab/ci/build.yml'
 
+variables:
+  PY_VERSION: "3.11"
+  DOCS_SRC: "docs/source"
+  BUILD_DIR: "docs/build/html"
+
 docs:
-  image: python:3.11
+  image: python:${PY_VERSION}
   stage: docs
   before_script:
+    - pip install --upgrade pip
     - pip install -r docs/requirements.txt
   script:
-    - sphinx-build -b html docs/source docs/build/html
+    - sphinx-build -b html "$DOCS_SRC" "$BUILD_DIR"
   artifacts:
     paths:
       - docs/build/html
     expire_in: 1 week
-  only:
-    - main
-    - dev
 
 pages:
   stage: deploy
-  image: python:3.11
-  before_script:
-    - pip install -r docs/requirements.txt
+  image: python:${PY_VERSION}
+  dependencies:
+    - docs
   script:
-    - sphinx-build -b html docs/source public
+    - mkdir -p public
+    - cp -r docs/build/html/* public/
   artifacts:
     paths:
       - public
