@@ -19,9 +19,9 @@ dependencies = [
 [dependency-groups]
 docs = [
     "astroid<4",
+    "renku-sphinx-theme",
     "sphinx==8.2.3",
     "sphinx-autoapi==3.6.0",
-    "sphinx-rtd-theme==3.0.2",
 ]
 dev = [
     { include-group = "docs" },

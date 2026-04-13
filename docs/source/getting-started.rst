@@ -1,6 +1,16 @@
 Getting Started
 ===============
 
+.. raw:: html
+
+   <section class="callout-band">
+     <p class="eyebrow">Setup Path</p>
+     <p>
+       The recommended local workflow uses <code>uv</code> for environment management,
+       dependency sync, test execution, linting, and Sphinx builds.
+     </p>
+   </section>
+
 Prerequisites
 -------------
 
@@ -54,3 +64,23 @@ Before pushing changes, run:
    python3 prepush_check.py
 
 This verifies linting, tests, and documentation build steps locally.
+
+.. raw:: html
+
+   <section class="card-grid">
+     <article class="card">
+       <p class="eyebrow">Develop</p>
+       <h3>Run the API with live reload</h3>
+       <p>Use <code>uv run uvicorn main:app --app-dir src --reload</code> during local feature work.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Verify</p>
+       <h3>Check quality before pushing</h3>
+       <p>The pre-push script keeps lint, tests, and documentation build aligned with CI expectations.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Publish</p>
+       <h3>Build the site locally first</h3>
+       <p>Validate Sphinx output on your machine before relying on GitHub Actions or Pages deployment.</p>
+     </article>
+   </section>

@@ -1,6 +1,16 @@
 Architecture
 ============
 
+.. raw:: html
+
+   <section class="callout-band">
+     <p class="eyebrow">System View</p>
+     <p>
+       Auto Docs is structured as a thin API layer over a documentation-analysis pipeline,
+       with repository utilities and Sphinx automation providing the integration points.
+     </p>
+   </section>
+
 Processing flow
 ---------------
 
@@ -44,3 +54,23 @@ The published documentation site combines:
 - static guides written in reStructuredText
 - generated API reference pages from AutoAPI
 - project styling layered on top of the Sphinx Read the Docs theme
+
+.. raw:: html
+
+   <section class="card-grid">
+     <article class="card">
+       <p class="eyebrow">Router</p>
+       <h3>Entry point for orchestration</h3>
+       <p>Receives requests, coordinates analysis, and returns operational outcomes through HTTP responses.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Services</p>
+       <h3>Application logic and workflow control</h3>
+       <p>Services handle repository inspection, coverage selection, and Sphinx setup generation for target repositories.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Utilities</p>
+       <h3>Parsing, generation, and provider integration</h3>
+       <p>Utility modules isolate code extraction, docstring logic, and GitHub or GitLab repository operations.</p>
+     </article>
+   </section>

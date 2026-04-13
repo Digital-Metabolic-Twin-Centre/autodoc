@@ -1,6 +1,16 @@
 Outputs and Reports
 ===================
 
+.. raw:: html
+
+   <section class="callout-band">
+     <p class="eyebrow">Artifacts</p>
+     <p>
+       Auto Docs writes outputs that support review, debugging, and documentation publishing.
+       These files are part of the operational value of the system, not just side effects.
+     </p>
+   </section>
+
 Generated local files
 ---------------------
 
@@ -40,3 +50,23 @@ When the documentation pipeline succeeds, the project also produces:
 - generated HTML documentation in ``docs/build/html``
 - GitHub Pages deployment artifacts through GitHub Actions
 - CI/CD documentation setup files for supported repository workflows
+
+.. raw:: html
+
+   <section class="card-grid">
+     <article class="card">
+       <p class="eyebrow">Review</p>
+       <h3>Use CSV output to inspect coverage</h3>
+       <p>See where docstrings are present, where they are missing, and which lines need editorial attention.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Suggest</p>
+       <h3>Keep generated text separate</h3>
+       <p>The suggested docstring output gives teams a reviewable artifact rather than silently rewriting source files.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Publish</p>
+       <h3>Trace the full docs build path</h3>
+       <p>Logs and generated site assets make it easier to debug failures and validate publishing behavior in CI.</p>
+     </article>
+   </section>

@@ -1,6 +1,16 @@
 Overview
 ========
 
+.. raw:: html
+
+   <section class="callout-band">
+     <p class="eyebrow">Purpose</p>
+     <p>
+       Auto Docs exists to make documentation quality visible, actionable, and publishable
+       without asking engineers to build a documentation pipeline from scratch.
+     </p>
+   </section>
+
 Auto Docs is a FastAPI-based service for improving documentation quality in software
 repositories. It inspects code, detects missing docstrings, generates AI-assisted
 documentation suggestions, and prepares Sphinx documentation assets for publishing.
@@ -36,3 +46,23 @@ Core components
 - Analysis pipeline: extracts code blocks and validates docstring coverage
 - Generation layer: creates suggested docstrings where coverage is missing
 - Sphinx automation: prepares documentation build structure and CI workflows
+
+.. raw:: html
+
+   <section class="card-grid">
+     <article class="card">
+       <p class="eyebrow">Coverage</p>
+       <h3>Find missing documentation fast</h3>
+       <p>Surface undocumented modules, functions, and classes before they become long-term maintenance drag.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Consistency</p>
+       <h3>Standardize how technical docs are prepared</h3>
+       <p>Use one pipeline for source inspection, generated suggestions, and Sphinx-ready publishing outputs.</p>
+     </article>
+     <article class="card">
+       <p class="eyebrow">Delivery</p>
+       <h3>Move from repository analysis to a public docs site</h3>
+       <p>Connect repository quality signals to a documentation site that can be versioned, reviewed, and deployed.</p>
+     </article>
+   </section>
