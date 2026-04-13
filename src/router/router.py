@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
+
+from config.log_config import get_logger
 from models.repo_request import RepoRequest
 from services.doc_services import analyze_repo
-from config.log_config import get_logger
 from services.sphinx_services import create_sphinx_setup
 
 logger = get_logger(__name__)
@@ -18,7 +19,10 @@ async def root():
 @router.post("/generate")
 async def generate_docs(req: RepoRequest):
     logger.info(
-        f"/generate endpoint called with provider={req.provider}, repo_url={req.repo_url}, branch={req.branch}"
+        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s",
+        req.provider,
+        req.repo_url,
+        req.branch,
     )
     if not req.repo_url or not req.token or not req.branch or not req.provider:
         logger.warning("Missing required parameters in request.")
@@ -39,7 +43,10 @@ async def generate_docs(req: RepoRequest):
             logger.warning("No files were analyzed. Repository may be empty or inaccessible.")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="No files found to analyze. Please check repository URL, token permissions, and branch name.",
+                detail=(
+                    "No files found to analyze. Please check repository URL, "
+                    "token permissions, and branch name."
+                ),
             )
 
         # 2. CREATE SPHINX SETUP
@@ -50,7 +57,11 @@ async def generate_docs(req: RepoRequest):
             logger.error("Sphinx setup creation failed.")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Sphinx setup creation failed. Token may lack 'write_repository' scope, or branch '{req.branch}' is protected. Check token permissions and GitLab branch settings.",
+                detail=(
+                    "Sphinx setup creation failed. Token may lack "
+                    f"'write_repository' scope, or branch '{req.branch}' is "
+                    "protected. Check token permissions and GitLab branch settings."
+                ),
             )
 
         return {

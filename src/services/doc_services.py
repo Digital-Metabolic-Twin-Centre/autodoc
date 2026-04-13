@@ -1,21 +1,23 @@
-from utils.git_utils import (
-    fetch_repo_tree,
-    fetch_content_from_github,
-    fetch_content_from_gitlab,
-    extract_repo_path,
-)
+import os
+
+import pandas as pd
+
+from config.log_config import get_logger
 from utils.code_block_extraction import GenericCodeBlockExtractor
 from utils.docstring_generation import (
-    generate_docstring_with_openai,
     format_docstring_for_language,
+    generate_docstring_with_openai,
 )
 from utils.docstring_validation import (
     analyze_docstring_in_blocks,
     analyze_docstring_in_module,
 )
-import pandas as pd
-import os
-from config.log_config import get_logger
+from utils.git_utils import (
+    extract_repo_path,
+    fetch_content_from_github,
+    fetch_content_from_gitlab,
+    fetch_repo_tree,
+)
 
 logger = get_logger(__name__)
 
@@ -26,7 +28,8 @@ def analyze_repo(provider, repo_url, token, branch):
 
     Description:
         This function fetches the repository tree, detects the tech stack, and checks each file
-        for missing or present docstring. It returns lists of files and items missing docstring and those with docstring.
+        for missing or present docstring. It returns lists of files and items
+        missing docstring and those with docstring.
 
     Args:
         provider (str): The git provider name (e.g., 'github', 'gitlab').
@@ -157,9 +160,12 @@ def analyze_repo(provider, repo_url, token, branch):
                     logger.info("Generated Docstring:")
                     logger.info(format_docstring_for_language(generated_docstring, language))
                     suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
+                    doc_info = block_analysis["docstring_analysis"][0]
                     with open(suggested_file, "a") as f:
                         f.write(
-                            f"\n# File: {file_name}, Path: {file_path}, Function: {block_analysis['docstring_analysis'][0]['function_name']}, Line: {block_analysis['docstring_analysis'][0]['line_number']}\n"
+                            "\n# File: "
+                            f"{file_name}, Path: {file_path}, Function: "
+                            f"{doc_info['function_name']}, Line: {doc_info['line_number']}\n"
                         )
                         f.write(f"{format_docstring_for_language(generated_docstring, language)}\n")
                         f.write(f"{'-' * 100}\n")

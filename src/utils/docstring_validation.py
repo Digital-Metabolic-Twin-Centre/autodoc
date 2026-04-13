@@ -3,11 +3,11 @@ import os
 import re
 from typing import Optional
 
-from utils.docstring_generation import (
-    generate_docstring_with_openai,
-    format_docstring_for_language,
-)
 from config.log_config import get_logger
+from utils.docstring_generation import (
+    format_docstring_for_language,
+    generate_docstring_with_openai,
+)
 
 logger = get_logger(__name__)
 
@@ -187,7 +187,7 @@ def analyze_docstring_in_blocks(
         block_analysis["line_number"] = start_line_number if start_line_number is not None else 0
 
         # Update counters
-        if block_analysis["missing_docstring"] == False:
+        if not block_analysis["missing_docstring"]:
             results["blocks_with_docstring"] += 1
         else:
             results["blocks_without_docstring"] += 1
@@ -205,7 +205,10 @@ def analyze_docstring_in_blocks(
                 with open(suggested_file, "a") as f:
                     # Add a column with filename, file path, function name, and line number
                     f.write(
-                        f"\n# File: {file_name}, Path: {file_path}, Function: {block_analysis['function_name']}, Line: {block_analysis['line_number']}\n"
+                        "\n# File: "
+                        f"{file_name}, Path: {file_path}, Function: "
+                        f"{block_analysis['function_name']}, Line: "
+                        f"{block_analysis['line_number']}\n"
                     )
                     f.write(f"\n{format_docstring_for_language(generated_docstring, language)}\n")
                     f.write(f"\n{'-' * 100}\n")
@@ -248,7 +251,7 @@ def analyze_docstring_in_module(content: str, language: str = None) -> Optional[
         pattern = r'^[\s]*["\'][\"\'][\"\']([^"\']*?)[\"\'][\"\'][\"\']|^[\s]*["\']([^"\']*?)["\']'
         match = re.search(pattern, content, re.MULTILINE | re.DOTALL)
         if match:
-            docstring_content = (match.group(1) or match.group(2)).strip()
+            return (match.group(1) or match.group(2)).strip()
 
     elif language in ["javascript", "typescript"]:
         # Look for JSDoc style comments at the beginning

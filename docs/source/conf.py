@@ -1,6 +1,6 @@
+import datetime
 import os
 import sys
-import datetime
 
 # Add project root to path so AutoAPI can discover modules
 sys.path.insert(0, os.path.abspath("../../src"))

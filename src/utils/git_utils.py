@@ -1,11 +1,12 @@
-import os
-import fnmatch
-import urllib.parse
 import base64
+import fnmatch
+import os
+import urllib.parse
 from typing import Dict, List, Optional, Tuple
 
 import gitlab
 import requests
+
 from config.config import GITHUB_API_URL, GITLAB_API_URL
 from config.log_config import get_logger
 from utils.code_block_extraction import GenericCodeBlockExtractor
@@ -122,7 +123,10 @@ def fetch_content_from_gitlab(
     """
     project_path_encoded = urllib.parse.quote_plus(repo_path)
     file_path_encoded = urllib.parse.quote_plus(file_path)
-    url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}/raw"
+    url = (
+        f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/"
+        f"{file_path_encoded}/raw"
+    )
     try:
         response = requests.get(
             url,
@@ -269,7 +273,8 @@ def create_directory_and_add_files(
     provider: str = "github",
 ) -> bool:
     """
-    Creates a new directory in the remote repository and adds multiple files to it in a single commit.
+    Creates a new directory in the remote repository and adds multiple files
+    to it in a single commit.
 
     Args:
         repo_url (str): Repository path (e.g., 'user/repo').
@@ -281,7 +286,6 @@ def create_directory_and_add_files(
     Returns:
         bool: True if operation succeeded, False otherwise.
     """
-    import json
 
     if provider == "github":
         # Prepare the tree for the commit
@@ -373,7 +377,11 @@ def create_directory_and_add_files(
         gitkeep_path = f"{dir_path}/.gitkeep"
         gitkeep_exists = False
         try:
-            check_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{urllib.parse.quote_plus(gitkeep_path)}"
+            gitkeep_path_encoded = urllib.parse.quote_plus(gitkeep_path)
+            check_url = (
+                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/"
+                f"repository/files/{gitkeep_path_encoded}"
+            )
             check_resp = requests.get(
                 check_url,
                 headers={"PRIVATE-TOKEN": token},
@@ -381,7 +389,7 @@ def create_directory_and_add_files(
                 timeout=10,
             )
             gitkeep_exists = check_resp.status_code == 200
-        except:
+        except requests.RequestException:
             pass
 
         if not gitkeep_exists:
@@ -403,7 +411,11 @@ def create_directory_and_add_files(
             target_path = f"{dir_path}/{file_name}"
             file_exists = False
             try:
-                check_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{urllib.parse.quote_plus(target_path)}"
+                target_path_encoded = urllib.parse.quote_plus(target_path)
+                check_url = (
+                    f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/"
+                    f"repository/files/{target_path_encoded}"
+                )
                 check_resp = requests.get(
                     check_url,
                     headers={"PRIVATE-TOKEN": token},
@@ -411,7 +423,7 @@ def create_directory_and_add_files(
                     timeout=10,
                 )
                 file_exists = check_resp.status_code == 200
-            except:
+            except requests.RequestException:
                 pass
 
             action_type = "update" if file_exists else "create"
@@ -437,11 +449,15 @@ def create_directory_and_add_files(
             logger.error(f"GitLab commit error: {error_msg}")
             if "insufficient_scope" in error_msg.lower():
                 logger.error(
-                    f"Token has insufficient permissions. Make sure the token includes 'write_repository' scope in addition to 'api' and 'read_api'."
+                    "Token has insufficient permissions. Make sure the token "
+                    "includes 'write_repository' scope in addition to "
+                    "'api' and 'read_api'."
                 )
             elif "not allowed to push" in error_msg.lower() or "protected" in error_msg.lower():
                 logger.error(
-                    f"Branch '{branch}' is protected. Either use a different branch, unprotect the branch, or add yourself as an allowed pusher in GitLab settings."
+                    f"Branch '{branch}' is protected. Either use a different "
+                    "branch, unprotect the branch, or add yourself as an "
+                    "allowed pusher in GitLab settings."
                 )
             return False
         return True
@@ -478,7 +494,11 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
     elif provider == "gitlab":
         # GitLab: Create or update a file using the REST API
         project_path_encoded = urllib.parse.quote_plus(repo_url)
-        api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{urllib.parse.quote_plus(file_path)}"
+        file_path_encoded = urllib.parse.quote_plus(file_path)
+        api_url = (
+            f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/"
+            f"{file_path_encoded}"
+        )
         headers = {"PRIVATE-TOKEN": token}
         # Check if file exists
         get_resp = requests.get(api_url, headers=headers, params={"ref": branch})

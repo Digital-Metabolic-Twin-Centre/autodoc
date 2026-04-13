@@ -198,7 +198,6 @@ class GenericCodeBlockExtractor:
         header = f"# --- Code Block starts at line {start_idx + 1} ---"
         line = lines[start_idx]
         block.append(line.rstrip())
-        nested_level = 0
         i = start_idx + 1
         while i < len(lines):
             line = lines[i]

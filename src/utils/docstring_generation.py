@@ -4,8 +4,9 @@ import time
 from typing import Optional
 
 import openai
-from tqdm import tqdm
 from dotenv import load_dotenv
+from tqdm import tqdm
+
 from config.log_config import get_logger
 
 logger = get_logger(__name__)
@@ -23,7 +24,8 @@ def configure_openai(api_key: str = None):
         api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError(
-            "OpenAI API key not provided. Set OPENAI_API_KEY environment variable or pass api_key parameter."
+            "OpenAI API key not provided. Set OPENAI_API_KEY environment "
+            "variable or pass api_key parameter."
         )
     openai.api_key = api_key
 
@@ -63,7 +65,8 @@ def create_openai_docstring_prompt(code: str, language: str = "python") -> str:
         str: Formatted prompt for docstring generation.
     """
     prompt = f"""
-Generate a concise docstring for the following {language} code. The docstring should be 4-5 lines maximum and include:
+Generate a concise docstring for the following {language} code.
+The docstring should be 4-5 lines maximum and include:
 
 1. A brief description (1-2 lines maximum)
 2. Args section with parameter types and descriptions

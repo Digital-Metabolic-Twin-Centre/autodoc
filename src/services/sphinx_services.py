@@ -1,33 +1,32 @@
 import os
-import pandas as pd
 import urllib
 
+import pandas as pd
 import requests
+
 from config.config import (
     AUTOAPI_DIRECTORY,
-    CONFIGURATION_UPDATE_FILE,
-    GITLAB_API_URL,
-    GITLAB_YML_FILE,
-    GITHUB_ACTIONS_FILE,
-    PROJECT_AUTHOR,
-)
-from config.config import (
-    DOCS_SRC,
     BUILD_DIR,
     CONF_PY,
-    PIPELINE_USERNAME,
+    CONFIGURATION_UPDATE_FILE,
+    DOCS_SRC,
+    GITHUB_ACTIONS_FILE,
+    GITLAB_API_URL,
+    GITLAB_YML_FILE,
     PIPELINE_EMAIL,
+    PIPELINE_USERNAME,
+    PROJECT_AUTHOR,
     PROJECT_NAME,
 )
 from config.log_config import get_logger
-from utils.git_utils import (
-    create_directory_and_add_files,
-    create_a_file,
-    extract_repo_path,
-)
 from utils.generate_yml_content import (
-    generate_gitlab_ci_file,
     generate_github_actions_file,
+    generate_gitlab_ci_file,
+)
+from utils.git_utils import (
+    create_a_file,
+    create_directory_and_add_files,
+    extract_repo_path,
 )
 
 logger = get_logger(__name__)
@@ -65,17 +64,24 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     files_to_document = files_with_all_docstrings + files_with_high_coverage
 
     logger.info(
-        f"Files with 100% docstrings ({len(files_with_all_docstrings)}): {files_with_all_docstrings}"
+        "Files with 100%% docstrings (%s): %s",
+        len(files_with_all_docstrings),
+        files_with_all_docstrings,
     )
     logger.info(
-        f"Files with ≥{DOCSTRING_THRESHOLD * 100:.0f}% docstrings ({len(files_with_high_coverage)}): {files_with_high_coverage}"
+        "Files with ≥%.0f%% docstrings (%s): %s",
+        DOCSTRING_THRESHOLD * 100,
+        len(files_with_high_coverage),
+        files_with_high_coverage,
     )
     logger.info(f"Total files to document: {len(files_to_document)}")
 
     # Skip directory creation if no files meet criteria
     if not files_to_document:
         logger.warning(
-            f"No files with ≥{DOCSTRING_THRESHOLD * 100:.0f}% docstring coverage found. Skipping Sphinx setup."
+            "No files with ≥%.0f%% docstring coverage found. "
+            "Skipping Sphinx setup.",
+            DOCSTRING_THRESHOLD * 100,
         )
         return False
 
@@ -125,7 +131,9 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
         success = trigger_gitlab_pipeline(repo_path, branch, token, variables)
         if not success:
             logger.warning(
-                "GitLab pipeline trigger failed. Pipeline must be triggered manually or CI_TRIGGER_PIPELINE_TOKEN environment variable is not set."
+                "GitLab pipeline trigger failed. Pipeline must be triggered "
+                "manually or CI_TRIGGER_PIPELINE_TOKEN environment variable "
+                "is not set."
             )
         else:
             logger.info("Pipeline triggered successfully!")

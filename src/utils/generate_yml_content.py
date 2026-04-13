@@ -33,7 +33,9 @@ build_sphinx:
     - mkdir -p docs/source
     - |
       if [ ! -f "$CONF_PY" ]; then
-        sphinx-quickstart --quiet --project "$PROJECT_NAME" --author "$PROJECT_AUTHOR" --sep --makefile --batchfile --ext-autodoc docs
+        sphinx-quickstart --quiet --project "$PROJECT_NAME" \\
+          --author "$PROJECT_AUTHOR" --sep --makefile \\
+          --batchfile --ext-autodoc docs
       fi
     # Update conf.py with autoapi settings
     - |
@@ -111,7 +113,9 @@ jobs:
         run: |
           mkdir -p docs/source
           if [ ! -f "docs/source/conf.py" ]; then
-            sphinx-quickstart --quiet --project "API Documentation" --author "Development Team" --sep --makefile --batchfile --ext-autodoc docs
+            sphinx-quickstart --quiet --project "API Documentation" \
+              --author "Development Team" --sep --makefile \
+              --batchfile --ext-autodoc docs
           fi
 
       - name: Update Sphinx AutoAPI configuration
