@@ -1,5 +1,5 @@
 def generate_gitlab_ci_file() -> bool:
-  """
+    """
     Generates a .gitlab-ci.yml file in the specified remote GitLab repository.
 
     Args:
@@ -9,8 +9,8 @@ def generate_gitlab_ci_file() -> bool:
 
     Returns:
         bool: True if the file was created successfully, False otherwise.
-  """
-  gitlab_ci_content = """stages:
+    """
+    gitlab_ci_content = """stages:
   - docs
   - deploy
 
@@ -26,8 +26,8 @@ build_sphinx:
   stage: docs
   image: python:${PY_VERSION}
   before_script:
-    - pip install --upgrade pip
-    - pip install sphinx sphinx-autoapi sphinx-rtd-theme
+    - python -m pip install uv
+    - uv pip install --system sphinx==8.2.3 sphinx-autoapi==3.6.0 sphinx-rtd-theme==3.0.2
   script:
     # Create docs directory structure if it doesn't exist
     - mkdir -p docs/source
@@ -66,17 +66,17 @@ pages:
     - main
 """
 
-  return gitlab_ci_content
+    return gitlab_ci_content
 
 
 def generate_github_actions_file() -> str:
-  """
+    """
     Generates a GitHub Actions workflow file for building Sphinx docs.
 
     Returns:
         str: Workflow file content.
-  """
-  github_actions_content = """name: Build Docs
+    """
+    github_actions_content = """name: Build Docs
 
 on:
   push:
@@ -101,10 +101,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Install documentation dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install sphinx sphinx-autoapi sphinx-rtd-theme
+        run: uv pip install --system sphinx==8.2.3 sphinx-autoapi==3.6.0 sphinx-rtd-theme==3.0.2
 
       - name: Ensure docs scaffolding exists
         run: |
@@ -129,4 +130,4 @@ jobs:
           path: docs/build/html
 """
 
-  return github_actions_content
+    return github_actions_content

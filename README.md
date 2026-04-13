@@ -34,7 +34,7 @@ Auto-Docs is a FastAPI-based service designed to automate the process of analyzi
 ├── docker-compose.yaml
 ├── Dockerfile
 ├── README.md
-├── requirements.txt
+├── pyproject.toml
 ├── log/
 │   └── app_<timestamp>.log
 ├── src/
@@ -52,8 +52,8 @@ Auto-Docs is a FastAPI-based service designed to automate the process of analyzi
 │   ├── services/
 │   │   ├── doc_services.py    # Docstring analysis and generation
 │   │   └── sphinx_services.py # Sphinx setup and automation
-│   ├── test/
-│   │   └── ...                # Test scripts and notebooks
+├── tests/
+│   └── ...                    # Automated tests
 │   └── utils/
 │       ├── code_block_extraction.py
 │       ├── docstring_generation.py
@@ -94,7 +94,7 @@ Auto-Docs is a FastAPI-based service designed to automate the process of analyzi
 ## Quick Start
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.11+
 - OpenAI API Key
 - (Optional) Docker
 
@@ -106,8 +106,10 @@ Auto-Docs is a FastAPI-based service designed to automate the process of analyzi
 $ git clone <your-repo-url>
 $ cd auto-docs
 
-# Install dependencies
-$ pip install -r requirements.txt
+# Create a virtual environment and sync local development dependencies
+$ uv venv
+$ source .venv/bin/activate
+$ uv sync --group dev --no-install-project
 ```
 
 ### Environment Variables (.env Setup)
@@ -127,7 +129,7 @@ CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 
 ```sh
 # Start the FastAPI server
-$ fastapi dev src/main.py
+$ uv run uvicorn main:app --app-dir src --reload
 ```
 
 - The API will be available at: http://localhost:8000
@@ -137,6 +139,20 @@ $ fastapi dev src/main.py
 
 ```sh
 docker-compose up --build
+```
+
+### Local Checks
+
+```sh
+# Run tests
+$ uv run pytest
+
+# Run lint checks
+$ uv run ruff check src tests
+
+# Build docs
+$ uv sync --group docs --no-install-project
+$ uv run sphinx-build -W -b html docs/source docs/build/html
 ```
 
 ---

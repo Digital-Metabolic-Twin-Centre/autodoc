@@ -1,4 +1,4 @@
-Welcome to Auto Docs Documentation
+Welcome to Auto Doc
 ==================================
 
 Contents:

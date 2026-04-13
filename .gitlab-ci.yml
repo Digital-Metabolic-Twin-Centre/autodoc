@@ -15,10 +15,10 @@ docs:
   image: python:${PY_VERSION}
   stage: docs
   before_script:
-    - pip install --upgrade pip
-    - pip install -r docs/requirements.txt
+    - python -m pip install uv
+    - uv sync --group docs --no-install-project
   script:
-    - sphinx-build -b html "$DOCS_SRC" "$BUILD_DIR"
+    - uv run sphinx-build -b html "$DOCS_SRC" "$BUILD_DIR"
   artifacts:
     paths:
       - docs/build/html

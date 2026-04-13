@@ -5,9 +5,9 @@ EXPOSE 8000
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install pip requirements
-COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+# Install runtime dependencies with uv
+COPY pyproject.toml .
+RUN python -m pip install uv && uv sync --system --no-dev --no-install-project
 
 WORKDIR /app
 COPY . /app

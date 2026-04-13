@@ -1,14 +1,18 @@
 import os
 import fnmatch
 import urllib.parse
-import gitlab
 import base64
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
+
+import gitlab
 import requests
 from config.config import GITHUB_API_URL, GITLAB_API_URL
 from config.log_config import get_logger
+from utils.code_block_extraction import GenericCodeBlockExtractor
+from utils.docstring_validation import analyze_docstring_in_blocks
 
 logger = get_logger(__name__)
+
 
 def extract_repo_path(repo_url: str, provider: str = "github") -> str:
     """
@@ -21,14 +25,16 @@ def extract_repo_path(repo_url: str, provider: str = "github") -> str:
     """
     if repo_url.startswith(("http://", "https://")):
         parsed = urllib.parse.urlparse(repo_url)
-        path = parsed.path.strip('/')
-        if path.endswith('.git'):
+        path = parsed.path.strip("/")
+        if path.endswith(".git"):
             path = path[:-4]
         return path
     return repo_url
 
-def get_gitignore_patterns(repo_path: str, access_token: str, 
-    branch: str = "main", provider: str = "github") -> List[str]:
+
+def get_gitignore_patterns(
+    repo_path: str, access_token: str, branch: str = "main", provider: str = "github"
+) -> List[str]:
     """
     Fetches .gitignore file from the repository and returns a list of patterns to ignore.
     Args:
@@ -69,8 +75,10 @@ def should_ignore(name: str, patterns: List[str]) -> bool:
             return True
     return False
 
-def fetch_content_from_github(repo_path: str, 
-    branch: str, file_path: str, access_token: str) -> Optional[str]:
+
+def fetch_content_from_github(
+    repo_path: str, branch: str, file_path: str, access_token: str
+) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitHub repository.
     Args:
@@ -81,16 +89,16 @@ def fetch_content_from_github(repo_path: str,
     Returns:
         Optional[str]: Raw file content if successful, None otherwise.
     """
-    url = f"{GITHUB_API_URL}/repos/{repo_path}/contents/{file_path}"    
+    url = f"{GITHUB_API_URL}/repos/{repo_path}/contents/{file_path}"
     try:
         response = requests.get(
             url,
             headers={
                 "Authorization": f"Bearer {access_token}",
-                "Accept": "application/vnd.github.v3.raw"
+                "Accept": "application/vnd.github.v3.raw",
             },
             params={"ref": branch},
-            timeout=10
+            timeout=10,
         )
         response.raise_for_status()
         return response.text if response.text else None
@@ -99,8 +107,9 @@ def fetch_content_from_github(repo_path: str,
     return None
 
 
-def fetch_content_from_gitlab(repo_path: str, 
-    branch: str, file_path: str, private_token: str) -> Optional[str]:
+def fetch_content_from_gitlab(
+    repo_path: str, branch: str, file_path: str, private_token: str
+) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitLab repository.
     Args:
@@ -119,16 +128,18 @@ def fetch_content_from_gitlab(repo_path: str,
             url,
             headers={"PRIVATE-TOKEN": private_token},
             params={"ref": branch},
-            timeout=10
+            timeout=10,
         )
         response.raise_for_status()
         return response.text if response.text else None
     except Exception as e:
-        logger.error(f"GitLab fetch error: {e}")        
+        logger.error(f"GitLab fetch error: {e}")
     return None
 
-def fetch_repo_tree(repo_path: str, access_token: str, 
-    branch: str = "main", provider: str = "github") -> List[Dict]:
+
+def fetch_repo_tree(
+    repo_path: str, access_token: str, branch: str = "main", provider: str = "github"
+) -> List[Dict]:
     """
     Recursively fetches the file and directory tree for a given repository and branch.
     Args:
@@ -142,12 +153,13 @@ def fetch_repo_tree(repo_path: str, access_token: str,
     repository_files = []
     gitignore_patterns = get_gitignore_patterns(repo_path, access_token, branch, provider)
     logger.info(f"Gitignore patterns: {gitignore_patterns}")
+
     def _fetch_tree(path: str = "") -> List[Dict]:
         if provider == "github":
             url = f"{GITHUB_API_URL}/repos/{repo_path}/contents/{path}"
             headers = {
                 "Authorization": f"Bearer {access_token}",
-                "Accept": "application/vnd.github.v3+json"
+                "Accept": "application/vnd.github.v3+json",
             }
             params = {"ref": branch}
             try:
@@ -171,21 +183,30 @@ def fetch_repo_tree(repo_path: str, access_token: str,
             return []
         all_files = []
         for item in items:
-            if should_ignore(item['name'], gitignore_patterns):
+            if should_ignore(item["name"], gitignore_patterns):
                 continue
-            if item.get('type') in ['dir', 'tree']:
-                sub_items = _fetch_tree(os.path.join(path, item['name']) if path else item['name'])
+            if item.get("type") in ["dir", "tree"]:
+                sub_items = _fetch_tree(os.path.join(path, item["name"]) if path else item["name"])
                 all_files.extend(sub_items)
-            elif item.get('type') in ['file', 'blob']:
+            elif item.get("type") in ["file", "blob"]:
                 all_files.append(item)
         return all_files
+
     try:
         repository_files = _fetch_tree()
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}") 
+        logger.error(f"An unexpected error occurred: {e}")
     return repository_files
 
-def validate_docstring(tech_stack: str, repo_path: str, branch: str, file_path: str, access_token: str, provider: str = "github") -> Optional[Tuple[bool, List[Dict[str, str]], List[Dict[str, str]]]]:
+
+def validate_docstring(
+    tech_stack: str,
+    repo_path: str,
+    branch: str,
+    file_path: str,
+    access_token: str,
+    provider: str = "github",
+) -> Optional[Tuple[bool, List[Dict[str, str]], List[Dict[str, str]]]]:
     """
     Validates the presence of docstring in a file based on its technology stack.
 
@@ -214,13 +235,39 @@ def validate_docstring(tech_stack: str, repo_path: str, branch: str, file_path: 
     if content is None or content == "":
         logger.warning(f"Empty file {file_name}. Cannot validate docstring.")
         return False, None, None
-    if tech_stack.lower() == "python":
-        python_validator = docstring_validation(content, file_name)
-        return python_validator.python_validate_docstring()
-    logger.warning("Unknown technology stack. Cannot validate docstring.")
-    return False, None, None
+    language = tech_stack.lower()
+    if language not in {"python", "javascript", "typescript", "matlab"}:
+        logger.warning("Unknown technology stack. Cannot validate docstring.")
+        return False, None, None
 
-def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: list, branch: str, token: str, provider: str = "github") -> bool:
+    extractor = GenericCodeBlockExtractor(content, file_name)
+    code_blocks = extractor.code_block_extractor()
+    analysis = analyze_docstring_in_blocks(
+        code_blocks,
+        file_name=file_name,
+        file_path=file_path,
+        language=language,
+    )
+
+    missing_items = []
+    present_items = []
+    for item in analysis["docstring_analysis"]:
+        if item["missing_docstring"]:
+            missing_items.append(item)
+        else:
+            present_items.append(item)
+
+    return len(missing_items) == 0, missing_items, present_items
+
+
+def create_directory_and_add_files(
+    repo_url: str,
+    dir_path: str,
+    file_paths: list,
+    branch: str,
+    token: str,
+    provider: str = "github",
+) -> bool:
     """
     Creates a new directory in the remote repository and adds multiple files to it in a single commit.
 
@@ -235,6 +282,7 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
         bool: True if operation succeeded, False otherwise.
     """
     import json
+
     if provider == "github":
         # Prepare the tree for the commit
         base_api_url = GITHUB_API_URL
@@ -263,19 +311,21 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
                 logger.warning(f"Could not fetch content for {file_path}, skipping.")
                 continue
             file_name = os.path.basename(file_path)
-            tree.append({
-                "path": f"{dir_path}/{file_name}",
-                "mode": "100644",
-                "type": "blob",
-                "content": content
-            })
+            tree.append(
+                {
+                    "path": f"{dir_path}/{file_name}",
+                    "mode": "100644",
+                    "type": "blob",
+                    "content": content,
+                }
+            )
 
         # 4. Create a new tree
         tree_url = f"{base_api_url}/git/trees"
         tree_resp = requests.post(
             tree_url,
             headers={"Authorization": f"Bearer {token}"},
-            json={"base_tree": base_tree_sha, "tree": tree}
+            json={"base_tree": base_tree_sha, "tree": tree},
         )
         if tree_resp.status_code not in (200, 201):
             logger.error(f"Failed to create tree: {tree_resp.text}")
@@ -291,8 +341,8 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
             json={
                 "message": commit_message,
                 "tree": new_tree_sha,
-                "parents": [latest_commit_sha]
-            }
+                "parents": [latest_commit_sha],
+            },
         )
         if commit_resp.status_code not in (200, 201):
             logger.error(f"Failed to create commit: {commit_resp.text}")
@@ -304,7 +354,7 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
         update_resp = requests.patch(
             update_ref_url,
             headers={"Authorization": f"Bearer {token}"},
-            json={"sha": new_commit_sha}
+            json={"sha": new_commit_sha},
         )
         if update_resp.status_code not in (200, 201):
             logger.error(f"Failed to update branch ref: {update_resp.text}")
@@ -318,24 +368,25 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
         api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/commits"
         actions = []
         existing_names = set()
-        
+
         # Check if .gitkeep already exists
         gitkeep_path = f"{dir_path}/.gitkeep"
         gitkeep_exists = False
         try:
             check_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{urllib.parse.quote_plus(gitkeep_path)}"
-            check_resp = requests.get(check_url, headers={"PRIVATE-TOKEN": token}, params={"ref": branch}, timeout=10)
+            check_resp = requests.get(
+                check_url,
+                headers={"PRIVATE-TOKEN": token},
+                params={"ref": branch},
+                timeout=10,
+            )
             gitkeep_exists = check_resp.status_code == 200
         except:
             pass
-        
+
         if not gitkeep_exists:
-            actions.append({
-                "action": "create",
-                "file_path": gitkeep_path,
-                "content": ""
-            })
-        
+            actions.append({"action": "create", "file_path": gitkeep_path, "content": ""})
+
         for file_path in file_paths:
             content = fetch_content_from_gitlab(repo_url, branch, file_path, token)
             if content is None:
@@ -347,34 +398,37 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
                 parent_folder = os.path.basename(os.path.dirname(file_path))
                 file_name = f"{parent_folder}_{file_name}"
             existing_names.add(file_name)
-            
+
             # Check if file already exists in target directory
             target_path = f"{dir_path}/{file_name}"
             file_exists = False
             try:
                 check_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{urllib.parse.quote_plus(target_path)}"
-                check_resp = requests.get(check_url, headers={"PRIVATE-TOKEN": token}, params={"ref": branch}, timeout=10)
+                check_resp = requests.get(
+                    check_url,
+                    headers={"PRIVATE-TOKEN": token},
+                    params={"ref": branch},
+                    timeout=10,
+                )
                 file_exists = check_resp.status_code == 200
             except:
                 pass
-            
+
             action_type = "update" if file_exists else "create"
-            logger.info(f"{'Updating' if file_exists else 'Adding'} file {file_name} to commit actions.")
-            actions.append({
-                "action": action_type,
-                "file_path": target_path,
-                "content": content
-            })
-        
+            logger.info(
+                f"{'Updating' if file_exists else 'Adding'} file {file_name} to commit actions."
+            )
+            actions.append({"action": action_type, "file_path": target_path, "content": content})
+
         if not actions:
             logger.warning("No actions to commit.")
             return True
-            
+
         logger.info(f"Prepared {len(actions)} actions for commit.")
         data = {
             "branch": branch,
             "commit_message": f"Update {dir_path} directory with documentation files",
-            "actions": actions
+            "actions": actions,
         }
         headers = {"PRIVATE-TOKEN": token}
         resp = requests.post(api_url, headers=headers, json=data)
@@ -382,15 +436,20 @@ def create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: lis
             error_msg = resp.text
             logger.error(f"GitLab commit error: {error_msg}")
             if "insufficient_scope" in error_msg.lower():
-                logger.error(f"Token has insufficient permissions. Make sure the token includes 'write_repository' scope in addition to 'api' and 'read_api'.")
+                logger.error(
+                    f"Token has insufficient permissions. Make sure the token includes 'write_repository' scope in addition to 'api' and 'read_api'."
+                )
             elif "not allowed to push" in error_msg.lower() or "protected" in error_msg.lower():
-                logger.error(f"Branch '{branch}' is protected. Either use a different branch, unprotect the branch, or add yourself as an allowed pusher in GitLab settings.")
+                logger.error(
+                    f"Branch '{branch}' is protected. Either use a different branch, unprotect the branch, or add yourself as an allowed pusher in GitLab settings."
+                )
             return False
         return True
 
     else:
         logger.error("Unsupported provider")
         return False
+
 
 def create_a_file(repo_url, branch, file_path, content, token, provider):
     if provider == "github":
@@ -406,7 +465,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         data = {
             "message": f"Create or update {file_path}",
             "content": base64.b64encode(content.encode()).decode(),
-            "branch": branch
+            "branch": branch,
         }
         if sha:
             data["sha"] = sha
@@ -429,11 +488,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         else:
             method = requests.post
             commit_message = f"Create {file_path}"
-        data = {
-            "branch": branch,
-            "content": content,
-            "commit_message": commit_message
-        }
+        data = {"branch": branch, "content": content, "commit_message": commit_message}
         resp = method(api_url, headers=headers, json=data)
         if resp.status_code not in (201, 200):
             logger.error(f"GitLab create/update file error: {resp.text}")
