@@ -7,9 +7,9 @@ sys.path.insert(0, os.path.abspath("../../src"))
 sys.path.insert(0, os.path.abspath("../.."))
 
 project = "Auto Docs"
-author = "IMDhub Team"
+author = "Auto Doc Team"
 year = datetime.datetime.now().year
-copyright = f"{year}, IMDhub"
+copyright = f"{year}, Auto Doc Team"
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -23,6 +23,15 @@ exclude_patterns = []
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
+html_show_sourcelink = False
+html_show_sphinx = False
+html_title = "Auto Docs"
+html_theme_options = {
+    "collapse_navigation": True,
+    "navigation_depth": 2,
+    "sticky_navigation": False,
+}
 
 autoapi_type = "python"
 autoapi_dirs = ["../../src"]
