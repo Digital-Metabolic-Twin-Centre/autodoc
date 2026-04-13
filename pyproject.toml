@@ -5,7 +5,7 @@ description = "Automated documentation generator for code repositories."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi==0.116.1",
+    "fastapi==0.135.3",
     "openai==1.99.9",
     "pandas==2.3.1",
     "pydantic==2.11.7",
