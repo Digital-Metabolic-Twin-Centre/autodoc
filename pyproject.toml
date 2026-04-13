@@ -1,0 +1,43 @@
+[project]
+name = "autodoc"
+version = "0.2.0"
+description = "Automated documentation generator for code repositories."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.116.1",
+    "openai==1.99.9",
+    "pandas==2.3.1",
+    "pydantic==2.11.7",
+    "python-dotenv==1.1.1",
+    "python-gitlab==6.2.0",
+    "requests==2.32.4",
+    "tqdm==4.67.1",
+    "uvicorn==0.35.0",
+]
+
+[dependency-groups]
+docs = [
+    "sphinx==8.2.3",
+    "sphinx-autoapi==3.6.0",
+    "sphinx-rtd-theme==3.0.2",
+]
+dev = [
+    { include-group = "docs" },
+    "httpx==0.28.1",
+    "pytest==8.4.1",
+    "pytest-cov==6.2.1",
+    "ruff==0.12.7",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
