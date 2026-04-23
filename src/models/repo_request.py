@@ -6,3 +6,9 @@ class RepoRequest(BaseModel):
     repo_url: str
     token: str
     branch: str
+
+
+class PublishPagesRequest(BaseModel):
+    repo_url: str
+    token: str
+    branch: str

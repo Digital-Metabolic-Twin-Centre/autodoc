@@ -1,4 +1,7 @@
 import os
+import subprocess
+import sys
+import tempfile
 import urllib
 
 import pandas as pd
@@ -10,7 +13,9 @@ from config.config import (
     CONF_PY,
     CONFIGURATION_UPDATE_FILE,
     DOCS_SRC,
-    GITHUB_ACTIONS_FILE,
+    GITHUB_PAGES_BRANCH,
+    GITHUB_PAGES_PATH,
+    GITHUB_PAGES_README_FILE,
     GITLAB_API_URL,
     GITLAB_YML_FILE,
     PIPELINE_EMAIL,
@@ -20,13 +25,18 @@ from config.config import (
 )
 from config.log_config import get_logger
 from utils.generate_yml_content import (
-    generate_github_actions_file,
+    generate_github_pages_readme,
     generate_gitlab_ci_file,
 )
 from utils.git_utils import (
+    configure_github_pages,
     create_a_file,
     create_directory_and_add_files,
+    download_github_branch_snapshot,
+    ensure_github_branch,
     extract_repo_path,
+    publish_local_directory_to_github_branch,
+    request_github_pages_build,
 )
 
 logger = get_logger(__name__)
@@ -142,23 +152,129 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
         return True
 
     if provider == "github":
-        github_actions_content = generate_github_actions_file()
-        workflow_file_created = create_a_file(
+        pages_readme_created = create_a_file(
             repo_path,
             branch,
-            GITHUB_ACTIONS_FILE,
-            github_actions_content,
+            GITHUB_PAGES_README_FILE,
+            generate_github_pages_readme(branch, GITHUB_PAGES_BRANCH),
             token,
             provider,
         )
-        if not workflow_file_created:
-            logger.error(f"{GITHUB_ACTIONS_FILE} file creation failed.")
+        if not pages_readme_created:
+            logger.error("GitHub Pages publish guide creation failed.")
             return False
-        logger.info(f"{GITHUB_ACTIONS_FILE} file created successfully.")
+
+        logger.info(
+            "GitHub repository prepared for manual review. Publish to %s after build review.",
+            GITHUB_PAGES_BRANCH,
+        )
         return True
 
     logger.error(f"Unsupported provider for Sphinx setup: {provider}")
     return False
+
+
+def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
+    """
+    Publishes reviewed GitHub docs output from a source branch to gh-pages.
+    """
+    repo_path = extract_repo_path(repo_url, "github")
+
+    pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
+    if not pages_branch_ready:
+        logger.error("GitHub Pages branch setup failed.")
+        return False
+
+    pages_configured = configure_github_pages(
+        repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH
+    )
+    if not pages_configured:
+        logger.error("GitHub Pages configuration failed.")
+        return False
+
+    with tempfile.TemporaryDirectory(prefix="autodoc-pages-") as temp_dir:
+        snapshot_downloaded = download_github_branch_snapshot(
+            repo_path, source_branch, token, temp_dir
+        )
+        if not snapshot_downloaded:
+            logger.error("Downloading reviewed GitHub branch failed.")
+            return False
+
+        conf_py_path = os.path.join(temp_dir, CONF_PY)
+        docs_source_dir = os.path.join(temp_dir, DOCS_SRC)
+        build_dir = os.path.join(temp_dir, BUILD_DIR)
+        update_conf_path = os.path.join(temp_dir, CONFIGURATION_UPDATE_FILE)
+
+        os.makedirs(docs_source_dir, exist_ok=True)
+
+        if not os.path.exists(conf_py_path):
+            quickstart_cmd = [
+                sys.executable,
+                "-m",
+                "sphinx.cmd.quickstart",
+                "--quiet",
+                "--project",
+                PROJECT_NAME,
+                "--author",
+                PROJECT_AUTHOR,
+                "--sep",
+                "--makefile",
+                "--batchfile",
+                "--ext-autodoc",
+                "docs",
+            ]
+            quickstart_result = subprocess.run(
+                quickstart_cmd,
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
+            if quickstart_result.returncode != 0:
+                logger.error("Sphinx quickstart failed: %s", quickstart_result.stderr)
+                return False
+
+        if os.path.exists(update_conf_path):
+            update_conf_result = subprocess.run(
+                [sys.executable, update_conf_path, conf_py_path],
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if update_conf_result.returncode != 0:
+                logger.error("Updating conf.py failed: %s", update_conf_result.stderr)
+                return False
+
+        build_result = subprocess.run(
+            [sys.executable, "-m", "sphinx", "-W", "-b", "html", DOCS_SRC, BUILD_DIR],
+            cwd=temp_dir,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        if build_result.returncode != 0:
+            logger.error("Sphinx build failed: %s", build_result.stderr)
+            return False
+
+        if not os.path.isdir(build_dir):
+            logger.error("Sphinx build did not produce %s.", BUILD_DIR)
+            return False
+
+        published = publish_local_directory_to_github_branch(
+            repo_path,
+            build_dir,
+            GITHUB_PAGES_BRANCH,
+            token,
+            source_branch_for_seed=source_branch,
+        )
+        if not published:
+            logger.error("Publishing built docs to GitHub Pages branch failed.")
+            return False
+
+    request_github_pages_build(repo_path, token)
+    logger.info("Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH)
+    return True
 
 
 def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: dict = None) -> bool:

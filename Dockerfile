@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 
 # Install runtime dependencies with uv
 COPY pyproject.toml .
-RUN python -m pip install uv && uv sync --no-dev
+RUN python -m pip install uv && uv sync --group docs --no-dev
 
 WORKDIR /app
 COPY . /app

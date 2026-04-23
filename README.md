@@ -16,7 +16,7 @@ Auto-Docs is a FastAPI-based service designed to automate the process of analyzi
 
 - **Sphinx Documentation Automation:**
   - Prepares and updates Sphinx configuration for the project.
-  - Integrates with CI/CD pipelines (GitLab, GitHub Actions) for automated documentation builds.
+  - Integrates with GitLab CI/CD and GitHub Pages branch publishing for documentation delivery.
 
 - **Logging and Reporting:**
   - Centralized logging for all operations.
@@ -193,9 +193,10 @@ Analyze a repository and set up documentation.
 
 - **AI Docstring Quality:** Generated docstrings depend on the quality/context of the code and OpenAI's model; manual review is recommended.
 - **Private Repositories:** Requires valid access tokens for private repositories; token permissions must allow cloning and reading.
-- **GitHub Actions Integration:**
-  - Currently, there is **no support for GitHub Actions**. The system does **not** generate, commit, or trigger any workflow files for GitHub repositories.
-  - As a result, **automated Sphinx documentation setup is also missing for GitHub repositories**. Only GitLab CI/CD pipeline creation and Sphinx automation are implemented and supported at this time.
+- **GitHub Publishing Constraints:**
+  - GitHub repositories are configured for **branch-based GitHub Pages publishing** rather than GitHub Actions workflows.
+  - The `/generate` flow prepares docs on the branch you selected so they can be reviewed first.
+  - After review, call `/publish-pages` to build Sphinx HTML from that reviewed branch and publish the generated site into `gh-pages`.
 
 ---
 

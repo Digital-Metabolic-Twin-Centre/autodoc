@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
 
 from config.log_config import get_logger
-from models.repo_request import RepoRequest
+from models.repo_request import PublishPagesRequest, RepoRequest
 from services.doc_services import analyze_repo
-from services.sphinx_services import create_sphinx_setup
+from services.sphinx_services import create_sphinx_setup, publish_github_pages
 
 logger = get_logger(__name__)
 
@@ -77,6 +77,46 @@ async def generate_docs(req: RepoRequest):
     except PermissionError as pe:
         logger.error(f"PermissionError: {pe}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
+    except Exception as e:
+        logger.error(f"Unhandled Exception: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred: " + str(e),
+        )
+
+
+@router.post("/publish-pages")
+async def publish_pages(req: PublishPagesRequest):
+    logger.info(
+        "/publish-pages endpoint called with repo_url=%s, branch=%s",
+        req.repo_url,
+        req.branch,
+    )
+    if not req.repo_url or not req.token or not req.branch:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required parameters: repo_url, token, or branch.",
+        )
+
+    try:
+        published = publish_github_pages(req.repo_url, req.branch, req.token)
+        if not published:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "GitHub Pages publish failed. Make sure the selected branch contains "
+                    "the docs sources created during review, Sphinx build dependencies "
+                    "are installed for the app, and the token can write repository "
+                    "contents and manage GitHub Pages."
+                ),
+            )
+        return {
+            "status": "success",
+            "published_branch": "gh-pages",
+            "source_branch": req.branch,
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(
