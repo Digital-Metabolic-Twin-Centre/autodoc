@@ -26,7 +26,6 @@ Auto-Docs is a FastAPI-based service designed to automate the process of analyzi
 
 ![Project Architecture](data/autodoc_architecture.png)
 
-
 ## Project Structure
 
 ```text
@@ -94,22 +93,22 @@ Auto-Docs is a FastAPI-based service designed to automate the process of analyzi
 ## Quick Start
 
 ### Prerequisites
+
 - Python 3.11+
 - OpenAI API Key
 - (Optional) Docker
-
 
 ### Installation
 
 ```sh
 # Clone the repository
-$ git clone <your-repo-url>
-$ cd auto-docs
+git clone <your-repo-url>
+cd auto-docs
 
 # Create a virtual environment and sync local development dependencies
-$ uv venv
-$ source .venv/bin/activate
-$ uv sync --group dev --no-install-project
+uv venv
+source .venv/bin/activate
+uv sync --group dev --no-install-project
 ```
 
 ### Environment Variables (.env Setup)
@@ -129,7 +128,7 @@ CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 
 ```sh
 # Start the FastAPI server
-$ uv run uvicorn main:app --app-dir src --reload
+uv run uvicorn main:app --app-dir src --reload
 ```
 
 - The API will be available at: http://localhost:8000
@@ -145,14 +144,14 @@ docker-compose up --build
 
 ```sh
 # Run tests
-$ uv run pytest
+uv run pytest
 
 # Run lint checks
-$ uv run ruff check src tests
+uv run ruff check src tests
 
 # Build docs
-$ uv sync --group docs --no-install-project
-$ uv run sphinx-build -W -b html docs/source docs/build/html
+uv sync --group docs --no-install-project
+uv run sphinx-build -W -b html docs/source docs/build/html
 ```
 
 ---
@@ -160,9 +159,11 @@ $ uv run sphinx-build -W -b html docs/source docs/build/html
 ## API Usage
 
 ### `POST /generate`
+
 Analyze a repository and set up documentation.
 
 **Request Body Example:**
+
 ```json
 {
   "provider": "github" | "gitlab",
@@ -173,6 +174,7 @@ Analyze a repository and set up documentation.
 ```
 
 **Response:**
+
 - `status`: "success"
 - `sphinx_setup_created`: true/false
 - `Docstring_analysis`: List of files and blocks with/without docstrings
@@ -180,6 +182,7 @@ Analyze a repository and set up documentation.
 ---
 
 ## Output Files
+
 - `src/files/suggested_docstring.txt`: AI-generated docstrings
 - `src/files/block_analysis.csv`: Analysis report
 - `log/app_<timestamp>.log`: Log files
@@ -205,8 +208,8 @@ Analyze a repository and set up documentation.
 
 ---
 
-
 ## Contributing
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/foo`)
 3. Commit your changes
