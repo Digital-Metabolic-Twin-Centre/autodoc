@@ -193,6 +193,7 @@ def analyze_docstring_in_blocks(
             results["blocks_without_docstring"] += 1
             generated_docstring = generate_docstring_with_openai(clean_code, language)
             if generated_docstring:
+                block_analysis["generated_docstring"] = generated_docstring
                 logger.info("Generated Docstring:")
                 logger.info(format_docstring_for_language(generated_docstring, language))
                 # Save the generated docstring to a suggested docstring file

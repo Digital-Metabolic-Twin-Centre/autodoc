@@ -187,8 +187,10 @@ Successful responses include:
 
 ### `POST /suggest-python-docstrings-pr`
 
-GitHub only. Finds Python functions/classes that are missing docstrings, generates suggested
-docstrings, commits the changes to a suggestion branch, and opens a pull request for review.
+GitHub only. Applies previously generated Python function/class docstring suggestions, commits the
+changes to a suggestion branch, and opens a pull request for review. Run `/generate` first; this
+endpoint uses the structured suggestions created during that analysis instead of making another
+OpenAI request.
 
 ```json
 {

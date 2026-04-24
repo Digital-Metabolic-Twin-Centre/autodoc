@@ -4,15 +4,16 @@ from pathlib import Path
 from services.docstring_pr_services import (
     PatchedPythonFile,
     _run_ruff_on_patched_files,
+    _suggestion_generator,
     patch_python_docstrings,
 )
 
 
-def fake_generator(code: str, language: str) -> str:
+def fake_generator(insertion) -> str:
     return "Generated documentation."
 
 
-def quoted_generator(code: str, language: str) -> str:
+def quoted_generator(insertion) -> str:
     return '"""Retrieve a logger instance with the specified name."""'
 
 
@@ -89,11 +90,35 @@ def test_patch_python_docstrings_wraps_long_generated_lines():
         "index, or None if not found."
     )
 
-    patched = patch_python_docstrings(source, generator=lambda code, language: long_docstring)
+    patched = patch_python_docstrings(source, generator=lambda insertion: long_docstring)
 
     assert all(len(line) <= 100 for line in patched.content.splitlines())
     assert "        not found." in patched.content
     assert '\n    \n    """' in patched.content
+
+
+def test_suggestion_generator_matches_by_name_and_kind():
+    source = textwrap.dedent(
+        """
+        def add(left, right):
+            return left + right
+        """
+    ).lstrip()
+
+    patched = patch_python_docstrings(
+        source,
+        generator=_suggestion_generator(
+            [
+                {
+                    "function_name": "add",
+                    "block_type": "function",
+                    "generated_docstring": "Add two values.",
+                }
+            ]
+        ),
+    )
+
+    assert '    """Add two values."""' in patched.content
 
 
 def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):

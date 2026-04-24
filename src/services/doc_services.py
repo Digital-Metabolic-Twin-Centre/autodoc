@@ -1,3 +1,4 @@
+import json
 import os
 
 import pandas as pd
@@ -53,10 +54,14 @@ def analyze_repo(provider, repo_url, token, branch):
     output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files")
     os.makedirs(output_dir, exist_ok=True)
     suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
+    suggested_json_file = os.path.join(output_dir, "suggested_docstrings.json")
     block_analysis_file = os.path.join(output_dir, "block_analysis.csv")
     if os.path.exists(suggested_file):
         os.remove(suggested_file)
         logger.debug(f"Deleted {suggested_file}")
+    if os.path.exists(suggested_json_file):
+        os.remove(suggested_json_file)
+        logger.debug(f"Deleted {suggested_json_file}")
     if os.path.exists(block_analysis_file):
         os.remove(block_analysis_file)
         logger.debug(f"Deleted {block_analysis_file}")
@@ -157,6 +162,9 @@ def analyze_repo(provider, repo_url, token, branch):
                 generated_docstring = generate_docstring_with_openai(content, language)
 
                 if generated_docstring:
+                    block_analysis["docstring_analysis"][0]["generated_docstring"] = (
+                        generated_docstring
+                    )
                     logger.info("Generated Docstring:")
                     logger.info(format_docstring_for_language(generated_docstring, language))
                     suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
@@ -218,6 +226,36 @@ def analyze_repo(provider, repo_url, token, branch):
     ]
     df = pd.DataFrame(flattened_data, columns=columns)
     df.to_csv(output_path, index=False)
+
+    suggestions = []
+    for block_analysis in block_analysis_list:
+        file_path = block_analysis.get("file_path", "")
+        for analysis in block_analysis.get("docstring_analysis", []):
+            generated_docstring = analysis.get("generated_docstring")
+            if not generated_docstring:
+                continue
+            suggestions.append(
+                {
+                    "file_path": file_path,
+                    "function_name": analysis.get("function_name", ""),
+                    "block_type": analysis.get("block_type", ""),
+                    "line_number": analysis.get("line_number", 0),
+                    "language": analysis.get("language", ""),
+                    "generated_docstring": generated_docstring,
+                }
+            )
+
+    with open(suggested_json_file, "w", encoding="utf-8") as file_handle:
+        json.dump(
+            {
+                "provider": provider.lower(),
+                "repo_path": repo_path,
+                "branch": branch,
+                "suggestions": suggestions,
+            },
+            file_handle,
+            indent=2,
+        )
 
     if not block_analysis_list:
         logger.warning("No files with docstring analysis found.")

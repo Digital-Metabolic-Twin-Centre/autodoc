@@ -1,4 +1,5 @@
 import ast
+import json
 import os
 import subprocess
 import sys
@@ -8,7 +9,6 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Union
 
 from config.log_config import get_logger
-from utils.docstring_generation import generate_docstring_with_openai
 from utils.git_utils import (
     GitHubApiError,
     commit_files_to_github_branch,
@@ -21,7 +21,6 @@ from utils.git_utils import (
 
 logger = get_logger(__name__)
 
-DocstringGenerator = Callable[[str, str], Optional[str]]
 DocstringNode = Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef]
 
 
@@ -77,10 +76,6 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
     return formatted
 
 
-def _generate_docstring(code: str, language: str) -> Optional[str]:
-    return generate_docstring_with_openai(code, language)
-
-
 def _node_insert_index(node: DocstringNode) -> int:
     first_body_node = node.body[0]
     return first_body_node.lineno - 1
@@ -97,7 +92,12 @@ def _find_missing_python_docstrings(content: str) -> List[DocstringInsertion]:
             continue
 
         code = ast.get_source_segment(content, node) or ""
-        kind = "class" if isinstance(node, ast.ClassDef) else "function"
+        if isinstance(node, ast.ClassDef):
+            kind = "class"
+        elif isinstance(node, ast.AsyncFunctionDef):
+            kind = "async_function"
+        else:
+            kind = "function"
         insertions.append(
             DocstringInsertion(
                 name=node.name,
@@ -114,7 +114,7 @@ def _find_missing_python_docstrings(content: str) -> List[DocstringInsertion]:
 
 def patch_python_docstrings(
     content: str,
-    generator: DocstringGenerator = _generate_docstring,
+    generator: Callable[[DocstringInsertion], Optional[str]],
     max_docstrings: int = 50,
 ) -> PatchedPythonFile:
     """
@@ -131,7 +131,7 @@ def patch_python_docstrings(
     for insertion in insertions:
         if remaining <= 0:
             break
-        docstring = generator(insertion.code, "python")
+        docstring = generator(insertion)
         if not docstring:
             logger.warning(
                 "Skipping %s %s because docstring generation failed.",
@@ -148,6 +148,55 @@ def patch_python_docstrings(
         return PatchedPythonFile(content=content, inserted=[])
 
     return PatchedPythonFile(content="\n".join(lines) + "\n", inserted=list(reversed(inserted)))
+
+
+def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[dict]]:
+    suggestions_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "files",
+        "suggested_docstrings.json",
+    )
+    if not os.path.exists(suggestions_path):
+        raise DocstringPullRequestError(
+            "No generated docstring suggestions found. Run /generate for this repo "
+            "and branch first."
+        )
+
+    with open(suggestions_path, "r", encoding="utf-8") as file_handle:
+        payload = json.load(file_handle)
+
+    if payload.get("repo_path") != repo_path or payload.get("branch") != branch:
+        raise DocstringPullRequestError(
+            "Stored suggestions do not match this repo/branch. Run /generate for this "
+            "repo and branch before creating a suggestion PR."
+        )
+
+    suggestions_by_file: Dict[str, List[dict]] = {}
+    for suggestion in payload.get("suggestions", []):
+        if suggestion.get("language") != "python":
+            continue
+        file_path = suggestion.get("file_path", "")
+        if file_path:
+            suggestions_by_file.setdefault(file_path, []).append(suggestion)
+    return suggestions_by_file
+
+
+def _suggestion_generator(suggestions: List[dict]) -> Callable[[DocstringInsertion], Optional[str]]:
+    used_indexes = set()
+
+    def generate(insertion: DocstringInsertion) -> Optional[str]:
+        for index, suggestion in enumerate(suggestions):
+            if index in used_indexes:
+                continue
+            if suggestion.get("function_name") != insertion.name:
+                continue
+            if suggestion.get("block_type") != insertion.kind:
+                continue
+            used_indexes.add(index)
+            return suggestion.get("generated_docstring")
+        return None
+
+    return generate
 
 
 def _build_pull_request_body(base_branch: str, files_changed: Dict[str, PatchedPythonFile]) -> str:
@@ -217,7 +266,6 @@ def create_python_docstring_pull_request(
     suggestion_branch: str,
     title: str,
     max_docstrings: int = 50,
-    generator: DocstringGenerator = _generate_docstring,
 ) -> dict:
     """
     Creates a GitHub pull request with generated Python docstring suggestions.
@@ -228,6 +276,12 @@ def create_python_docstring_pull_request(
         )
 
     repo_path = extract_repo_path(repo_url, "github")
+    suggestions_by_file = _load_generated_suggestions(repo_path, base_branch)
+    if not suggestions_by_file:
+        raise DocstringPullRequestError(
+            "No generated Python docstring suggestions were found. Run /generate first."
+        )
+
     files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
     python_files = [
         item.get("path", "")
@@ -245,9 +299,14 @@ def create_python_docstring_pull_request(
         content = fetch_content_from_github(repo_path, base_branch, file_path, token)
         if not content:
             continue
+        suggestions = suggestions_by_file.get(file_path)
+        if not suggestions:
+            continue
         try:
             patched = patch_python_docstrings(
-                content, generator=generator, max_docstrings=remaining
+                content,
+                generator=_suggestion_generator(suggestions),
+                max_docstrings=remaining,
             )
         except SyntaxError:
             logger.warning("Skipping %s because Python parsing failed.", file_path)
