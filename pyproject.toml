@@ -1,6 +1,6 @@
 [project]
 name = "autodoc"
-version = "0.3.2"
+version = "0.4.0"
 description = "Automated documentation generator for code repositories."
 readme = "README.md"
 requires-python = ">=3.11"
