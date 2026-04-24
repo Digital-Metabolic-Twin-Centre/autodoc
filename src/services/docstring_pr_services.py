@@ -1,6 +1,10 @@
 import ast
+import os
+import subprocess
+import sys
+import tempfile
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 from config.log_config import get_logger
 from utils.docstring_generation import generate_docstring_with_openai
@@ -17,6 +21,7 @@ from utils.git_utils import (
 logger = get_logger(__name__)
 
 DocstringGenerator = Callable[[str, str], Optional[str]]
+DocstringNode = Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef]
 
 
 @dataclass
@@ -57,7 +62,11 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
     return formatted
 
 
-def _node_insert_index(node: ast.AST) -> int:
+def _generate_docstring(code: str, language: str) -> Optional[str]:
+    return generate_docstring_with_openai(code, language)
+
+
+def _node_insert_index(node: DocstringNode) -> int:
     first_body_node = node.body[0]
     return first_body_node.lineno - 1
 
@@ -90,7 +99,7 @@ def _find_missing_python_docstrings(content: str) -> List[DocstringInsertion]:
 
 def patch_python_docstrings(
     content: str,
-    generator: DocstringGenerator = generate_docstring_with_openai,
+    generator: DocstringGenerator = _generate_docstring,
     max_docstrings: int = 50,
 ) -> PatchedPythonFile:
     """
@@ -142,6 +151,49 @@ def _build_pull_request_body(base_branch: str, files_changed: Dict[str, PatchedP
     )
 
 
+def _run_ruff_on_patched_files(files: Dict[str, PatchedPythonFile]) -> Dict[str, PatchedPythonFile]:
+    """
+    Runs ruff formatting/fixes on patched Python files before they are committed.
+    """
+    if not files:
+        return files
+
+    with tempfile.TemporaryDirectory(prefix="autodoc-ruff-") as temp_dir:
+        local_paths = []
+        path_map = {}
+        for file_path, patched in files.items():
+            local_path = os.path.join(temp_dir, file_path)
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            with open(local_path, "w", encoding="utf-8") as file_handle:
+                file_handle.write(patched.content)
+            local_paths.append(local_path)
+            path_map[local_path] = file_path
+
+        for command in (
+            [sys.executable, "-m", "ruff", "format", *local_paths],
+            [sys.executable, "-m", "ruff", "check", "--fix", *local_paths],
+        ):
+            result = subprocess.run(
+                command,
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode != 0:
+                logger.warning("Ruff cleanup failed: %s", result.stderr.strip() or result.stdout)
+                return files
+
+        cleaned_files = {}
+        for local_path, file_path in path_map.items():
+            with open(local_path, "r", encoding="utf-8") as file_handle:
+                cleaned_files[file_path] = PatchedPythonFile(
+                    content=file_handle.read(),
+                    inserted=files[file_path].inserted,
+                )
+        return cleaned_files
+
+
 def create_python_docstring_pull_request(
     provider: str,
     repo_url: str,
@@ -150,7 +202,7 @@ def create_python_docstring_pull_request(
     suggestion_branch: str,
     title: str,
     max_docstrings: int = 50,
-    generator: DocstringGenerator = generate_docstring_with_openai,
+    generator: DocstringGenerator = _generate_docstring,
 ) -> dict:
     """
     Creates a GitHub pull request with generated Python docstring suggestions.
@@ -191,6 +243,8 @@ def create_python_docstring_pull_request(
 
     if not patched_files:
         raise DocstringPullRequestError("No missing Python docstrings were patched.")
+
+    patched_files = _run_ruff_on_patched_files(patched_files)
 
     branch_ready = ensure_github_branch(repo_path, base_branch, suggestion_branch, token)
     if not branch_ready:

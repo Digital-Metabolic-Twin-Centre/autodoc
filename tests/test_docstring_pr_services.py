@@ -1,6 +1,11 @@
 import textwrap
+from pathlib import Path
 
-from services.docstring_pr_services import patch_python_docstrings
+from services.docstring_pr_services import (
+    PatchedPythonFile,
+    _run_ruff_on_patched_files,
+    patch_python_docstrings,
+)
 
 
 def fake_generator(code: str, language: str) -> str:
@@ -69,3 +74,25 @@ def test_patch_python_docstrings_strips_generated_triple_quote_wrapper():
 
     assert '    """Retrieve a logger instance with the specified name."""' in patched.content
     assert '    """\n    """Retrieve' not in patched.content
+
+
+def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
+    def fake_run(command, cwd, capture_output, text, timeout):
+        local_path = Path(command[-1])
+        if "format" in command:
+            local_path.write_text("def run():\n    return True\n", encoding="utf-8")
+
+        class Result:
+            returncode = 0
+            stderr = ""
+            stdout = ""
+
+        return Result()
+
+    monkeypatch.setattr("services.docstring_pr_services.subprocess.run", fake_run)
+
+    cleaned = _run_ruff_on_patched_files(
+        {"src/example.py": PatchedPythonFile(content="def run():\n return True\n", inserted=[])}
+    )
+
+    assert cleaned["src/example.py"].content == "def run():\n    return True\n"
