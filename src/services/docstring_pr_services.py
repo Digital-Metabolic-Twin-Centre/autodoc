@@ -40,7 +40,11 @@ class DocstringPullRequestError(RuntimeError):
 
 
 def _format_python_docstring(docstring: str, indent: str) -> List[str]:
-    cleaned_lines = [line.rstrip() for line in docstring.strip().splitlines()]
+    cleaned = docstring.strip()
+    if cleaned.startswith(('"""', "'''")) and cleaned.endswith(('"""', "'''")):
+        cleaned = cleaned[3:-3].strip()
+
+    cleaned_lines = [line.rstrip() for line in cleaned.splitlines()]
     if not cleaned_lines:
         cleaned_lines = ["TODO: Add documentation."]
 

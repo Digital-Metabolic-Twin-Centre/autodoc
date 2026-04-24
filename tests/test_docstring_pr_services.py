@@ -7,6 +7,10 @@ def fake_generator(code: str, language: str) -> str:
     return "Generated documentation."
 
 
+def quoted_generator(code: str, language: str) -> str:
+    return '"""Retrieve a logger instance with the specified name."""'
+
+
 def test_patch_python_docstrings_inserts_function_docstring():
     source = textwrap.dedent(
         """
@@ -51,3 +55,17 @@ def test_patch_python_docstrings_inserts_class_and_method_docstrings():
     assert len(patched.inserted) == 2
     assert '    """Generated documentation."""' in patched.content
     assert '        """Generated documentation."""' in patched.content
+
+
+def test_patch_python_docstrings_strips_generated_triple_quote_wrapper():
+    source = textwrap.dedent(
+        """
+        def get_logger(name):
+            return logging.getLogger(name)
+        """
+    ).lstrip()
+
+    patched = patch_python_docstrings(source, generator=quoted_generator)
+
+    assert '    """Retrieve a logger instance with the specified name."""' in patched.content
+    assert '    """\n    """Retrieve' not in patched.content
