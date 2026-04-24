@@ -27,3 +27,6 @@ def test_format_python_docstring_wraps_long_lines():
     )
 
     assert all(len(line) <= 100 for line in formatted.splitlines())
+    assert "        not found." in formatted
+    assert formatted.endswith('\n    """')
+    assert '\n\n    """' in formatted

@@ -57,7 +57,11 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
         if not stripped:
             cleaned_lines.append("")
             continue
-        cleaned_lines.extend(textwrap.wrap(stripped, width=content_width) or [""])
+        leading_spaces = stripped[: len(stripped) - len(stripped.lstrip())]
+        cleaned_lines.extend(
+            textwrap.wrap(stripped, width=content_width, subsequent_indent=leading_spaces)
+            or [""]
+        )
 
     if not cleaned_lines:
         cleaned_lines = ["TODO: Add documentation."]
@@ -67,6 +71,8 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
 
     formatted = [f'{indent}"""']
     formatted.extend(f"{indent}{line}" if line else indent for line in cleaned_lines)
+    if any(line.startswith((" ", "\t")) for line in cleaned_lines):
+        formatted.append(indent)
     formatted.append(f'{indent}"""')
     return formatted
 

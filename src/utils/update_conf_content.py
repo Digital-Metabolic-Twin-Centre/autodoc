@@ -15,15 +15,17 @@ def update_conf(conf_py: str) -> None:
         return
 
     text = conf_path.read_text(encoding="utf-8")
-    # Ensure autoapi.extension is in extensions
+    # Ensure documentation extensions are enabled.
     ext_match = re.search(r"extensions\s*=\s*(\[[^\]]*\])", text)
     if ext_match:
         extensions = ext_match.group(1)
-        if "autoapi.extension" not in extensions:
-            new_ext = _append_extension(extensions, "autoapi.extension")
-            text = text.replace(extensions, new_ext)
+        new_ext = extensions
+        for extension in ("autoapi.extension", "sphinx.ext.napoleon"):
+            if extension not in new_ext:
+                new_ext = _append_extension(new_ext, extension)
+        text = text.replace(extensions, new_ext)
     else:
-        text += "\nextensions = ['autoapi.extension']\n"
+        text += "\nextensions = ['autoapi.extension', 'sphinx.ext.napoleon']\n"
     # Set autoapi_dirs
     if not re.search(r"autoapi_dirs\s*=", text):
         text += "\nautoapi_dirs = ['../../autoapi_include']\n"

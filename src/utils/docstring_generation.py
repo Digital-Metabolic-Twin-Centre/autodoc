@@ -197,7 +197,12 @@ def format_docstring_for_language(docstring: str, language: str) -> str:
             if not stripped:
                 lines.append("")
                 continue
-            lines.extend(textwrap.wrap(stripped, width=96) or [""])
+            leading_spaces = stripped[: len(stripped) - len(stripped.lstrip())]
+            lines.extend(
+                textwrap.wrap(stripped, width=96, subsequent_indent=leading_spaces) or [""]
+            )
+        if any(line.startswith((" ", "\t")) for line in lines):
+            lines.append("")
         indented_lines = ["    " + line if line.strip() else "" for line in lines]
         return f'    """\n{chr(10).join(indented_lines)}\n    """'
 

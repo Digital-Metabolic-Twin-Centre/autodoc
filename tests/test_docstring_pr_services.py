@@ -92,6 +92,8 @@ def test_patch_python_docstrings_wraps_long_generated_lines():
     patched = patch_python_docstrings(source, generator=lambda code, language: long_docstring)
 
     assert all(len(line) <= 100 for line in patched.content.splitlines())
+    assert "        not found." in patched.content
+    assert '\n    \n    """' in patched.content
 
 
 def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
