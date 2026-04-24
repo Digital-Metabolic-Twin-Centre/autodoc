@@ -15,6 +15,14 @@ from utils.docstring_validation import analyze_docstring_in_blocks
 logger = get_logger(__name__)
 
 
+class GitHubApiError(RuntimeError):
+    """Raised when a GitHub API request fails."""
+
+    def __init__(self, message: str, status_code: Optional[int] = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+
 def _github_headers(token: str, accept: str = "application/vnd.github+json") -> Dict[str, str]:
     return {
         "Authorization": f"Bearer {token}",
@@ -1016,5 +1024,15 @@ def create_github_pull_request(
     )
     if resp.status_code not in (200, 201):
         logger.error(f"Failed to create GitHub pull request: {resp.text}")
-        return None
+        if resp.status_code == 403:
+            raise GitHubApiError(
+                "GitHub rejected pull request creation. Check that the token has "
+                "'Pull requests: Read and write' permission for this repository and "
+                "that organization SSO/access is approved.",
+                status_code=resp.status_code,
+            )
+        raise GitHubApiError(
+            f"GitHub pull request creation failed: {resp.text}",
+            status_code=resp.status_code,
+        )
     return resp.json().get("html_url")

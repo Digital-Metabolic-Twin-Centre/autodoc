@@ -1,4 +1,12 @@
-from utils.git_utils import configure_github_pages, extract_repo_path, should_ignore
+import pytest
+
+from utils.git_utils import (
+    GitHubApiError,
+    configure_github_pages,
+    create_github_pull_request,
+    extract_repo_path,
+    should_ignore,
+)
 from utils.update_conf_content import _append_extension
 
 
@@ -71,3 +79,23 @@ def test_append_extension_handles_empty_and_existing_extension_lists():
         _append_extension("['sphinx.ext.autodoc']", "autoapi.extension")
         == "['sphinx.ext.autodoc', 'autoapi.extension']"
     )
+
+
+def test_create_github_pull_request_raises_permission_error(monkeypatch):
+    def fake_post(url, headers, json):
+        return DummyResponse(
+            403,
+            text='{"message":"Resource not accessible by personal access token"}',
+        )
+
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+
+    with pytest.raises(GitHubApiError, match="Pull requests: Read and write"):
+        create_github_pull_request(
+            "example/project",
+            "autodocs/python-docstring-suggestions",
+            "main",
+            "Add suggested Python docstrings",
+            "Body",
+            "secret",
+        )

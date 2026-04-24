@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, Optional
 from config.log_config import get_logger
 from utils.docstring_generation import generate_docstring_with_openai
 from utils.git_utils import (
+    GitHubApiError,
     commit_files_to_github_branch,
     create_github_pull_request,
     ensure_github_branch,
@@ -203,14 +204,17 @@ def create_python_docstring_pull_request(
             "Could not commit docstring suggestions to the suggestion branch."
         )
 
-    pr_url = create_github_pull_request(
-        repo_path,
-        suggestion_branch,
-        base_branch,
-        title,
-        _build_pull_request_body(base_branch, patched_files),
-        token,
-    )
+    try:
+        pr_url = create_github_pull_request(
+            repo_path,
+            suggestion_branch,
+            base_branch,
+            title,
+            _build_pull_request_body(base_branch, patched_files),
+            token,
+        )
+    except GitHubApiError as error:
+        raise DocstringPullRequestError(str(error)) from error
     if not pr_url:
         raise DocstringPullRequestError("Could not create the GitHub pull request.")
 
