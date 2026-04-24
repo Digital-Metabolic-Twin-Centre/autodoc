@@ -18,7 +18,7 @@ router = APIRouter()
 
 def _default_docstring_suggestion_branch() -> str:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M")
-    return f"autodocs/python-docstring-suggestions-{timestamp}"
+    return f"autodocs-docstring-suggestions-{timestamp}"
 
 
 @router.get("/")

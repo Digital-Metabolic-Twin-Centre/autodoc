@@ -135,7 +135,7 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
     )
     monkeypatch.setattr(
         "router.router._default_docstring_suggestion_branch",
-        lambda: "autodocs/python-docstring-suggestions-20260424-1430",
+        lambda: "autodocs-docstring-suggestions-20260424-1430",
     )
 
     response = client.post(
@@ -152,7 +152,7 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
     assert response.json()["status"] == "success"
     assert (
         captured["suggestion_branch"]
-        == "autodocs/python-docstring-suggestions-20260424-1430"
+        == "autodocs-docstring-suggestions-20260424-1430"
     )
 
 

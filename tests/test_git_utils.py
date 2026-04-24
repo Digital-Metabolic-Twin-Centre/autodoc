@@ -93,7 +93,7 @@ def test_create_github_pull_request_raises_permission_error(monkeypatch):
     with pytest.raises(GitHubApiError, match="Pull requests: Read and write"):
         create_github_pull_request(
             "example/project",
-            "autodocs/python-docstring-suggestions",
+            "autodocs-docstring-suggestions",
             "main",
             "Add suggested Python docstrings",
             "Body",
