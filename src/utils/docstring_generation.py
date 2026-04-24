@@ -186,6 +186,8 @@ def format_docstring_for_language(docstring: str, language: str) -> str:
     if not docstring or docstring == "N/A":
         return docstring
 
+    docstring = _strip_docstring_wrapper(docstring)
+
     if language.lower() == "python":
         # Python triple-quote format
         lines = docstring.split("\n")
@@ -206,3 +208,12 @@ def format_docstring_for_language(docstring: str, language: str) -> str:
 
     else:
         return docstring
+
+
+def _strip_docstring_wrapper(docstring: str) -> str:
+    cleaned = docstring.strip()
+    quote_pairs = (('"""', '"""'), ("'''", "'''"), ("/**", "*/"))
+    for opening, closing in quote_pairs:
+        if cleaned.startswith(opening) and cleaned.endswith(closing):
+            return cleaned[len(opening) : -len(closing)].strip()
+    return cleaned
