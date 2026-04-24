@@ -115,3 +115,40 @@ def test_ensure_sphinx_project_name_replaces_placeholder(tmp_path):
     _ensure_sphinx_project_name(str(conf_path), "Example Project")
 
     assert 'project = "Example Project"' in conf_path.read_text(encoding="utf-8")
+
+
+def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
+    monkeypatch.setattr(
+        "router.router.create_python_docstring_pull_request",
+        lambda provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings: {
+            "status": "success",
+            "pull_request_url": "https://github.com/example/project/pull/1",
+        },
+    )
+
+    response = client.post(
+        "/suggest-python-docstrings-pr",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "base_branch": "main",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
+
+def test_suggest_python_docstrings_pr_requires_base_branch():
+    response = client.post(
+        "/suggest-python-docstrings-pr",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "base_branch": "",
+        },
+    )
+
+    assert response.status_code == 400

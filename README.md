@@ -16,6 +16,7 @@ site and publishes the generated HTML to `gh-pages`.
 - Writes analysis results to `src/files/block_analysis.csv`.
 - Writes OpenAI-generated suggestions for missing docstrings to
   `src/files/suggested_docstring.txt`.
+- Can open a GitHub pull request with generated Python docstring suggestions for review.
 - Copies files with at least 75% docstring coverage into `autoapi_include/` in the target
   repository.
 - Adds `update_conf.py` so the target repository can enable `sphinx-autoapi`.
@@ -83,6 +84,10 @@ For `/publish-pages`, also set this permission when GitHub shows it on the token
 
 If the token does not include Pages write access, `/publish-pages` may fail when it tries to
 configure GitHub Pages, even if `/generate` works.
+
+For `/suggest-python-docstrings-pr`, also set:
+
+- **Pull requests:** Read and write
 
 ## Setup
 
@@ -180,6 +185,38 @@ Successful responses include:
 }
 ```
 
+### `POST /suggest-python-docstrings-pr`
+
+GitHub only. Finds Python functions/classes that are missing docstrings, generates suggested
+docstrings, commits the changes to a suggestion branch, and opens a pull request for review.
+
+```json
+{
+  "provider": "github",
+  "repo_url": "owner/repository",
+  "token": "access-token",
+  "base_branch": "main",
+  "suggestion_branch": "autodocs/python-docstring-suggestions",
+  "title": "Add suggested Python docstrings",
+  "max_docstrings": 50
+}
+```
+
+Successful responses include:
+
+```json
+{
+  "status": "success",
+  "provider": "github",
+  "base_branch": "main",
+  "suggestion_branch": "autodocs/python-docstring-suggestions",
+  "pull_request_url": "https://github.com/owner/repository/pull/12",
+  "files_changed": 3,
+  "docstrings_added": 10,
+  "changed_files": ["src/example.py"]
+}
+```
+
 ## Repository Flow
 
 1. Call `/generate` with a repository, token, branch, and provider.
@@ -191,6 +228,8 @@ Successful responses include:
    `CI_TRIGGER_PIPELINE_TOKEN` is set.
 6. For GitHub, review the generated branch changes, then call `/publish-pages` to build the docs
    and publish the HTML to `gh-pages`.
+7. Optionally call `/suggest-python-docstrings-pr` to open a separate GitHub pull request with
+   Python docstring suggestions for missing function/class docstrings.
 
 ## Local Checks
 

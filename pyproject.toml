@@ -42,3 +42,6 @@ select = ["E", "F", "I"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.pyright]
+extraPaths = ["src"]

@@ -1,8 +1,12 @@
 from fastapi import APIRouter, HTTPException, status
 
 from config.log_config import get_logger
-from models.repo_request import PublishPagesRequest, RepoRequest
+from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
 from services.doc_services import analyze_repo
+from services.docstring_pr_services import (
+    DocstringPullRequestError,
+    create_python_docstring_pull_request,
+)
 from services.sphinx_services import PublishPagesError, create_sphinx_setup, publish_github_pages
 
 logger = get_logger(__name__)
@@ -119,6 +123,42 @@ async def publish_pages(req: PublishPagesRequest):
         raise
     except PublishPagesError as pe:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
+    except Exception as e:
+        logger.error(f"Unhandled Exception: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred: " + str(e),
+        )
+
+
+@router.post("/suggest-python-docstrings-pr")
+async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
+    logger.info(
+        "/suggest-python-docstrings-pr endpoint called with provider=%s, repo_url=%s, "
+        "base_branch=%s, suggestion_branch=%s",
+        req.provider,
+        req.repo_url,
+        req.base_branch,
+        req.suggestion_branch,
+    )
+    if not req.repo_url or not req.token or not req.base_branch:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required parameters: repo_url, token, or base_branch.",
+        )
+
+    try:
+        return create_python_docstring_pull_request(
+            req.provider,
+            req.repo_url,
+            req.token,
+            req.base_branch,
+            req.suggestion_branch,
+            req.title,
+            req.max_docstrings,
+        )
+    except DocstringPullRequestError as dpe:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe))
     except Exception as e:
         logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(

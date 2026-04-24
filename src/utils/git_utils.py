@@ -917,3 +917,104 @@ def publish_local_directory_to_github_branch(
         return False
 
     return True
+
+
+def commit_files_to_github_branch(
+    repo_url: str,
+    branch: str,
+    files: Dict[str, str],
+    token: str,
+    commit_message: str,
+) -> bool:
+    """
+    Commits multiple text files to an existing GitHub branch.
+    """
+    if not files:
+        logger.warning("No files provided for GitHub commit.")
+        return False
+
+    ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{branch}"
+    ref_resp = requests.get(ref_url, headers=_github_headers(token))
+    if ref_resp.status_code != 200:
+        logger.error(f"Failed to get target branch ref: {ref_resp.text}")
+        return False
+    latest_commit_sha = ref_resp.json()["object"]["sha"]
+
+    commit_resp = requests.get(
+        f"{GITHUB_API_URL}/repos/{repo_url}/git/commits/{latest_commit_sha}",
+        headers=_github_headers(token),
+    )
+    if commit_resp.status_code != 200:
+        logger.error(f"Failed to get target branch commit: {commit_resp.text}")
+        return False
+    base_tree_sha = commit_resp.json()["tree"]["sha"]
+
+    tree = [
+        {
+            "path": file_path,
+            "mode": "100644",
+            "type": "blob",
+            "content": content,
+        }
+        for file_path, content in files.items()
+    ]
+
+    tree_resp = requests.post(
+        f"{GITHUB_API_URL}/repos/{repo_url}/git/trees",
+        headers=_github_headers(token),
+        json={"base_tree": base_tree_sha, "tree": tree},
+    )
+    if tree_resp.status_code not in (200, 201):
+        logger.error(f"Failed to create suggestion tree: {tree_resp.text}")
+        return False
+
+    new_commit_resp = requests.post(
+        f"{GITHUB_API_URL}/repos/{repo_url}/git/commits",
+        headers=_github_headers(token),
+        json={
+            "message": commit_message,
+            "tree": tree_resp.json()["sha"],
+            "parents": [latest_commit_sha],
+        },
+    )
+    if new_commit_resp.status_code not in (200, 201):
+        logger.error(f"Failed to create suggestion commit: {new_commit_resp.text}")
+        return False
+
+    update_resp = requests.patch(
+        ref_url,
+        headers=_github_headers(token),
+        json={"sha": new_commit_resp.json()["sha"]},
+    )
+    if update_resp.status_code not in (200, 201):
+        logger.error(f"Failed to update suggestion branch ref: {update_resp.text}")
+        return False
+
+    return True
+
+
+def create_github_pull_request(
+    repo_url: str,
+    head_branch: str,
+    base_branch: str,
+    title: str,
+    body: str,
+    token: str,
+) -> Optional[str]:
+    """
+    Opens a GitHub pull request and returns its URL.
+    """
+    resp = requests.post(
+        f"{GITHUB_API_URL}/repos/{repo_url}/pulls",
+        headers=_github_headers(token),
+        json={
+            "title": title,
+            "head": head_branch,
+            "base": base_branch,
+            "body": body,
+        },
+    )
+    if resp.status_code not in (200, 201):
+        logger.error(f"Failed to create GitHub pull request: {resp.text}")
+        return None
+    return resp.json().get("html_url")
