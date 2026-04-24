@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -19,6 +21,6 @@ class DocstringPullRequestRequest(BaseModel):
     repo_url: str
     token: str
     base_branch: str
-    suggestion_branch: str = "autodocs/python-docstring-suggestions"
+    suggestion_branch: Optional[str] = None
     title: str = "Add suggested Python docstrings"
     max_docstrings: int = 50

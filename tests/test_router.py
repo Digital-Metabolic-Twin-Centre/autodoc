@@ -118,12 +118,24 @@ def test_ensure_sphinx_project_name_replaces_placeholder(tmp_path):
 
 
 def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
-    monkeypatch.setattr(
-        "router.router.create_python_docstring_pull_request",
-        lambda provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings: {
+    captured = {}
+
+    def fake_create_pr(
+        provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings
+    ):
+        captured["suggestion_branch"] = suggestion_branch
+        return {
             "status": "success",
             "pull_request_url": "https://github.com/example/project/pull/1",
-        },
+        }
+
+    monkeypatch.setattr(
+        "router.router.create_python_docstring_pull_request",
+        fake_create_pr,
+    )
+    monkeypatch.setattr(
+        "router.router._default_docstring_suggestion_branch",
+        lambda: "autodocs/python-docstring-suggestions-20260424-1430",
     )
 
     response = client.post(
@@ -138,6 +150,42 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["status"] == "success"
+    assert (
+        captured["suggestion_branch"]
+        == "autodocs/python-docstring-suggestions-20260424-1430"
+    )
+
+
+def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatch):
+    captured = {}
+
+    def fake_create_pr(
+        provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings
+    ):
+        captured["suggestion_branch"] = suggestion_branch
+        return {
+            "status": "success",
+            "pull_request_url": "https://github.com/example/project/pull/1",
+        }
+
+    monkeypatch.setattr(
+        "router.router.create_python_docstring_pull_request",
+        fake_create_pr,
+    )
+
+    response = client.post(
+        "/suggest-python-docstrings-pr",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "base_branch": "main",
+            "suggestion_branch": "autodocs/custom-branch",
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["suggestion_branch"] == "autodocs/custom-branch"
 
 
 def test_suggest_python_docstrings_pr_requires_base_branch():

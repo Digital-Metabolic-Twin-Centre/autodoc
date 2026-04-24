@@ -196,11 +196,14 @@ docstrings, commits the changes to a suggestion branch, and opens a pull request
   "repo_url": "owner/repository",
   "token": "access-token",
   "base_branch": "main",
-  "suggestion_branch": "autodocs/python-docstring-suggestions",
+  "suggestion_branch": "autodocs/python-docstring-suggestions-20260424-1430",
   "title": "Add suggested Python docstrings",
   "max_docstrings": 50
 }
 ```
+
+`suggestion_branch` is optional. When omitted, Auto-Docs creates a unique branch name such as
+`autodocs/python-docstring-suggestions-20260424-1430`.
 
 Successful responses include:
 
@@ -209,7 +212,7 @@ Successful responses include:
   "status": "success",
   "provider": "github",
   "base_branch": "main",
-  "suggestion_branch": "autodocs/python-docstring-suggestions",
+  "suggestion_branch": "autodocs/python-docstring-suggestions-20260424-1430",
   "pull_request_url": "https://github.com/owner/repository/pull/12",
   "files_changed": 3,
   "docstrings_added": 10,

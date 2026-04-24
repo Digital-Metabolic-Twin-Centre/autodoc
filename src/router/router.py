@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException, status
 
 from config.log_config import get_logger
@@ -12,6 +14,11 @@ from services.sphinx_services import PublishPagesError, create_sphinx_setup, pub
 logger = get_logger(__name__)
 
 router = APIRouter()
+
+
+def _default_docstring_suggestion_branch() -> str:
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M")
+    return f"autodocs/python-docstring-suggestions-{timestamp}"
 
 
 @router.get("/")
@@ -133,13 +140,14 @@ async def publish_pages(req: PublishPagesRequest):
 
 @router.post("/suggest-python-docstrings-pr")
 async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
+    suggestion_branch = req.suggestion_branch or _default_docstring_suggestion_branch()
     logger.info(
         "/suggest-python-docstrings-pr endpoint called with provider=%s, repo_url=%s, "
         "base_branch=%s, suggestion_branch=%s",
         req.provider,
         req.repo_url,
         req.base_branch,
-        req.suggestion_branch,
+        suggestion_branch,
     )
     if not req.repo_url or not req.token or not req.base_branch:
         raise HTTPException(
@@ -153,7 +161,7 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
             req.repo_url,
             req.token,
             req.base_branch,
-            req.suggestion_branch,
+            suggestion_branch,
             req.title,
             req.max_docstrings,
         )
