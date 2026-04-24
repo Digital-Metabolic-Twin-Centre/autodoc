@@ -76,6 +76,24 @@ def test_patch_python_docstrings_strips_generated_triple_quote_wrapper():
     assert '    """\n    """Retrieve' not in patched.content
 
 
+def test_patch_python_docstrings_wraps_long_generated_lines():
+    source = textwrap.dedent(
+        """
+        def extract():
+            return {}
+        """
+    ).lstrip()
+    long_docstring = (
+        "Returns:\n"
+        "    dict: A dictionary containing the function code block and the ending line "
+        "index, or None if not found."
+    )
+
+    patched = patch_python_docstrings(source, generator=lambda code, language: long_docstring)
+
+    assert all(len(line) <= 100 for line in patched.content.splitlines())
+
+
 def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
     def fake_run(command, cwd, capture_output, text, timeout):
         local_path = Path(command[-1])

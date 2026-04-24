@@ -1,5 +1,6 @@
 import json
 import os
+import textwrap
 import time
 from typing import Optional
 
@@ -190,7 +191,13 @@ def format_docstring_for_language(docstring: str, language: str) -> str:
 
     if language.lower() == "python":
         # Python triple-quote format
-        lines = docstring.split("\n")
+        lines = []
+        for line in docstring.split("\n"):
+            stripped = line.rstrip()
+            if not stripped:
+                lines.append("")
+                continue
+            lines.extend(textwrap.wrap(stripped, width=96) or [""])
         indented_lines = ["    " + line if line.strip() else "" for line in lines]
         return f'    """\n{chr(10).join(indented_lines)}\n    """'
 

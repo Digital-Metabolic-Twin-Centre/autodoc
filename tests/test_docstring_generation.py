@@ -16,3 +16,14 @@ def test_format_python_docstring_keeps_plain_docstring_content():
     formatted = format_docstring_for_language("Create or update a file.", "python")
 
     assert formatted == '    """\n    Create or update a file.\n    """'
+
+
+def test_format_python_docstring_wraps_long_lines():
+    formatted = format_docstring_for_language(
+        "Returns:\n"
+        "    dict: A dictionary containing the function code block and the ending line "
+        "index, or None if not found.",
+        "python",
+    )
+
+    assert all(len(line) <= 100 for line in formatted.splitlines())

@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import textwrap
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Union
 
@@ -49,7 +50,15 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
     if cleaned.startswith(('"""', "'''")) and cleaned.endswith(('"""', "'''")):
         cleaned = cleaned[3:-3].strip()
 
-    cleaned_lines = [line.rstrip() for line in cleaned.splitlines()]
+    content_width = max(40, 100 - len(indent))
+    cleaned_lines = []
+    for line in cleaned.splitlines():
+        stripped = line.rstrip()
+        if not stripped:
+            cleaned_lines.append("")
+            continue
+        cleaned_lines.extend(textwrap.wrap(stripped, width=content_width) or [""])
+
     if not cleaned_lines:
         cleaned_lines = ["TODO: Add documentation."]
 
