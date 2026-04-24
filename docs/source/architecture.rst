@@ -6,7 +6,7 @@ Architecture
    <section class="callout-band">
      <p class="eyebrow">System View</p>
      <p>
-       Auto Docs is structured as a thin API layer over a documentation-analysis pipeline,
+       Auto Doc is structured as a thin API layer over a documentation-analysis pipeline,
        with repository utilities and Sphinx automation providing the integration points.
      </p>
    </section>
@@ -14,7 +14,7 @@ Architecture
 Processing flow
 ---------------
 
-Auto Docs follows a straightforward pipeline:
+Auto Doc follows a straightforward pipeline:
 
 1. Receive repository access details through the API
 2. Read the repository tree from GitHub or GitLab

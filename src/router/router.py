@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 from config.log_config import get_logger
 from models.repo_request import PublishPagesRequest, RepoRequest
 from services.doc_services import analyze_repo
-from services.sphinx_services import create_sphinx_setup, publish_github_pages
+from services.sphinx_services import PublishPagesError, create_sphinx_setup, publish_github_pages
 
 logger = get_logger(__name__)
 
@@ -117,6 +117,8 @@ async def publish_pages(req: PublishPagesRequest):
         }
     except HTTPException:
         raise
+    except PublishPagesError as pe:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
     except Exception as e:
         logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(

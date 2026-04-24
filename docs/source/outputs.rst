@@ -6,7 +6,7 @@ Outputs and Reports
    <section class="callout-band">
      <p class="eyebrow">Artifacts</p>
      <p>
-       Auto Docs writes outputs that support review, debugging, and documentation publishing.
+       Auto Doc writes outputs that support review, debugging, and documentation publishing.
        These files are part of the operational value of the system, not just side effects.
      </p>
    </section>
@@ -14,7 +14,7 @@ Outputs and Reports
 Generated local files
 ---------------------
 
-During analysis, Auto Docs writes outputs into the project workspace.
+During analysis, Auto Doc writes outputs into the project workspace.
 
 Key outputs include:
 

@@ -66,6 +66,24 @@ For GitHub publishing, the token must be able to read repository contents, write
 manage GitHub Pages settings. For GitLab setup, the token must be able to read the repository and
 write files to the selected branch.
 
+### GitHub Token Permissions
+
+For a fine-grained GitHub personal access token, use repository-scoped access and select the target
+repository. The minimum permissions are:
+
+- **Contents:** Read and write
+- **Metadata:** Read-only
+
+Those permissions are enough for `/generate`, which reads source files and commits generated docs
+setup files back to the selected branch.
+
+For `/publish-pages`, also set this permission when GitHub shows it on the token form:
+
+- **Pages:** Read and write
+
+If the token does not include Pages write access, `/publish-pages` may fail when it tries to
+configure GitHub Pages, even if `/generate` works.
+
 ## Setup
 
 ```sh

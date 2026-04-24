@@ -1,4 +1,5 @@
-from utils.git_utils import extract_repo_path, should_ignore
+from utils.git_utils import configure_github_pages, extract_repo_path, should_ignore
+from utils.update_conf_content import _append_extension
 
 
 def test_extract_repo_path_strips_protocol_and_git_suffix():
@@ -16,3 +17,57 @@ def test_should_ignore_matches_file_and_directory_patterns():
     assert should_ignore("server.log", patterns) is True
     assert should_ignore("dist", patterns) is True
     assert should_ignore("src", patterns) is False
+
+
+class DummyResponse:
+    def __init__(self, status_code, payload=None, text=""):
+        self.status_code = status_code
+        self._payload = payload or {}
+        self.text = text
+
+    def json(self):
+        return self._payload
+
+
+def test_configure_github_pages_skips_update_when_source_is_already_correct(monkeypatch):
+    calls = []
+
+    def fake_get(url, headers):
+        calls.append(("get", url, headers))
+        return DummyResponse(200, {"source": {"branch": "gh-pages", "path": "/"}})
+
+    def fake_put(url, headers, json):
+        calls.append(("put", url, headers, json))
+        return DummyResponse(403, text="should not update")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.put", fake_put)
+
+    assert configure_github_pages("example/project", "gh-pages", "secret") is True
+    assert [call[0] for call in calls] == ["get"]
+
+
+def test_configure_github_pages_updates_when_source_differs(monkeypatch):
+    calls = []
+
+    def fake_get(url, headers):
+        calls.append(("get", url, headers))
+        return DummyResponse(200, {"source": {"branch": "main", "path": "/"}})
+
+    def fake_put(url, headers, json):
+        calls.append(("put", url, headers, json))
+        return DummyResponse(204)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.put", fake_put)
+
+    assert configure_github_pages("example/project", "gh-pages", "secret") is True
+    assert [call[0] for call in calls] == ["get", "put"]
+
+
+def test_append_extension_handles_empty_and_existing_extension_lists():
+    assert _append_extension("[]", "autoapi.extension") == "['autoapi.extension']"
+    assert (
+        _append_extension("['sphinx.ext.autodoc']", "autoapi.extension")
+        == "['sphinx.ext.autodoc', 'autoapi.extension']"
+    )

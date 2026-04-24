@@ -598,6 +598,11 @@ def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: s
     }
     get_resp = requests.get(api_url, headers=_github_headers(token))
     if get_resp.status_code == 200:
+        pages_config = get_resp.json()
+        current_source = pages_config.get("source") or {}
+        if current_source.get("branch") == pages_branch and current_source.get("path") == path:
+            logger.info("GitHub Pages is already configured for %s%s.", pages_branch, path)
+            return True
         resp = requests.put(api_url, headers=_github_headers(token), json=payload)
         success_codes = (204,)
     elif get_resp.status_code == 404:

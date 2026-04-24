@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../../src"))
 sys.path.insert(0, os.path.abspath("../.."))
 
-project = "Auto Docs"
+project = "Auto Doc"
 author = "Auto Doc Team"
 year = datetime.datetime.now().year
 copyright = f"{year}, Auto Doc Team"
@@ -26,7 +26,7 @@ html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_show_sourcelink = False
 html_show_sphinx = False
-html_title = "Auto Docs"
+html_title = "Auto Doc"
 html_theme_options = {}
 
 autoapi_type = "python"

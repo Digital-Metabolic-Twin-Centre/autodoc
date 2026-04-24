@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -40,6 +41,71 @@ from utils.git_utils import (
 )
 
 logger = get_logger(__name__)
+
+
+class PublishPagesError(RuntimeError):
+    """Raised when a GitHub Pages publish step fails."""
+
+
+def _raise_publish_error(message: str) -> None:
+    logger.error(message)
+    raise PublishPagesError(message)
+
+
+def _project_name_from_repo_path(repo_path: str) -> str:
+    repo_name = repo_path.rstrip("/").split("/")[-1]
+    name = repo_name.replace("-", " ").replace("_", " ").strip()
+    return name.title() if name else PROJECT_NAME
+
+
+def _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None:
+    if not os.path.exists(conf_py_path):
+        return
+
+    with open(conf_py_path, "r", encoding="utf-8") as conf_file:
+        conf_text = conf_file.read()
+
+    if re.search(r"project\s*=\s*['\"]Project_Name['\"]", conf_text):
+        conf_text = re.sub(
+            r"project\s*=\s*['\"]Project_Name['\"]",
+            f'project = "{project_name}"',
+            conf_text,
+            count=1,
+        )
+        with open(conf_py_path, "w", encoding="utf-8") as conf_file:
+            conf_file.write(conf_text)
+
+
+def _ensure_api_index(index_path: str, project_name: str) -> None:
+    default_markers = (
+        "Add your content using ``reStructuredText`` syntax.",
+        "Welcome to Project_Name's documentation!",
+        "Welcome to Project Name's documentation!",
+    )
+    should_write = not os.path.exists(index_path)
+    if not should_write:
+        with open(index_path, "r", encoding="utf-8") as index_file:
+            index_text = index_file.read()
+        should_write = any(marker in index_text for marker in default_markers)
+
+    if not should_write:
+        return
+
+    underline = "=" * len(project_name)
+    content = f"""{project_name}
+{underline}
+
+API Reference
+-------------
+
+.. toctree::
+   :maxdepth: 2
+
+   autoapi/index
+"""
+    os.makedirs(os.path.dirname(index_path), exist_ok=True)
+    with open(index_path, "w", encoding="utf-8") as index_file:
+        index_file.write(content)
 
 
 def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file):
@@ -179,29 +245,39 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
     Publishes reviewed GitHub docs output from a source branch to gh-pages.
     """
     repo_path = extract_repo_path(repo_url, "github")
+    project_name = _project_name_from_repo_path(repo_path)
 
     pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
     if not pages_branch_ready:
-        logger.error("GitHub Pages branch setup failed.")
-        return False
+        _raise_publish_error(
+            "GitHub Pages branch setup failed. Check that the source branch exists and "
+            "the token can read and write repository contents."
+        )
 
     pages_configured = configure_github_pages(
         repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH
     )
     if not pages_configured:
-        logger.error("GitHub Pages configuration failed.")
-        return False
+        _raise_publish_error(
+            "GitHub Pages configuration failed. GitHub usually returns this when the "
+            "token is missing Pages read/write access, the repository does not allow "
+            "Pages configuration by that token, or the token owner lacks admin access "
+            "to the repository."
+        )
 
     with tempfile.TemporaryDirectory(prefix="autodoc-pages-") as temp_dir:
         snapshot_downloaded = download_github_branch_snapshot(
             repo_path, source_branch, token, temp_dir
         )
         if not snapshot_downloaded:
-            logger.error("Downloading reviewed GitHub branch failed.")
-            return False
+            _raise_publish_error(
+                "Downloading the reviewed GitHub branch failed. Check that the branch "
+                f"'{source_branch}' exists and the token can read repository contents."
+            )
 
         conf_py_path = os.path.join(temp_dir, CONF_PY)
         docs_source_dir = os.path.join(temp_dir, DOCS_SRC)
+        index_path = os.path.join(docs_source_dir, "index.rst")
         build_dir = os.path.join(temp_dir, BUILD_DIR)
         update_conf_path = os.path.join(temp_dir, CONFIGURATION_UPDATE_FILE)
 
@@ -214,7 +290,7 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
                 "sphinx.cmd.quickstart",
                 "--quiet",
                 "--project",
-                PROJECT_NAME,
+                project_name,
                 "--author",
                 PROJECT_AUTHOR,
                 "--sep",
@@ -232,7 +308,10 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             )
             if quickstart_result.returncode != 0:
                 logger.error("Sphinx quickstart failed: %s", quickstart_result.stderr)
-                return False
+                _raise_publish_error(
+                    "Sphinx quickstart failed while creating docs/source/conf.py: "
+                    f"{quickstart_result.stderr.strip()}"
+                )
 
         if os.path.exists(update_conf_path):
             update_conf_result = subprocess.run(
@@ -244,7 +323,13 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             )
             if update_conf_result.returncode != 0:
                 logger.error("Updating conf.py failed: %s", update_conf_result.stderr)
-                return False
+                _raise_publish_error(
+                    "Updating Sphinx conf.py failed: "
+                    f"{update_conf_result.stderr.strip()}"
+                )
+
+        _ensure_sphinx_project_name(conf_py_path, project_name)
+        _ensure_api_index(index_path, project_name)
 
         build_result = subprocess.run(
             [sys.executable, "-m", "sphinx", "-W", "-b", "html", DOCS_SRC, BUILD_DIR],
@@ -255,11 +340,10 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         )
         if build_result.returncode != 0:
             logger.error("Sphinx build failed: %s", build_result.stderr)
-            return False
+            _raise_publish_error(f"Sphinx build failed: {build_result.stderr.strip()}")
 
         if not os.path.isdir(build_dir):
-            logger.error("Sphinx build did not produce %s.", BUILD_DIR)
-            return False
+            _raise_publish_error(f"Sphinx build did not produce {BUILD_DIR}.")
 
         published = publish_local_directory_to_github_branch(
             repo_path,
@@ -269,8 +353,10 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             source_branch_for_seed=source_branch,
         )
         if not published:
-            logger.error("Publishing built docs to GitHub Pages branch failed.")
-            return False
+            _raise_publish_error(
+                "Publishing built docs to the GitHub Pages branch failed. Check that "
+                "the token can write repository contents and the gh-pages branch is not protected."
+            )
 
     request_github_pages_build(repo_path, token)
     logger.info("Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH)

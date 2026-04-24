@@ -1,1 +1,1 @@
-"""Auto Docs application package."""
+"""Auto Doc application package."""

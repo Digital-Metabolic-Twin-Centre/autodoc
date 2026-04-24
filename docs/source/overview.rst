@@ -6,16 +6,16 @@ Overview
    <section class="callout-band">
      <p class="eyebrow">Purpose</p>
      <p>
-       Auto Docs exists to make documentation quality visible, actionable, and publishable
+       Auto Doc exists to make documentation quality visible, actionable, and publishable
        without asking engineers to build a documentation pipeline from scratch.
      </p>
    </section>
 
-Auto Docs is a FastAPI-based service for improving documentation quality in software
+Auto Doc is a FastAPI-based service for improving documentation quality in software
 repositories. It inspects code, detects missing docstrings, generates AI-assisted
 documentation suggestions, and prepares Sphinx documentation assets for publishing.
 
-What Auto Docs does
+What Auto Doc does
 -------------------
 
 - Analyzes source files from GitHub and GitLab repositories
@@ -35,7 +35,7 @@ Supported source types
 Why teams use it
 ----------------
 
-Auto Docs is designed for teams that want documentation to be part of delivery, not
+Auto Doc is designed for teams that want documentation to be part of delivery, not
 an afterthought. It helps reduce manual auditing, highlights gaps in code
 documentation, and gives engineers a faster path to a publishable Sphinx site.
 

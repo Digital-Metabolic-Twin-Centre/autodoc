@@ -1,4 +1,4 @@
-Auto Docs
+Auto Doc
 =========
 
 .. raw:: html
@@ -7,7 +7,7 @@ Auto Docs
      <p class="ad-kicker">Automated Documentation Platform</p>
      <h1>Build documentation that keeps pace with your codebase.</h1>
      <p>
-       Auto Docs helps engineering teams analyze repositories, identify missing
+       Auto Doc helps engineering teams analyze repositories, identify missing
        documentation, generate AI-assisted docstring suggestions, and publish
        maintainable Sphinx documentation through a single workflow.
      </p>
