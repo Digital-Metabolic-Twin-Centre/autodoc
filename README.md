@@ -1,220 +1,204 @@
-# Auto-Docs: Automated Documentation Generator
+# Auto-Docs
 
-Auto-Docs is a FastAPI-based service designed to automate the process of analyzing code repositories, detecting missing docstrings, generating high-quality documentation using AI, and setting up Sphinx documentation with CI/CD integration. It supports Python, JavaScript, TypeScript, and MATLAB codebases, making it a versatile tool for modern development teams.
+Auto-Docs is a FastAPI service that analyzes a GitHub or GitLab repository for missing
+docstrings, suggests docstrings with OpenAI, and prepares Sphinx AutoAPI documentation files
+in the target repository.
 
----
+This branch uses branch-based GitHub Pages publishing. The `/generate` endpoint prepares the
+selected source branch for review, and the `/publish-pages` endpoint builds the reviewed Sphinx
+site and publishes the generated HTML to `gh-pages`.
 
-## Key Features
+## What It Does
 
-- **Repository Analysis:**
-  - Scans remote repositories (GitHub/GitLab) for supported source files.
-  - Detects missing or incomplete docstrings in code blocks and modules.
+- Reads repository trees from GitHub or GitLab using provider APIs.
+- Scans Python, JavaScript, TypeScript, and MATLAB source files.
+- Detects function, class, and module-level documentation coverage.
+- Writes analysis results to `src/files/block_analysis.csv`.
+- Writes OpenAI-generated suggestions for missing docstrings to
+  `src/files/suggested_docstring.txt`.
+- Copies files with at least 75% docstring coverage into `autoapi_include/` in the target
+  repository.
+- Adds `update_conf.py` so the target repository can enable `sphinx-autoapi`.
+- For GitLab, creates or updates `.gitlab-ci.yml` and optionally triggers a pipeline.
+- For GitHub, creates a review guide on the selected branch and can publish built HTML to
+  `gh-pages` through `/publish-pages`.
 
-- **AI-Powered Docstring Generation:**
-  - Uses OpenAI to generate concise, context-aware docstrings for code blocks.
-  - Outputs suggested docstrings and analysis reports.
-
-- **Sphinx Documentation Automation:**
-  - Prepares and updates Sphinx configuration for the project.
-  - Integrates with GitLab CI/CD and GitHub Pages branch publishing for documentation delivery.
-
-- **Logging and Reporting:**
-  - Centralized logging for all operations.
-  - Generates CSV and text reports for docstring analysis and suggestions.
-
----
-
-![Project Architecture](data/autodoc_architecture.png)
-
-## Project Structure
+## Project Layout
 
 ```text
 .
-├── docker-compose.yaml
 ├── Dockerfile
-├── README.md
+├── docker-compose.yaml
+├── docs/
+│   └── source/                 # Sphinx documentation for this service
+├── prepush_check.py            # Local quality gate helper
 ├── pyproject.toml
-├── log/
-│   └── app_<timestamp>.log
 ├── src/
-│   ├── main.py                # FastAPI app entry point
-│   ├── config/
-│   │   ├── config.py          # Sphinx and CI/CD configuration
-│   │   └── log_config.py      # Logging configuration
-│   ├── files/
-│   │   ├── block_analysis.csv # Analysis report
-│   │   └── suggested_docstring.txt # AI-generated docstrings
-│   ├── models/
-│   │   └── repo_request.py    # Request models
-│   ├── router/
-│   │   └── router.py          # API route definitions
-│   ├── services/
-│   │   ├── doc_services.py    # Docstring analysis and generation
-│   │   └── sphinx_services.py # Sphinx setup and automation
-├── tests/
-│   └── ...                    # Automated tests
-│   └── utils/
-│       ├── code_block_extraction.py
-│       ├── docstring_generation.py
-│       ├── docstring_validation.py
-│       ├── generate_yml_content.py
-│       ├── git_utils.py
-│       └── update_conf_content.py
+│   ├── main.py                 # FastAPI application entry point
+│   ├── config/                 # Runtime constants and logging setup
+│   ├── models/                 # Pydantic request models
+│   ├── router/                 # API routes
+│   ├── services/               # Repository analysis and Sphinx publishing flows
+│   └── utils/                  # Git provider, docstring, and generated file helpers
+└── tests/                      # Unit tests
 ```
 
----
+Runtime output directories are created as needed:
 
-## How It Works
+```text
+src/files/
+├── block_analysis.csv
+└── suggested_docstring.txt
 
-1. **User submits a repository URL and access token via the API.**
-2. **The service clones the repository and scans for supported source files.**
-3. **Each file is analyzed for missing or incomplete docstrings.**
-4. **OpenAI is used to generate suggested docstrings for undocumented code blocks.**
-5. **Sphinx configuration and CI/CD pipeline files are generated or updated.**
-6. **Results (suggested docstrings, analysis CSV, logs) are saved in the `files/` and `log/` directories.**
+log/
+└── app_<timestamp>.log
+```
 
----
-
-## Main Services & Modules
-
-- **Docstring Analysis & Generation:**
-  - `src/services/doc_services.py`, `src/utils/docstring_generation.py`, `src/utils/docstring_validation.py`
-- **Sphinx Documentation Setup:**
-  - `src/services/sphinx_services.py`, `src/utils/update_conf_content.py`
-- **Repository & CI/CD Integration:**
-  - `src/utils/git_utils.py`, `src/utils/generate_yml_content.py`
-- **API Routing:**
-  - `src/router/router.py`
-- **Configuration & Logging:**
-  - `src/config/config.py`, `src/config/log_config.py`
-
----
-
-## Quick Start
-
-### Prerequisites
+## Requirements
 
 - Python 3.11+
-- OpenAI API Key
-- (Optional) Docker
+- `uv`
+- An OpenAI API key
+- A GitHub or GitLab access token for the repository you want to analyze
+- Docker, if you want to run the service in a container
 
-### Installation
+For GitHub publishing, the token must be able to read repository contents, write contents, and
+manage GitHub Pages settings. For GitLab setup, the token must be able to read the repository and
+write files to the selected branch.
+
+## Setup
 
 ```sh
-# Clone the repository
-git clone <your-repo-url>
-cd auto-docs
-
-# Create a virtual environment and sync local development dependencies
 uv venv
 source .venv/bin/activate
 uv sync --group dev --no-install-project
 ```
 
-### Environment Variables (.env Setup)
-
-Create a `.env` file in the project root directory to securely store sensitive configuration values. At minimum, the following variables are required:
+Create a `.env` file in the project root:
 
 ```env
 OPENAI_API_KEY=your-openai-api-key
-# (Optional) For CI/CD integration with GitLab:
+
+# Optional, only needed if Auto-Docs should trigger GitLab pipelines.
 CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
-# (Add any other required environment variables here)
 ```
 
-**Note:** Never commit your `.env` file to version control. The application will automatically load these variables at startup.
-
-### Running the Service
+## Run Locally
 
 ```sh
-# Start the FastAPI server
 uv run uvicorn main:app --app-dir src --reload
 ```
 
-- The API will be available at: http://localhost:8000
-- Interactive docs: http://localhost:8000/docs
+The service runs at `http://localhost:8000`.
+Interactive API docs are available at `http://localhost:8000/docs`.
 
-### Using Docker
-
-```sh
-docker-compose up --build
-```
-
-### Local Checks
+You can also run it directly:
 
 ```sh
-# Run tests
-uv run pytest
-
-# Run lint checks
-uv run ruff check src tests
-
-# Build docs
-uv sync --group docs --no-install-project
-uv run sphinx-build -W -b html docs/source docs/build/html
+uv run python src/main.py
 ```
 
----
+## Run With Docker
 
-## API Usage
+```sh
+docker compose up --build
+```
+
+The compose file exposes port `8000` and mounts local `files/` and `log/` directories into the
+container paths used by the app.
+
+## API
+
+### `GET /`
+
+Returns a simple welcome message.
 
 ### `POST /generate`
 
-Analyze a repository and set up documentation.
-
-**Request Body Example:**
+Analyzes a repository branch and prepares Sphinx documentation support in that same branch.
 
 ```json
 {
-  "provider": "github" | "gitlab",
-  "repo_url": "<user/repo or group/project>",
-  "token": "<access token>",
-  "branch": "<branch name>"
+  "provider": "github",
+  "repo_url": "owner/repository",
+  "token": "access-token",
+  "branch": "docs-review"
 }
 ```
 
-**Response:**
+`provider` must be `github` or `gitlab`. `repo_url` can be a provider URL such as
+`https://github.com/owner/repository` or a repository path such as `owner/repository`.
 
-- `status`: "success"
-- `sphinx_setup_created`: true/false
-- `Docstring_analysis`: List of files and blocks with/without docstrings
+Successful responses include:
 
----
+```json
+{
+  "status": "success",
+  "sphinx_setup_created": true,
+  "Docstring_analysis": []
+}
+```
 
-## Output Files
+### `POST /publish-pages`
 
-- `src/files/suggested_docstring.txt`: AI-generated docstrings
-- `src/files/block_analysis.csv`: Analysis report
-- `log/app_<timestamp>.log`: Log files
+GitHub only. Builds Sphinx HTML from a reviewed source branch, publishes the generated static site
+to `gh-pages`, configures branch-based GitHub Pages, and requests a Pages rebuild.
 
----
+```json
+{
+  "repo_url": "owner/repository",
+  "token": "access-token",
+  "branch": "docs-review"
+}
+```
 
-## Limitations
+Successful responses include:
 
-- **AI Docstring Quality:** Generated docstrings depend on the quality/context of the code and OpenAI's model; manual review is recommended.
-- **Private Repositories:** Requires valid access tokens for private repositories; token permissions must allow cloning and reading.
-- **GitHub Publishing Constraints:**
-  - GitHub repositories are configured for **branch-based GitHub Pages publishing** rather than GitHub Actions workflows.
-  - The `/generate` flow prepares docs on the branch you selected so they can be reviewed first.
-  - After review, call `/publish-pages` to build Sphinx HTML from that reviewed branch and publish the generated site into `gh-pages`.
+```json
+{
+  "status": "success",
+  "published_branch": "gh-pages",
+  "source_branch": "docs-review"
+}
+```
 
----
+## Repository Flow
 
-## Improvements
+1. Call `/generate` with a repository, token, branch, and provider.
+2. Auto-Docs scans supported files and writes local analysis output.
+3. Files with at least 75% docstring coverage are copied into `autoapi_include/` in the target
+   repository branch.
+4. Auto-Docs commits `update_conf.py` to the target branch.
+5. For GitLab, Auto-Docs commits `.gitlab-ci.yml` and tries to trigger a pipeline when
+   `CI_TRIGGER_PIPELINE_TOKEN` is set.
+6. For GitHub, review the generated branch changes, then call `/publish-pages` to build the docs
+   and publish the HTML to `gh-pages`.
 
-- **Web UI Dashboard:** Build a frontend for easier project management, visualization, and configuration.
-- **Enhanced Sphinx Integration:** Support for custom Sphinx themes, plugins, and advanced configuration options.
-- **Parallel Processing:** Optimize for faster analysis of large repositories using concurrency.
-- **Pluggable AI Models:** Allow users to select or bring their own LLMs for docstring generation from Web UI.
+## Local Checks
 
----
+```sh
+uv run ruff check src tests
+uv run pytest
+uv run sphinx-build -W -b html docs/source docs/build/html
+```
 
-## Contributing
+Or run the combined helper:
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/foo`)
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
+```sh
+python3 prepush_check.py
+```
 
----
+Include the Docker image build check with:
+
+```sh
+python3 prepush_check.py --docker
+```
+
+## Notes
+
+- Generated docstrings should be reviewed before being applied to source code.
+- Unsupported files are skipped during analysis.
+- Empty repositories, inaccessible branches, or tokens without enough permissions cause the API to
+  return an error.
+- The current GitHub flow does not create a GitHub Actions workflow. It publishes by building
+  reviewed docs server-side and committing static HTML to `gh-pages`.
