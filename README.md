@@ -1,6 +1,6 @@
-# Auto-Docs
+# Auto-Doc
 
-Auto-Docs is a FastAPI service that analyzes a GitHub or GitLab repository for missing
+Auto-Doc is a FastAPI service that analyzes a GitHub or GitLab repository for missing
 docstrings, suggests docstrings with OpenAI, and prepares Sphinx AutoAPI documentation files
 in the target repository.
 
@@ -102,7 +102,7 @@ Create a `.env` file in the project root:
 ```env
 OPENAI_API_KEY=your-openai-api-key
 
-# Optional, only needed if Auto-Docs should trigger GitLab pipelines.
+# Optional, only needed if Auto-Doc should trigger GitLab pipelines.
 CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 ```
 
@@ -204,7 +204,7 @@ OpenAI request.
 }
 ```
 
-`suggestion_branch` is optional. When omitted, Auto-Docs creates a unique branch name such as
+`suggestion_branch` is optional. When omitted, Auto-Doc creates a unique branch name such as
 `autodocs-docstring-suggestions-20260424-1430`.
 
 Successful responses include:
@@ -225,11 +225,11 @@ Successful responses include:
 ## Repository Flow
 
 1. Call `/generate` with a repository, token, branch, and provider.
-2. Auto-Docs scans supported files and writes local analysis output.
+2. Auto-Doc scans supported files and writes local analysis output.
 3. Files with at least 75% docstring coverage are copied into `autoapi_include/` in the target
    repository branch.
-4. Auto-Docs commits `update_conf.py` to the target branch.
-5. For GitLab, Auto-Docs commits `.gitlab-ci.yml` and tries to trigger a pipeline when
+4. Auto-Doc commits `update_conf.py` to the target branch.
+5. For GitLab, Auto-Doc commits `.gitlab-ci.yml` and tries to trigger a pipeline when
    `CI_TRIGGER_PIPELINE_TOKEN` is set.
 6. For GitHub, review the generated branch changes, then call `/publish-pages` to build the docs
    and publish the HTML to `gh-pages`.
