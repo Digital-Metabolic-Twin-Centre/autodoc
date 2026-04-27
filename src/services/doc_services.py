@@ -22,8 +22,33 @@ from utils.git_utils import (
 
 logger = get_logger(__name__)
 
+__all__ = [
+    "analyze_repo",
+    "_normalize_target_folders",
+    "_file_matches_target_folders",
+]
 
-def analyze_repo(provider, repo_url, token, branch):
+
+def _normalize_target_folders(target_folders):
+    normalized_folders = []
+    for folder in target_folders or []:
+        normalized = str(folder).strip().strip("/")
+        if normalized:
+            normalized_folders.append(normalized)
+    return normalized_folders
+
+
+def _file_matches_target_folders(file_path, target_folders):
+    if not target_folders:
+        return True
+    normalized_path = file_path.strip("/")
+    return any(
+        normalized_path == target_folder or normalized_path.startswith(f"{target_folder}/")
+        for target_folder in target_folders
+    )
+
+
+def analyze_repo(provider, repo_url, token, branch, target_folders=None):
     """
     Analyze a repository for Python files missing docstring.
 
@@ -37,6 +62,7 @@ def analyze_repo(provider, repo_url, token, branch):
         repo_url (str): The URL of the repository.
         token (str): The authentication token for accessing the repository.
         branch (str): The branch name to analyze.
+        target_folders (list[str] | None): Optional repository folders to limit analysis to.
 
     Returns:
         tuple:
@@ -44,7 +70,10 @@ def analyze_repo(provider, repo_url, token, branch):
             - file_present_docstring (list): List of dicts for files/items with docstring.
     """
     block_analysis_list = []
+    normalized_target_folders = _normalize_target_folders(target_folders)
     logger.info(f"Analyzing repo: provider={provider}, url={repo_url}, branch={branch}")
+    if normalized_target_folders:
+        logger.info("Limiting analysis to target folders: %s", normalized_target_folders)
 
     # Extract repo path from URL
     repo_path = extract_repo_path(repo_url, provider)
@@ -99,6 +128,12 @@ def analyze_repo(provider, repo_url, token, branch):
             )
             continue
         file_path = file.get("path", "")
+        if not _file_matches_target_folders(file_path, normalized_target_folders):
+            logger.debug(
+                "Skipping %s because it is outside the requested target folders.",
+                file_path,
+            )
+            continue
 
         # fetch content based on provider
         if provider.lower() == "github":

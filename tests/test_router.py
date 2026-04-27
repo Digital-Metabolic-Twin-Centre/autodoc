@@ -21,7 +21,7 @@ def test_root_endpoint_returns_welcome_message():
 def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
     monkeypatch.setattr(
         "router.router.analyze_repo",
-        lambda provider, repo_url, token, branch: (
+        lambda provider, repo_url, token, branch, target_folders: (
             "analysis.csv",
             [{"file_name": "a.py"}],
         ),
@@ -48,7 +48,7 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
 def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch):
     monkeypatch.setattr(
         "router.router.analyze_repo",
-        lambda provider, repo_url, token, branch: ("analysis.csv", []),
+        lambda provider, repo_url, token, branch, target_folders: ("analysis.csv", []),
     )
 
     response = client.post(

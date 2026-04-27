@@ -44,7 +44,7 @@ async def generate_docs(req: RepoRequest):
     try:
         # 1. ANALYZE REPO
         docstring_analysis_file, docstring_analysis = analyze_repo(
-            req.provider, req.repo_url, req.token, req.branch
+            req.provider, req.repo_url, req.token, req.branch, req.target_folders
         )
         logger.info("Docstring analysis completed successfully.")
         print(docstring_analysis_file)

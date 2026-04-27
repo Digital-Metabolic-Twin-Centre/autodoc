@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class RepoRequest(BaseModel):
@@ -8,6 +8,7 @@ class RepoRequest(BaseModel):
     repo_url: str
     token: str
     branch: str
+    target_folders: list[str] = Field(default_factory=list)
 
 
 class PublishPagesRequest(BaseModel):

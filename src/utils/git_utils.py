@@ -278,11 +278,11 @@ def validate_docstring(
         content = None
     if content is None or content == "":
         logger.warning(f"Empty file {file_name}. Cannot validate docstring.")
-        return False, None, None
+        return False, [], []
     language = tech_stack.lower()
     if language not in {"python", "javascript", "typescript", "matlab"}:
         logger.warning("Unknown technology stack. Cannot validate docstring.")
-        return False, None, None
+        return False, [], []
 
     extractor = GenericCodeBlockExtractor(content, file_name)
     code_blocks = extractor.code_block_extractor()
