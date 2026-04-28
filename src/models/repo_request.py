@@ -9,6 +9,7 @@ class RepoRequest(BaseModel):
     token: str
     branch: str
     target_folders: list[str] = Field(default_factory=list)
+    model: Optional[str] = None
 
 
 class PublishPagesRequest(BaseModel):

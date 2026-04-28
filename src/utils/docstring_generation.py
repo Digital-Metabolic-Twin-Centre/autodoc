@@ -13,6 +13,8 @@ from config.log_config import get_logger
 logger = get_logger(__name__)
 load_dotenv()
 
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+
 
 def configure_openai(api_key: str = None):
     """
@@ -91,7 +93,10 @@ Generate only the JSON response without any additional text or markdown formatti
 
 
 def generate_docstring_with_openai(
-    code: str, language: str = "python", api_key: str = None, model: str = "gpt-4o-mini"
+    code: str,
+    language: str = "python",
+    api_key: str = None,
+    model: str = DEFAULT_OPENAI_MODEL,
 ) -> Optional[str]:
     """
     Generate a concise docstring for the given code using OpenAI ChatGPT.

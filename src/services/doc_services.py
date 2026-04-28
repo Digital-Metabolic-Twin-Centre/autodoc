@@ -14,6 +14,7 @@ from utils.docstring_validation import (
     analyze_docstring_in_module,
 )
 from utils.git_utils import (
+    RepositoryAccessError,
     extract_repo_path,
     fetch_content_from_github,
     fetch_content_from_gitlab,
@@ -24,10 +25,19 @@ from utils.output_paths import build_repo_output_dir, build_repo_output_file
 logger = get_logger(__name__)
 
 __all__ = [
+    "RepoAnalysisError",
     "analyze_repo",
     "_normalize_target_folders",
     "_file_matches_target_folders",
 ]
+
+
+class RepoAnalysisError(RuntimeError):
+    """Raised when repository analysis cannot proceed or yields no usable files."""
+
+    def __init__(self, message: str, status_code: int = 422):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def _normalize_target_folders(target_folders):
@@ -49,9 +59,9 @@ def _file_matches_target_folders(file_path, target_folders):
     )
 
 
-def analyze_repo(provider, repo_url, token, branch, target_folders=None):
+def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=None):
     """
-    Analyze a repository for Python files missing docstring.
+    Analyze a repository for source files missing docstring.
 
     Description:
         This function fetches the repository tree, detects the tech stack, and checks each file
@@ -64,6 +74,7 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
         token (str): The authentication token for accessing the repository.
         branch (str): The branch name to analyze.
         target_folders (list[str] | None): Optional repository folders to limit analysis to.
+        model (str | None): Optional OpenAI model override for generated docstrings.
 
     Returns:
         tuple:
@@ -72,6 +83,9 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
     """
     block_analysis_list = []
     normalized_target_folders = _normalize_target_folders(target_folders)
+    supported_files_found = 0
+    supported_files_in_scope = 0
+    unreadable_supported_files = 0
     logger.info(f"Analyzing repo: provider={provider}, url={repo_url}, branch={branch}")
     if normalized_target_folders:
         logger.info("Limiting analysis to target folders: %s", normalized_target_folders)
@@ -99,6 +113,9 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
     try:
         file_list = fetch_repo_tree(repo_path, token, branch=branch, provider=provider.lower())
         logger.info(f"Fetched repo tree, {len(file_list)} files found.")
+    except RepositoryAccessError as exc:
+        logger.error("Repository access failed: %s", exc)
+        raise RepoAnalysisError(str(exc), status_code=exc.status_code or 404) from exc
     except Exception as e:
         logger.error(f"Error fetching repo tree: {e}")
         raise
@@ -127,6 +144,7 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
                 f"File {file_name} is not supported for docstring validation. Skipping..."
             )
             continue
+        supported_files_found += 1
         file_path = file.get("path", "")
         if not _file_matches_target_folders(file_path, normalized_target_folders):
             logger.debug(
@@ -134,6 +152,7 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
                 file_path,
             )
             continue
+        supported_files_in_scope += 1
 
         # fetch content based on provider
         if provider.lower() == "github":
@@ -144,6 +163,7 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
             content = ""
         if content is None or content == "":
             logger.warning(f"Empty file {file_name}. Cannot validate docstring.")
+            unreadable_supported_files += 1
             continue
 
         # Create a code blocks in the file to analyze
@@ -194,7 +214,11 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
                         }
                     ],
                 }
-                generated_docstring = generate_docstring_with_openai(content, language)
+                generated_docstring = generate_docstring_with_openai(
+                    content,
+                    language,
+                    model=model,
+                )
 
                 if generated_docstring:
                     block_analysis["docstring_analysis"][0]["generated_docstring"] = (
@@ -225,6 +249,7 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
             file_path=file_path,
             language=language,
             suggested_file=suggested_file,
+            model=model,
         )
         block_analysis_list.append(block_analysis)
 
@@ -298,4 +323,28 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
 
     if not block_analysis_list:
         logger.warning("No files with docstring analysis found.")
+        if supported_files_found == 0:
+            raise RepoAnalysisError(
+                "Repository was reachable, but no supported source files were found. "
+                "Auto-Doc currently analyzes .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
+                status_code=404,
+            )
+        if normalized_target_folders and supported_files_in_scope == 0:
+            raise RepoAnalysisError(
+                "Repository was reachable, but none of the supported source files matched "
+                f"target_folders={normalized_target_folders}.",
+                status_code=404,
+            )
+        if supported_files_in_scope > 0 and unreadable_supported_files == supported_files_in_scope:
+            raise RepoAnalysisError(
+                "Repository tree was found, but Auto-Doc could not read any matching source file "
+                f"contents on branch '{branch}'. Check that the branch exists and that the token "
+                "can read file contents for this repository or fork.",
+                status_code=403,
+            )
+        raise RepoAnalysisError(
+            "Repository was reachable, but Auto-Doc could not extract any analyzable code blocks "
+            f"from the supported files on branch '{branch}'.",
+            status_code=422,
+        )
     return output_path, block_analysis_list

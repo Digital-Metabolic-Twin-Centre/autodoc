@@ -146,12 +146,14 @@ Analyzes a repository branch and prepares Sphinx documentation support in that s
   "provider": "github",
   "repo_url": "owner/repository",
   "token": "access-token",
-  "branch": "docs-review"
+  "branch": "docs-review",
+  "model": "gpt-4o-mini"
 }
 ```
 
 `provider` must be `github` or `gitlab`. `repo_url` can be a provider URL such as
 `https://github.com/owner/repository` or a repository path such as `owner/repository`.
+`model` is optional; when omitted, Auto-Doc defaults to `gpt-4o-mini`.
 
 Successful responses include:
 

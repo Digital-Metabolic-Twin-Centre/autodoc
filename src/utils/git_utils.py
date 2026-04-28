@@ -23,12 +23,61 @@ class GitHubApiError(RuntimeError):
         self.status_code = status_code
 
 
+class RepositoryAccessError(RuntimeError):
+    """Raised when a repository or branch cannot be accessed for analysis."""
+
+    def __init__(self, message: str, status_code: Optional[int] = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+
 def _github_headers(token: str, accept: str = "application/vnd.github+json") -> Dict[str, str]:
     return {
         "Authorization": f"Bearer {token}",
         "Accept": accept,
         "X-GitHub-Api-Version": "2026-03-10",
     }
+
+
+def _parse_response_message(response) -> str:
+    try:
+        payload = response.json()
+    except Exception:
+        payload = None
+    if isinstance(payload, dict) and payload.get("message"):
+        return str(payload["message"])
+    return response.text.strip() or "Unknown error"
+
+
+def _raise_github_repository_access_error(
+    response, repo_path: str, branch: str, path: str = ""
+) -> None:
+    message = _parse_response_message(response)
+    branch_label = branch or "<unspecified>"
+    if response.status_code == 404:
+        if "No commit found for the ref" in message:
+            raise RepositoryAccessError(
+                f"Branch '{branch_label}' was not found in GitHub repository '{repo_path}'.",
+                status_code=404,
+            )
+        target = f"/{path}" if path else ""
+        raise RepositoryAccessError(
+            "GitHub repository "
+            f"'{repo_path}'{target} was not found or is not accessible with this token.",
+            status_code=404,
+        )
+    if response.status_code in {401, 403}:
+        raise RepositoryAccessError(
+            "GitHub rejected access to repository "
+            f"'{repo_path}' on branch '{branch_label}'. Check that the token can read "
+            "repository contents for this repo or fork.",
+            status_code=response.status_code,
+        )
+    raise RepositoryAccessError(
+        "GitHub repository access failed for "
+        f"'{repo_path}' on branch '{branch_label}': {message}",
+        status_code=response.status_code,
+    )
 
 
 def extract_repo_path(repo_url: str, provider: str = "github") -> str:
@@ -208,10 +257,13 @@ def fetch_repo_tree(
             params = {"ref": branch}
             try:
                 response = requests.get(url, headers=headers, params=params, timeout=10)
-                response.raise_for_status()
+                if response.status_code >= 400:
+                    _raise_github_repository_access_error(response, repo_path, branch)
                 items = response.json()
                 if isinstance(items, dict):
                     items = [items]
+            except RepositoryAccessError:
+                raise
             except Exception as e:
                 logger.error(f"GitHub tree fetch error: {e}")
                 return []
@@ -238,6 +290,8 @@ def fetch_repo_tree(
 
     try:
         repository_files = _fetch_tree()
+    except RepositoryAccessError:
+        raise
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
     return repository_files

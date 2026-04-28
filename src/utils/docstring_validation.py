@@ -19,6 +19,7 @@ def analyze_docstring_in_blocks(
     file_path: str = "unknown",
     language: str = None,
     suggested_file: str | None = None,
+    model: str | None = None,
 ) -> dict:
     """
     Analyzes code blocks to find docstring and identify missing ones.
@@ -193,7 +194,11 @@ def analyze_docstring_in_blocks(
             results["blocks_with_docstring"] += 1
         else:
             results["blocks_without_docstring"] += 1
-            generated_docstring = generate_docstring_with_openai(clean_code, language)
+            generated_docstring = generate_docstring_with_openai(
+                clean_code,
+                language,
+                model=model,
+            )
             if generated_docstring:
                 block_analysis["generated_docstring"] = generated_docstring
                 logger.info("Generated Docstring:")

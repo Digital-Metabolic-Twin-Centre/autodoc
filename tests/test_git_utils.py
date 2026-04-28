@@ -2,9 +2,11 @@ import pytest
 
 from utils.git_utils import (
     GitHubApiError,
+    RepositoryAccessError,
     configure_github_pages,
     create_github_pull_request,
     extract_repo_path,
+    fetch_repo_tree,
     should_ignore,
 )
 from utils.update_conf_content import _append_extension
@@ -35,6 +37,26 @@ class DummyResponse:
 
     def json(self):
         return self._payload
+
+
+def test_fetch_repo_tree_reports_missing_branch(monkeypatch):
+    def fake_get(url, headers, params, timeout):
+        return DummyResponse(404, {"message": "No commit found for the ref missing-branch"})
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    with pytest.raises(RepositoryAccessError, match="Branch 'missing-branch' was not found"):
+        fetch_repo_tree("example/project", "secret", branch="missing-branch", provider="github")
+
+
+def test_fetch_repo_tree_reports_inaccessible_repo(monkeypatch):
+    def fake_get(url, headers, params, timeout):
+        return DummyResponse(404, {"message": "Not Found"})
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    with pytest.raises(RepositoryAccessError, match="was not found or is not accessible"):
+        fetch_repo_tree("example/project", "secret", branch="main", provider="github")
 
 
 def test_configure_github_pages_skips_update_when_source_is_already_correct(monkeypatch):

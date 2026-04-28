@@ -4,7 +4,8 @@ from fastapi import APIRouter, HTTPException, status
 
 from config.log_config import get_logger
 from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
-from services.doc_services import analyze_repo
+from services.doc_services import RepoAnalysisError, analyze_repo
+from utils.docstring_generation import DEFAULT_OPENAI_MODEL
 from services.docstring_pr_services import (
     DocstringPullRequestError,
     create_python_docstring_pull_request,
@@ -30,10 +31,11 @@ async def root():
 @router.post("/generate")
 async def generate_docs(req: RepoRequest):
     logger.info(
-        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s",
+        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s",
         req.provider,
         req.repo_url,
         req.branch,
+        req.model or DEFAULT_OPENAI_MODEL,
     )
     if not req.repo_url or not req.token or not req.branch or not req.provider:
         logger.warning("Missing required parameters in request.")
@@ -44,21 +46,15 @@ async def generate_docs(req: RepoRequest):
     try:
         # 1. ANALYZE REPO
         docstring_analysis_file, docstring_analysis = analyze_repo(
-            req.provider, req.repo_url, req.token, req.branch, req.target_folders
+            req.provider,
+            req.repo_url,
+            req.token,
+            req.branch,
+            req.target_folders,
+            req.model or DEFAULT_OPENAI_MODEL,
         )
         logger.info("Docstring analysis completed successfully.")
         print(docstring_analysis_file)
-
-        # Check if analysis found any files
-        if not docstring_analysis:
-            logger.warning("No files were analyzed. Repository may be empty or inaccessible.")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=(
-                    "No files found to analyze. Please check repository URL, "
-                    "token permissions, and branch name."
-                ),
-            )
 
         # 2. CREATE SPHINX SETUP
         sphinx_setup_created = create_sphinx_setup(
@@ -82,6 +78,9 @@ async def generate_docs(req: RepoRequest):
         }
     except HTTPException:
         raise
+    except RepoAnalysisError as rae:
+        logger.error("Repository analysis failed: %s", rae)
+        raise HTTPException(status_code=rae.status_code, detail=str(rae))
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))

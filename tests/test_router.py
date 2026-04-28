@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from main import app
+from services.doc_services import RepoAnalysisError
 from services.sphinx_services import (
     PublishPagesError,
     _ensure_api_index,
@@ -19,10 +20,12 @@ def test_root_endpoint_returns_welcome_message():
 
 
 def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
+    captured = {}
+
     monkeypatch.setattr(
         "router.router.analyze_repo",
-        lambda provider, repo_url, token, branch, target_folders: (
-            "analysis.csv",
+        lambda provider, repo_url, token, branch, target_folders, model: (
+            captured.update({"model": model}) or "analysis.csv",
             [{"file_name": "a.py"}],
         ),
     )
@@ -43,13 +46,17 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["status"] == "success"
+    assert captured["model"] == "gpt-4o-mini"
 
 
 def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch):
-    monkeypatch.setattr(
-        "router.router.analyze_repo",
-        lambda provider, repo_url, token, branch, target_folders: ("analysis.csv", []),
-    )
+    def fail_analysis(provider, repo_url, token, branch, target_folders, model):
+        raise RepoAnalysisError(
+            "Repository was reachable, but no supported source files were found.",
+            status_code=404,
+        )
+
+    monkeypatch.setattr("router.router.analyze_repo", fail_analysis)
 
     response = client.post(
         "/generate",
@@ -62,6 +69,35 @@ def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch)
     )
 
     assert response.status_code == 404
+    assert "no supported source files" in response.json()["detail"].lower()
+
+
+def test_generate_endpoint_uses_provided_model(monkeypatch):
+    captured = {}
+
+    def fake_analyze_repo(provider, repo_url, token, branch, target_folders, model):
+        captured["model"] = model
+        return "analysis.csv", [{"file_name": "a.py"}]
+
+    monkeypatch.setattr("router.router.analyze_repo", fake_analyze_repo)
+    monkeypatch.setattr(
+        "router.router.create_sphinx_setup",
+        lambda provider, repo_url, token, branch, analysis_file: True,
+    )
+
+    response = client.post(
+        "/generate",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "model": "gpt-4.1-mini",
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["model"] == "gpt-4.1-mini"
 
 
 def test_publish_pages_returns_specific_publish_error(monkeypatch):

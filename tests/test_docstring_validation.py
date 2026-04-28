@@ -17,7 +17,7 @@ def test_analyze_docstring_in_module_returns_python_module_docstring():
 def test_analyze_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch):
     monkeypatch.setattr(
         "utils.docstring_validation.generate_docstring_with_openai",
-        lambda code, language: None,
+        lambda code, language, model=None: None,
     )
 
     blocks = [
@@ -60,9 +60,13 @@ def test_analyze_docstring_in_blocks_detects_existing_python_docstrings():
 def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(
     monkeypatch, tmp_path
 ):
+    captured = {}
+
     monkeypatch.setattr(
         "utils.docstring_validation.generate_docstring_with_openai",
-        lambda code, language: "Run the task.",
+        lambda code, language, model=None: (
+            captured.update({"model": model}) or "Run the task."
+        ),
     )
     suggested_file = tmp_path / "logs" / "github" / "owner__repo" / "suggested_docstring.txt"
     suggested_file.parent.mkdir(parents=True, exist_ok=True)
@@ -80,8 +84,10 @@ def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(
         file_path="worker.py",
         language="python",
         suggested_file=str(suggested_file),
+        model="gpt-4.1-mini",
     )
 
     content = suggested_file.read_text(encoding="utf-8")
+    assert captured["model"] == "gpt-4.1-mini"
     assert "File: worker.py, Path: worker.py, Function: run_task, Line: 1" in content
     assert "Run the task." in content
