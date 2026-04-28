@@ -8,6 +8,7 @@ from utils.docstring_generation import (
     format_docstring_for_language,
     generate_docstring_with_openai,
 )
+from utils.output_paths import build_repo_output_file
 
 logger = get_logger(__name__)
 
@@ -17,6 +18,7 @@ def analyze_docstring_in_blocks(
     file_name: str = "unknown",
     file_path: str = "unknown",
     language: str = None,
+    suggested_file: str | None = None,
 ) -> dict:
     """
     Analyzes code blocks to find docstring and identify missing ones.
@@ -196,14 +198,10 @@ def analyze_docstring_in_blocks(
                 block_analysis["generated_docstring"] = generated_docstring
                 logger.info("Generated Docstring:")
                 logger.info(format_docstring_for_language(generated_docstring, language))
-                # Save the generated docstring to a suggested docstring file
-                output_dir = os.path.join(
-                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files"
+                target_suggested_file = suggested_file or build_repo_output_file(
+                    "unknown", "unknown", "suggested_docstring.txt"
                 )
-                os.makedirs(output_dir, exist_ok=True)
-                suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
-                # suggested_file = f"suggested_docstring"
-                with open(suggested_file, "a") as f:
+                with open(target_suggested_file, "a", encoding="utf-8") as f:
                     # Add a column with filename, file path, function name, and line number
                     f.write(
                         "\n# File: "

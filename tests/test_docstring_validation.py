@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from utils.docstring_validation import (
     analyze_docstring_in_blocks,
     analyze_docstring_in_module,
@@ -53,3 +55,33 @@ def test_analyze_docstring_in_blocks_detects_existing_python_docstrings():
 
     assert result["blocks_with_docstring"] == 1
     assert result["docstring_analysis"][0]["docstring_content"] == "Run the task."
+
+
+def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(
+        "utils.docstring_validation.generate_docstring_with_openai",
+        lambda code, language: "Run the task.",
+    )
+    suggested_file = tmp_path / "logs" / "github" / "owner__repo" / "suggested_docstring.txt"
+    suggested_file.parent.mkdir(parents=True, exist_ok=True)
+
+    blocks = [
+        "# --- Code Block starts at line 1 ---\n"
+        "def run_task():\n"
+        "    return True\n"
+        "# --- Code Block ends at line 2 ---"
+    ]
+
+    analyze_docstring_in_blocks(
+        blocks,
+        file_name="worker.py",
+        file_path="worker.py",
+        language="python",
+        suggested_file=str(suggested_file),
+    )
+
+    content = suggested_file.read_text(encoding="utf-8")
+    assert "File: worker.py, Path: worker.py, Function: run_task, Line: 1" in content
+    assert "Run the task." in content

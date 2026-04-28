@@ -18,9 +18,10 @@ During analysis, Auto Doc writes outputs into the project workspace.
 
 Key outputs include:
 
-- ``src/files/block_analysis.csv``: flattened analysis of detected code blocks
-- ``src/files/suggested_docstring.txt``: generated docstring suggestions
-- ``log/app_<timestamp>.log``: runtime logs for the service
+- ``logs/<provider>/<repo>/block_analysis.csv``: flattened analysis of detected code blocks
+- ``logs/<provider>/<repo>/suggested_docstring.txt``: generated docstring suggestions
+- ``logs/<provider>/<repo>/suggested_docstrings.json``: structured suggestions used for PR creation
+- ``logs/app_<timestamp>.log``: runtime logs for the service
 
 What the reports contain
 ------------------------

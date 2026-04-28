@@ -13,9 +13,9 @@ site and publishes the generated HTML to `gh-pages`.
 - Reads repository trees from GitHub or GitLab using provider APIs.
 - Scans Python, JavaScript, TypeScript, and MATLAB source files.
 - Detects function, class, and module-level documentation coverage.
-- Writes analysis results to `src/files/block_analysis.csv`.
+- Writes analysis results to `logs/<provider>/<repo>/block_analysis.csv`.
 - Writes OpenAI-generated suggestions for missing docstrings to
-  `src/files/suggested_docstring.txt`.
+  `logs/<provider>/<repo>/suggested_docstring.txt`.
 - Can open a GitHub pull request with generated Python docstring suggestions for review.
 - Copies files with at least 75% docstring coverage into `autoapi_include/` in the target
   repository.
@@ -47,12 +47,13 @@ site and publishes the generated HTML to `gh-pages`.
 Runtime output directories are created as needed:
 
 ```text
-src/files/
-├── block_analysis.csv
-└── suggested_docstring.txt
-
-log/
-└── app_<timestamp>.log
+logs/
+├── app_<timestamp>.log
+└── github/
+    └── owner__repository/
+        ├── block_analysis.csv
+        ├── suggested_docstring.txt
+        └── suggested_docstrings.json
 ```
 
 ## Requirements
@@ -127,8 +128,8 @@ uv run python src/main.py
 docker compose up --build
 ```
 
-The compose file exposes port `8000` and mounts local `files/` and `log/` directories into the
-container paths used by the app.
+The compose file exposes port `8000` and mounts the local `logs/` directory into the container
+path used by the app.
 
 ## API
 

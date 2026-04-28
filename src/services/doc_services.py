@@ -19,6 +19,7 @@ from utils.git_utils import (
     fetch_content_from_gitlab,
     fetch_repo_tree,
 )
+from utils.output_paths import build_repo_output_dir, build_repo_output_file
 
 logger = get_logger(__name__)
 
@@ -79,12 +80,11 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
 
-    # delete the suggested docstring file and block analysis file if it exists
-    output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "files")
-    os.makedirs(output_dir, exist_ok=True)
-    suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
-    suggested_json_file = os.path.join(output_dir, "suggested_docstrings.json")
-    block_analysis_file = os.path.join(output_dir, "block_analysis.csv")
+    # Keep each repository analysis isolated under logs/<provider>/<repo>/.
+    output_dir = build_repo_output_dir(repo_path, provider)
+    suggested_file = build_repo_output_file(repo_path, provider, "suggested_docstring.txt")
+    suggested_json_file = build_repo_output_file(repo_path, provider, "suggested_docstrings.json")
+    block_analysis_file = build_repo_output_file(repo_path, provider, "block_analysis.csv")
     if os.path.exists(suggested_file):
         os.remove(suggested_file)
         logger.debug(f"Deleted {suggested_file}")
@@ -220,7 +220,11 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None):
 
         logger.info(f"Analyzing {file_name} with {len(code_blocks)} code blocks.")
         block_analysis = analyze_docstring_in_blocks(
-            code_blocks, file_name=file_name, file_path=file_path, language=language
+            code_blocks,
+            file_name=file_name,
+            file_path=file_path,
+            language=language,
+            suggested_file=suggested_file,
         )
         block_analysis_list.append(block_analysis)
 

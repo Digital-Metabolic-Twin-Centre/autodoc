@@ -12,7 +12,7 @@ from datetime import datetime
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "log")
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 LOG_FILE = os.path.join(LOG_DIR, f"app_{timestamp}.log")
