@@ -33,11 +33,12 @@ async def root():
 @router.post("/generate")
 async def generate_docs(req: RepoRequest):
     logger.info(
-        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s",
+        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s, reuse_doc=%s",
         req.provider,
         req.repo_url,
         req.branch,
         req.model or DEFAULT_OPENAI_MODEL,
+        req.reuse_doc,
     )
     if not req.repo_url or not req.token or not req.branch or not req.provider:
         logger.warning("Missing required parameters in request.")
@@ -54,6 +55,7 @@ async def generate_docs(req: RepoRequest):
             req.branch,
             req.target_folders,
             req.model or DEFAULT_OPENAI_MODEL,
+            req.reuse_doc,
         )
         logger.info("Docstring analysis completed successfully.")
         print(docstring_analysis_file)

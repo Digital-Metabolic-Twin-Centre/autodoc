@@ -10,6 +10,7 @@ class RepoRequest(BaseModel):
     branch: str
     target_folders: list[str] = Field(default_factory=list)
     model: Optional[str] = None
+    reuse_doc: bool = False
 
 
 class PublishPagesRequest(BaseModel):
