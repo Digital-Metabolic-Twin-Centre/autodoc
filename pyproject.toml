@@ -1,6 +1,6 @@
 [project]
 name = "autodoc"
-version = "0.5.0"
+version = "0.5.1"
 description = "Automated documentation generator for code repositories."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -11,7 +11,7 @@ dependencies = [
     "pydantic==2.11.7",
     "python-dotenv==1.2.2",
     "python-gitlab==6.2.0",
-    "requests==2.32.4",
+    "requests==2.33.0",
     "tqdm==4.67.1",
     "uvicorn==0.35.0",
 ]
@@ -27,7 +27,7 @@ docs = [
 dev = [
     { include-group = "docs" },
     "httpx==0.28.1",
-    "pytest==8.4.1",
+    "pytest==9.0.3",
     "pytest-cov==6.2.1",
     "ruff==0.12.7",
 ]
