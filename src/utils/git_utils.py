@@ -400,6 +400,17 @@ def create_directory_and_add_files(
             return False
         base_tree_sha = commit_resp.json()["tree"]["sha"]
 
+        desired_paths = {f"{dir_path}/{file_path}" for file_path in file_paths}
+
+        current_items = list_github_tree(repo_url, branch, token, recursive=True)
+        stale_paths = sorted(
+            item.get("path", "")
+            for item in current_items
+            if item.get("type") == "blob"
+            and item.get("path", "").startswith(f"{dir_path}/")
+            and item.get("path", "") not in desired_paths
+        )
+
         # 3. Prepare blobs for each file
         tree = []
         # Add files
@@ -414,6 +425,16 @@ def create_directory_and_add_files(
                     "mode": "100644",
                     "type": "blob",
                     "content": content,
+                }
+            )
+
+        for stale_path in stale_paths:
+            tree.append(
+                {
+                    "path": stale_path,
+                    "mode": "100644",
+                    "type": "blob",
+                    "sha": None,
                 }
             )
 
@@ -464,6 +485,7 @@ def create_directory_and_add_files(
         project_path_encoded = urllib.parse.quote_plus(repo_url)
         api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/commits"
         actions = []
+        desired_paths = {f"{dir_path}/{file_path}" for file_path in file_paths}
         # Check if .gitkeep already exists
         gitkeep_path = f"{dir_path}/.gitkeep"
         gitkeep_exists = False
@@ -485,6 +507,23 @@ def create_directory_and_add_files(
 
         if not gitkeep_exists:
             actions.append({"action": "create", "file_path": gitkeep_path, "content": ""})
+
+        try:
+            gl = gitlab.Gitlab(GITLAB_API_URL, private_token=token)
+            project = gl.projects.get(repo_url)
+            tree_items = project.repository_tree(path=dir_path, ref=branch, recursive=True)
+            stale_paths = sorted(
+                item.get("path", "")
+                for item in tree_items
+                if item.get("type") == "blob"
+                and item.get("path", "") not in desired_paths
+                and item.get("path", "") != gitkeep_path
+            )
+        except Exception:
+            stale_paths = []
+
+        for stale_path in stale_paths:
+            actions.append({"action": "delete", "file_path": stale_path})
 
         for file_path in file_paths:
             content = fetch_content_from_gitlab(repo_url, branch, file_path, token)

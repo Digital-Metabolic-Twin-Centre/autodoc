@@ -4,6 +4,8 @@ from main import app
 from services.doc_services import RepoAnalysisError
 from services.sphinx_services import (
     PublishPagesError,
+    _extract_autoapi_module_names,
+    _find_autoapi_skip_candidates,
     _ensure_api_index,
     _ensure_sphinx_project_name,
     _project_name_from_repo_path,
@@ -182,6 +184,35 @@ def test_ensure_sphinx_project_name_replaces_placeholder(tmp_path):
     _ensure_sphinx_project_name(str(conf_path), "Example Project")
 
     assert 'project = "Example Project"' in conf_path.read_text(encoding="utf-8")
+
+
+def test_extract_autoapi_module_names_reads_modules_from_sphinx_error():
+    build_output = (
+        "ExtensionError: ... module 'autoapi_include.job_views'\n"
+        "ExtensionError: ... module 'settings_docker'\n"
+    )
+
+    modules = _extract_autoapi_module_names(build_output)
+
+    assert modules == ["autoapi_include.job_views", "settings_docker"]
+
+
+def test_find_autoapi_skip_candidates_matches_module_leaf(tmp_path):
+    autoapi_dir = tmp_path / "autoapi_include"
+    (autoapi_dir / "api" / "views").mkdir(parents=True)
+    (autoapi_dir / "webKinPred").mkdir(parents=True)
+    (autoapi_dir / "api" / "views" / "job_views.py").write_text("", encoding="utf-8")
+    (autoapi_dir / "webKinPred" / "settings_docker.py").write_text("", encoding="utf-8")
+
+    job_view_matches = _find_autoapi_skip_candidates(str(tmp_path), "autoapi_include.job_views")
+    settings_matches = _find_autoapi_skip_candidates(str(tmp_path), "settings_docker")
+
+    assert [path.relative_to(tmp_path).as_posix() for path in job_view_matches] == [
+        "autoapi_include/api/views/job_views.py"
+    ]
+    assert [path.relative_to(tmp_path).as_posix() for path in settings_matches] == [
+        "autoapi_include/webKinPred/settings_docker.py"
+    ]
 
 
 def test_suggest_python_docstrings_pr_returns_success(monkeypatch):

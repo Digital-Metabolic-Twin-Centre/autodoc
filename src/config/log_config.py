@@ -63,3 +63,7 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 def get_logger(name: str):
     return logging.getLogger(name)
+
+
+def get_run_log_dir() -> str | None:
+    return RUN_LOG_DIR

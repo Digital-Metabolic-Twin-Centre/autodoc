@@ -26,7 +26,7 @@ from config.config import (
     PROJECT_AUTHOR,
     PROJECT_NAME,
 )
-from config.log_config import get_logger
+from config.log_config import get_logger, get_run_log_dir
 from utils.generate_yml_content import (
     generate_github_pages_readme,
     generate_gitlab_ci_file,
@@ -53,6 +53,98 @@ class PublishPagesError(RuntimeError):
 def _raise_publish_error(message: str) -> None:
     logger.error(message)
     raise PublishPagesError(message)
+
+
+def _extract_autoapi_module_names(build_output: str) -> list[str]:
+    module_names = re.findall(r"module '([^']+)'", build_output or "")
+    unique_module_names = []
+    seen = set()
+    for module_name in module_names:
+        if module_name in seen:
+            continue
+        seen.add(module_name)
+        unique_module_names.append(module_name)
+    return unique_module_names
+
+
+def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]:
+    autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
+    if not autoapi_root.exists():
+        return []
+    module_leaf = module_name.split(".")[-1]
+    matches = []
+    for path in autoapi_root.rglob("*.py"):
+        if path.stem == module_leaf:
+            matches.append(path)
+    return matches
+
+
+def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
+    if not skipped_files:
+        return
+    run_log_dir = get_run_log_dir()
+    if not run_log_dir:
+        return
+    report_path = Path(run_log_dir) / "skipped_autoapi_files.txt"
+    with open(report_path, "w", encoding="utf-8") as report_file:
+        report_file.write("Skipped AutoAPI Files\n")
+        report_file.write("=====================\n\n")
+        for item in skipped_files:
+            report_file.write(f"- file: {item['file']}\n")
+            report_file.write(f"  module: {item['module']}\n")
+            report_file.write(f"  reason: {item['reason']}\n\n")
+
+
+def _run_sphinx_build_with_autoapi_skips(temp_dir: str) -> subprocess.CompletedProcess:
+    skipped_files: list[dict] = []
+    attempted_modules: set[str] = set()
+
+    while True:
+        build_result = subprocess.run(
+            [sys.executable, "-m", "sphinx", "-W", "-b", "html", DOCS_SRC, BUILD_DIR],
+            cwd=temp_dir,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        if build_result.returncode == 0:
+            _write_skipped_autoapi_report(skipped_files)
+            return build_result
+
+        build_output = "\n".join(
+            part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
+        )
+        module_names = _extract_autoapi_module_names(build_output)
+        skipped_any = False
+
+        for module_name in module_names:
+            if module_name in attempted_modules:
+                continue
+            candidates = _find_autoapi_skip_candidates(temp_dir, module_name)
+            if not candidates:
+                attempted_modules.add(module_name)
+                continue
+            for candidate in candidates:
+                relative_candidate = candidate.relative_to(Path(temp_dir)).as_posix()
+                logger.warning(
+                    "Skipping AutoAPI file %s after build failure for module %s.",
+                    relative_candidate,
+                    module_name,
+                )
+                skipped_files.append(
+                    {
+                        "file": relative_candidate,
+                        "module": module_name,
+                        "reason": "AutoAPI relative import failure during Sphinx build",
+                    }
+                )
+                candidate.unlink(missing_ok=True)
+                skipped_any = True
+            attempted_modules.add(module_name)
+
+        if not skipped_any:
+            _write_skipped_autoapi_report(skipped_files)
+            return build_result
 
 
 def _project_name_from_repo_path(repo_path: str) -> str:
@@ -474,16 +566,13 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
 
-        build_result = subprocess.run(
-            [sys.executable, "-m", "sphinx", "-W", "-b", "html", DOCS_SRC, BUILD_DIR],
-            cwd=temp_dir,
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
+        build_result = _run_sphinx_build_with_autoapi_skips(temp_dir)
         if build_result.returncode != 0:
-            logger.error("Sphinx build failed: %s", build_result.stderr)
-            _raise_publish_error(f"Sphinx build failed: {build_result.stderr.strip()}")
+            build_output = "\n".join(
+                part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
+            )
+            logger.error("Sphinx build failed: %s", build_output)
+            _raise_publish_error(f"Sphinx build failed: {build_output}")
 
         if not os.path.isdir(build_dir):
             _raise_publish_error(f"Sphinx build did not produce {BUILD_DIR}.")

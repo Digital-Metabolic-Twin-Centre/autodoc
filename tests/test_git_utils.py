@@ -105,6 +105,10 @@ def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkey
     monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
     monkeypatch.setattr("utils.git_utils.requests.patch", fake_patch)
     monkeypatch.setattr(
+        "utils.git_utils.list_github_tree",
+        lambda repo_url, branch, token, recursive=True: [],
+    )
+    monkeypatch.setattr(
         "utils.git_utils.fetch_content_from_github",
         lambda repo_url, branch, file_path, token: "" if file_path.endswith("__init__.py") else "x = 1\n",
     )
@@ -123,6 +127,54 @@ def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkey
         "autoapi_include/pkg/__init__.py",
         "autoapi_include/pkg/job_views.py",
     }
+
+
+def test_create_directory_and_add_files_removes_stale_flattened_github_files(monkeypatch):
+    def fake_get(url, headers=None, params=None, timeout=None):
+        if url.endswith("/git/refs/heads/main"):
+            return DummyResponse(200, {"object": {"sha": "commitsha"}})
+        if url.endswith("/git/commits/commitsha"):
+            return DummyResponse(200, {"tree": {"sha": "treesha"}})
+        raise AssertionError(f"Unexpected GET {url}")
+
+    captured = {}
+
+    def fake_post(url, headers=None, json=None):
+        if url.endswith("/git/trees"):
+            captured["tree"] = json["tree"]
+            return DummyResponse(201, {"sha": "newtree"})
+        if url.endswith("/git/commits"):
+            return DummyResponse(201, {"sha": "newcommit"})
+        raise AssertionError(f"Unexpected POST {url}")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+    monkeypatch.setattr("utils.git_utils.requests.patch", lambda *args, **kwargs: DummyResponse(200, {}))
+    monkeypatch.setattr(
+        "utils.git_utils.fetch_content_from_github",
+        lambda repo_url, branch, file_path, token: "x = 1\n",
+    )
+    monkeypatch.setattr(
+        "utils.git_utils.list_github_tree",
+        lambda repo_url, branch, token, recursive=True: [
+            {"type": "blob", "path": "autoapi_include/job_views.py"},
+            {"type": "blob", "path": "autoapi_include/pkg/old.py"},
+            {"type": "blob", "path": "README.md"},
+        ],
+    )
+
+    result = create_directory_and_add_files(
+        "example/project",
+        "autoapi_include",
+        ["pkg/job_views.py"],
+        "main",
+        "secret",
+        "github",
+    )
+
+    assert result is True
+    assert {"path": "autoapi_include/job_views.py", "mode": "100644", "type": "blob", "sha": None} in captured["tree"]
+    assert {"path": "autoapi_include/pkg/old.py", "mode": "100644", "type": "blob", "sha": None} in captured["tree"]
 
 
 def test_configure_github_pages_skips_update_when_source_is_already_correct(monkeypatch):
