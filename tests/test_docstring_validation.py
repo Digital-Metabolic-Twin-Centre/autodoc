@@ -130,3 +130,32 @@ def test_analyze_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(
     )
 
     assert result["docstring_analysis"][0]["generated_docstring"] == "Run the task."
+
+
+def test_analyze_docstring_in_blocks_logs_cache_reuse(monkeypatch, caplog):
+    monkeypatch.setattr(
+        "utils.docstring_validation.generate_docstring_with_openai",
+        lambda code, language, model=None: (_ for _ in ()).throw(
+            AssertionError("OpenAI should not be called for cached suggestions")
+        ),
+    )
+
+    blocks = [
+        "# --- Code Block starts at line 1 ---\n"
+        "def run_task():\n"
+        "    return True\n"
+        "# --- Code Block ends at line 2 ---"
+    ]
+
+    analyze_docstring_in_blocks(
+        blocks,
+        file_name="worker.py",
+        file_path="worker.py",
+        language="python",
+        existing_suggestions={
+            "exact": {("worker.py", "run_task", "function", 1, "python"): "Run the task."},
+            "fuzzy": {},
+        },
+    )
+
+    assert "Reused cached docstring (exact match):" in caplog.text

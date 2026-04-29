@@ -229,17 +229,29 @@ def analyze_docstring_in_blocks(
                 language,
             )
             generated_docstring = existing_suggestions["exact"].get(suggestion_key)
+            docstring_source = None
+            if generated_docstring:
+                docstring_source = "exact-cache"
             if not generated_docstring:
                 generated_docstring = existing_suggestions["fuzzy"].get(fuzzy_suggestion_key)
+                if generated_docstring:
+                    docstring_source = "fuzzy-cache"
             if not generated_docstring:
                 generated_docstring = generate_docstring_with_openai(
                     clean_code,
                     language,
                     model=model,
                 )
+                if generated_docstring:
+                    docstring_source = "openai"
             if generated_docstring:
                 block_analysis["generated_docstring"] = generated_docstring
-                logger.info("Generated Docstring:")
+                if docstring_source == "openai":
+                    logger.info("Generated Docstring:")
+                elif docstring_source == "exact-cache":
+                    logger.info("Reused cached docstring (exact match):")
+                else:
+                    logger.info("Reused cached docstring (line number changed):")
                 logger.info(format_docstring_for_language(generated_docstring, language))
                 target_suggested_file = suggested_file or build_repo_output_file(
                     "unknown", "unknown", "suggested_docstring.txt"

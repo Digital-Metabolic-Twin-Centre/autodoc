@@ -321,20 +321,32 @@ def analyze_repo(
                     language,
                 )
                 generated_docstring = existing_suggestions["exact"].get(suggestion_key)
+                docstring_source = None
+                if generated_docstring:
+                    docstring_source = "exact-cache"
                 if not generated_docstring:
                     generated_docstring = existing_suggestions["fuzzy"].get(fuzzy_suggestion_key)
+                    if generated_docstring:
+                        docstring_source = "fuzzy-cache"
                 if not generated_docstring:
                     generated_docstring = generate_docstring_with_openai(
                         content,
                         language,
                         model=model,
                     )
+                    if generated_docstring:
+                        docstring_source = "openai"
 
                 if generated_docstring:
                     block_analysis["docstring_analysis"][0]["generated_docstring"] = (
                         generated_docstring
                     )
-                    logger.info("Generated Docstring:")
+                    if docstring_source == "openai":
+                        logger.info("Generated Docstring:")
+                    elif docstring_source == "exact-cache":
+                        logger.info("Reused cached docstring (exact match):")
+                    else:
+                        logger.info("Reused cached docstring (line number changed):")
                     logger.info(format_docstring_for_language(generated_docstring, language))
                     suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
                     doc_info = block_analysis["docstring_analysis"][0]
