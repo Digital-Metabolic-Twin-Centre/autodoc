@@ -167,7 +167,7 @@ def fetch_content_from_github(
             timeout=10,
         )
         response.raise_for_status()
-        return response.text if response.text else None
+        return response.text
     except Exception as e:
         logger.error(f"GitHub fetch error: {e}")
     return None
@@ -191,7 +191,7 @@ def fetch_content_bytes_from_github(
             timeout=10,
         )
         response.raise_for_status()
-        return response.content if response.content else None
+        return response.content
     except Exception as e:
         logger.error(f"GitHub byte fetch error: {e}")
     return None
@@ -224,7 +224,7 @@ def fetch_content_from_gitlab(
             timeout=10,
         )
         response.raise_for_status()
-        return response.text if response.text else None
+        return response.text
     except Exception as e:
         logger.error(f"GitLab fetch error: {e}")
     return None
@@ -402,21 +402,15 @@ def create_directory_and_add_files(
 
         # 3. Prepare blobs for each file
         tree = []
-        existing_names = set()
         # Add files
         for file_path in file_paths:
             content = fetch_content_from_github(repo_url, branch, file_path, token)
             if content is None:
                 logger.warning(f"Could not fetch content for {file_path}, skipping.")
                 continue
-            file_name = os.path.basename(file_path)
-            if file_name in existing_names:
-                parent_folder = os.path.basename(os.path.dirname(file_path))
-                file_name = f"{parent_folder}_{file_name}"
-            existing_names.add(file_name)
             tree.append(
                 {
-                    "path": f"{dir_path}/{file_name}",
+                    "path": f"{dir_path}/{file_path}",
                     "mode": "100644",
                     "type": "blob",
                     "content": content,
@@ -470,8 +464,6 @@ def create_directory_and_add_files(
         project_path_encoded = urllib.parse.quote_plus(repo_url)
         api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/commits"
         actions = []
-        existing_names = set()
-
         # Check if .gitkeep already exists
         gitkeep_path = f"{dir_path}/.gitkeep"
         gitkeep_exists = False
@@ -499,15 +491,8 @@ def create_directory_and_add_files(
             if content is None:
                 logger.warning(f"Could not fetch content for {file_path}, skipping.")
                 continue
-            file_name = os.path.basename(file_path)
-            # If file_name already exists, add parent folder name
-            if file_name in existing_names:
-                parent_folder = os.path.basename(os.path.dirname(file_path))
-                file_name = f"{parent_folder}_{file_name}"
-            existing_names.add(file_name)
-
             # Check if file already exists in target directory
-            target_path = f"{dir_path}/{file_name}"
+            target_path = f"{dir_path}/{file_path}"
             file_exists = False
             try:
                 target_path_encoded = urllib.parse.quote_plus(target_path)
@@ -527,7 +512,7 @@ def create_directory_and_add_files(
 
             action_type = "update" if file_exists else "create"
             logger.info(
-                f"{'Updating' if file_exists else 'Adding'} file {file_name} to commit actions."
+                f"{'Updating' if file_exists else 'Adding'} file {target_path} to commit actions."
             )
             actions.append({"action": action_type, "file_path": target_path, "content": content})
 

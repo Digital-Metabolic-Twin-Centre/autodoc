@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import urllib
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -14,6 +15,7 @@ from config.config import (
     CONF_PY,
     CONFIGURATION_UPDATE_FILE,
     DOCS_SRC,
+    GITHUB_API_URL,
     GITHUB_PAGES_BRANCH,
     GITHUB_PAGES_PATH,
     GITHUB_PAGES_README_FILE,
@@ -41,6 +43,7 @@ from utils.git_utils import (
 )
 
 logger = get_logger(__name__)
+SAMPLE_DOCS_DIR = Path(__file__).resolve().parents[2] / "Documentation_sample"
 
 
 class PublishPagesError(RuntimeError):
@@ -56,6 +59,165 @@ def _project_name_from_repo_path(repo_path: str) -> str:
     repo_name = repo_path.rstrip("/").split("/")[-1]
     name = repo_name.replace("-", " ").replace("_", " ").strip()
     return name.title() if name else PROJECT_NAME
+
+
+def _load_sample_text(relative_path: str) -> str:
+    return (SAMPLE_DOCS_DIR / relative_path).read_text(encoding="utf-8")
+
+
+def _build_sample_conf(project_name: str) -> str:
+    conf_text = _load_sample_text("conf.py")
+    conf_text = re.sub(
+        r'project\s*=\s*"[^"]+"',
+        f'project = "{project_name}"',
+        conf_text,
+        count=1,
+    )
+    if '"autoapi.extension"' not in conf_text and "'autoapi.extension'" not in conf_text:
+        conf_text = conf_text.replace(
+            '"sphinx.ext.napoleon",',
+            '"sphinx.ext.napoleon",\n    "autoapi.extension",',
+        )
+    additions = [
+        'autoapi_type = "python"',
+        'autoapi_dirs = ["../../autoapi_include"]',
+        "autoapi_keep_files = False",
+        "autoapi_generate_api_docs = True",
+    ]
+    if not all(addition in conf_text for addition in additions):
+        conf_text += "\n\n" + "\n".join(
+            addition for addition in additions if addition not in conf_text
+        ) + "\n"
+    return conf_text
+
+
+def _build_sample_index(project_name: str) -> str:
+    index_text = _load_sample_text("index.rst")
+    lines = index_text.splitlines()
+    if len(lines) >= 2:
+        lines[0] = project_name
+        lines[1] = "=" * len(project_name)
+    index_text = "\n".join(lines).rstrip() + "\n"
+    if "autoapi/index" not in index_text:
+        index_text += (
+            "\n.. toctree::\n"
+            "   :maxdepth: 1\n"
+            "   :caption: API Reference\n\n"
+            "   autoapi/index\n"
+        )
+    return index_text
+
+
+def _build_sample_overview(project_name: str) -> str:
+    overview_text = _load_sample_text("project/overview.rst")
+    return overview_text.replace("<replace>", project_name, 1)
+
+
+def _build_sample_makefile() -> str:
+    return (
+        "SPHINXBUILD   = sphinx-build\n"
+        "SOURCEDIR     = source\n"
+        "BUILDDIR      = build\n\n"
+        ".PHONY: help clean html\n\n"
+        "help:\n"
+        '\t@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)"\n\n'
+        "clean:\n"
+        "\trm -rf build/*\n\n"
+        "html:\n"
+        '\t$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)/html"\n'
+    )
+
+
+def _build_sample_readme() -> str:
+    return (
+        "Documentation Notes\n"
+        "===================\n\n"
+        "These pages are written in reStructuredText (`.rst`) and built by Sphinx.\n\n"
+        "Local preview\n"
+        "-------------\n\n"
+        ".. code-block:: bash\n\n"
+        "   cd docs\n"
+        "   python -m pip install sphinx sphinx-autoapi sphinx-rtd-theme\n"
+        "   make html\n\n"
+        "Open ``docs/build/html/index.html`` in your browser.\n"
+    )
+
+
+def _sample_docs_files(project_name: str) -> dict[str, str]:
+    return {
+        "docs/Makefile": _build_sample_makefile(),
+        CONF_PY: _build_sample_conf(project_name),
+        f"{DOCS_SRC}/index.rst": _build_sample_index(project_name),
+        f"{DOCS_SRC}/README.rst": _build_sample_readme(),
+        f"{DOCS_SRC}/project/overview.rst": _build_sample_overview(project_name),
+        f"{DOCS_SRC}/project/objectives.rst": _load_sample_text("project/objectives.rst"),
+        f"{DOCS_SRC}/project/plan.rst": _load_sample_text("project/plan.rst"),
+        f"{DOCS_SRC}/project/results.rst": _load_sample_text("project/results.rst"),
+        f"{DOCS_SRC}/logbook/weekly_updates.rst": _load_sample_text("logbook/weekly_updates.rst"),
+        f"{DOCS_SRC}/_static/custom-wide.css": _load_sample_text("_static/custom-wide.css"),
+    }
+
+
+def _remote_text_file_exists(
+    repo_path: str,
+    branch: str,
+    file_path: str,
+    token: str,
+    provider: str,
+) -> bool:
+    normalized_provider = provider.lower()
+    if normalized_provider == "github":
+        return (
+            requests.get(
+                f"{GITHUB_API_URL}/repos/{repo_path}/contents/{file_path}",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/vnd.github.v3+json",
+                    "X-GitHub-Api-Version": "2026-03-10",
+                },
+                params={"ref": branch},
+                timeout=10,
+            ).status_code
+            == 200
+        )
+    project_path_encoded = urllib.parse.quote_plus(repo_path)
+    file_path_encoded = urllib.parse.quote_plus(file_path)
+    return (
+        requests.get(
+            (
+                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/"
+                f"{file_path_encoded}"
+            ),
+            headers={"PRIVATE-TOKEN": token},
+            params={"ref": branch},
+            timeout=10,
+        ).status_code
+        == 200
+    )
+
+
+def _create_sample_sphinx_scaffold(
+    repo_path: str,
+    branch: str,
+    token: str,
+    provider: str,
+    project_name: str,
+) -> bool:
+    for file_path, content in _sample_docs_files(project_name).items():
+        if _remote_text_file_exists(repo_path, branch, file_path, token, provider):
+            continue
+        created = create_a_file(repo_path, branch, file_path, content, token, provider)
+        if not created:
+            logger.error("Failed to create sample scaffold file %s.", file_path)
+            return False
+    return True
+
+
+def _write_sample_sphinx_scaffold(root_dir: str, project_name: str) -> None:
+    for file_path, content in _sample_docs_files(project_name).items():
+        destination = Path(root_dir) / file_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(content, encoding="utf-8")
 
 
 def _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None:
@@ -113,6 +275,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     # Extract repo path from URL
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
+    project_name = _project_name_from_repo_path(repo_path)
 
     # FETCH FILES WITH COMPLETE OR HIGH DOCSTRING COVERAGE
     DOCSTRING_THRESHOLD = 0.75  # 75% threshold for including files
@@ -167,6 +330,13 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     )
     if not dir:
         logger.error("Directory creation failed.")
+        return False
+
+    scaffold_created = _create_sample_sphinx_scaffold(
+        repo_path, branch, token, provider, project_name
+    )
+    if not scaffold_created:
+        logger.error("Sample Sphinx scaffold creation failed.")
         return False
 
     # CREATE A FILE TO UPDATE CONF.PY FILE FOR SPHINX AUTOAPI
@@ -284,34 +454,7 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         os.makedirs(docs_source_dir, exist_ok=True)
 
         if not os.path.exists(conf_py_path):
-            quickstart_cmd = [
-                sys.executable,
-                "-m",
-                "sphinx.cmd.quickstart",
-                "--quiet",
-                "--project",
-                project_name,
-                "--author",
-                PROJECT_AUTHOR,
-                "--sep",
-                "--makefile",
-                "--batchfile",
-                "--ext-autodoc",
-                "docs",
-            ]
-            quickstart_result = subprocess.run(
-                quickstart_cmd,
-                cwd=temp_dir,
-                capture_output=True,
-                text=True,
-                timeout=180,
-            )
-            if quickstart_result.returncode != 0:
-                logger.error("Sphinx quickstart failed: %s", quickstart_result.stderr)
-                _raise_publish_error(
-                    "Sphinx quickstart failed while creating docs/source/conf.py: "
-                    f"{quickstart_result.stderr.strip()}"
-                )
+            _write_sample_sphinx_scaffold(temp_dir, project_name)
 
         if os.path.exists(update_conf_path):
             update_conf_result = subprocess.run(

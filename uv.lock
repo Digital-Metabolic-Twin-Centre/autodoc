@@ -81,12 +81,14 @@ dev = [
     { name = "ruff" },
     { name = "sphinx" },
     { name = "sphinx-autoapi" },
+    { name = "sphinx-rtd-theme" },
 ]
 docs = [
     { name = "astroid" },
     { name = "renku-sphinx-theme" },
     { name = "sphinx" },
     { name = "sphinx-autoapi" },
+    { name = "sphinx-rtd-theme" },
 ]
 
 [package.metadata]
@@ -112,12 +114,14 @@ dev = [
     { name = "ruff", specifier = "==0.12.7" },
     { name = "sphinx", specifier = "==8.2.3" },
     { name = "sphinx-autoapi", specifier = "==3.6.0" },
+    { name = "sphinx-rtd-theme", specifier = "==3.0.2" },
 ]
 docs = [
     { name = "astroid", specifier = "<4" },
     { name = "renku-sphinx-theme" },
     { name = "sphinx", specifier = "==8.2.3" },
     { name = "sphinx-autoapi", specifier = "==3.6.0" },
+    { name = "sphinx-rtd-theme", specifier = "==3.0.2" },
 ]
 
 [[package]]

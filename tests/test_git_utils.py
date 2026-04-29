@@ -3,10 +3,13 @@ import pytest
 from utils.git_utils import (
     GitHubApiError,
     RepositoryAccessError,
+    create_directory_and_add_files,
     configure_github_pages,
     create_github_pull_request,
     extract_repo_path,
     fetch_repo_tree,
+    fetch_content_bytes_from_github,
+    fetch_content_from_github,
     should_ignore,
 )
 from utils.update_conf_content import _append_extension
@@ -38,6 +41,10 @@ class DummyResponse:
     def json(self):
         return self._payload
 
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(self.text or self._payload.get("message", "request failed"))
+
 
 def test_fetch_repo_tree_reports_missing_branch(monkeypatch):
     def fake_get(url, headers, params, timeout):
@@ -57,6 +64,65 @@ def test_fetch_repo_tree_reports_inaccessible_repo(monkeypatch):
 
     with pytest.raises(RepositoryAccessError, match="was not found or is not accessible"):
         fetch_repo_tree("example/project", "secret", branch="main", provider="github")
+
+
+def test_fetch_content_from_github_preserves_empty_file(monkeypatch):
+    monkeypatch.setattr("utils.git_utils.requests.get", lambda *args, **kwargs: DummyResponse(200, text=""))
+
+    assert fetch_content_from_github("example/project", "main", "__init__.py", "secret") == ""
+
+
+def test_fetch_content_bytes_from_github_preserves_empty_file(monkeypatch):
+    response = DummyResponse(200, text="")
+    response.content = b""
+    monkeypatch.setattr("utils.git_utils.requests.get", lambda *args, **kwargs: response)
+
+    assert fetch_content_bytes_from_github("example/project", "main", "__init__.py", "secret") == b""
+
+
+def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkeypatch):
+    def fake_get(url, headers=None, params=None, timeout=None):
+        if url.endswith("/git/refs/heads/main"):
+            return DummyResponse(200, {"object": {"sha": "commitsha"}})
+        if url.endswith("/git/commits/commitsha"):
+            return DummyResponse(200, {"tree": {"sha": "treesha"}})
+        raise AssertionError(f"Unexpected GET {url}")
+
+    captured = {}
+
+    def fake_post(url, headers=None, json=None):
+        if url.endswith("/git/trees"):
+            captured["tree"] = json["tree"]
+            return DummyResponse(201, {"sha": "newtree"})
+        if url.endswith("/git/commits"):
+            return DummyResponse(201, {"sha": "newcommit"})
+        raise AssertionError(f"Unexpected POST {url}")
+
+    def fake_patch(url, headers=None, json=None):
+        return DummyResponse(200, {})
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+    monkeypatch.setattr("utils.git_utils.requests.patch", fake_patch)
+    monkeypatch.setattr(
+        "utils.git_utils.fetch_content_from_github",
+        lambda repo_url, branch, file_path, token: "" if file_path.endswith("__init__.py") else "x = 1\n",
+    )
+
+    result = create_directory_and_add_files(
+        "example/project",
+        "autoapi_include",
+        ["pkg/__init__.py", "pkg/job_views.py"],
+        "main",
+        "secret",
+        "github",
+    )
+
+    assert result is True
+    assert {item["path"] for item in captured["tree"]} == {
+        "autoapi_include/pkg/__init__.py",
+        "autoapi_include/pkg/job_views.py",
+    }
 
 
 def test_configure_github_pages_skips_update_when_source_is_already_correct(monkeypatch):
