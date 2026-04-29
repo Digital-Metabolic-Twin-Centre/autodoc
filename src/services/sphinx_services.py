@@ -51,7 +51,105 @@ from utils.git_utils import (
 )
 
 logger = get_logger(__name__)
-SAMPLE_DOCS_DIR = Path(__file__).resolve().parents[2] / "Documentation_sample"
+DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
+SAMPLE_DOCS_FALLBACK_TEXTS = {
+    "conf.py": (
+        'from datetime import datetime\n\n'
+        'project = "Student Project Documentation"\n'
+        'author = "Digital Metabolic Twin Centre"\n'
+        'copyright = f"{datetime.now().year}, {author}"\n\n'
+        "extensions = [\n"
+        '    "sphinx.ext.autodoc",\n'
+        '    "sphinx.ext.napoleon",\n'
+        "]\n\n"
+        'templates_path = ["_templates"]\n'
+        'exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]\n\n'
+        'html_theme = "sphinx_rtd_theme"\n'
+        'html_static_path = ["_static"]\n'
+        'html_css_files = ["custom-wide.css"]\n'
+    ),
+    "index.rst": (
+        "Student Project Documentation\n"
+        "=============================\n\n"
+        "Welcome to your project docs.\n\n"
+        ".. toctree::\n"
+        "   :maxdepth: 1\n"
+        "   :caption: Project\n\n"
+        "   project/overview\n"
+        "   project/objectives\n"
+        "   project/plan\n"
+        "   project/results\n\n"
+        ".. toctree::\n"
+        "   :maxdepth: 1\n"
+        "   :caption: Progress\n\n"
+        "   logbook/weekly_updates\n\n"
+        ".. toctree::\n"
+        "   :maxdepth: 1\n"
+        "   :caption: Notes\n\n"
+        "   README\n"
+    ),
+    "project/overview.rst": (
+        "Project Overview\n"
+        "================\n\n"
+        "- Project title: <replace>\n"
+        "- Student name: <replace>\n"
+        "- Supervisor: <replace>\n"
+        "- One-paragraph summary: <replace>\n"
+    ),
+    "project/objectives.rst": (
+        "Objectives\n"
+        "==========\n\n"
+        "- Objective 1: <replace>\n"
+        "- Objective 2: <replace>\n"
+        "- Objective 3: <replace>\n\n"
+        "Success criteria\n"
+        "----------------\n\n"
+        "- Criterion 1: <replace>\n"
+        "- Criterion 2: <replace>\n"
+    ),
+    "project/plan.rst": (
+        "Project Plan\n"
+        "============\n\n"
+        "1. Discovery and setup\n"
+        "2. Design and implementation\n"
+        "3. Testing and evaluation\n"
+        "4. Final report and demo\n\n"
+        "Milestones\n"
+        "----------\n\n"
+        "+-----------+------------+------------+\n"
+        "| Milestone | Start date | End date   |\n"
+        "+===========+============+============+\n"
+        "| M1        | <replace>  | <replace>  |\n"
+        "+-----------+------------+------------+\n"
+        "| M2        | <replace>  | <replace>  |\n"
+        "+-----------+------------+------------+\n"
+    ),
+    "project/results.rst": (
+        "Results\n"
+        "=======\n\n"
+        "- Deliverable 1: <replace>\n"
+        "- Deliverable 2: <replace>\n"
+        "- Key findings: <replace>\n"
+        "- Lessons learned: <replace>\n"
+    ),
+    "logbook/weekly_updates.rst": (
+        "Weekly Updates\n"
+        "==============\n\n"
+        "Week of <YYYY-MM-DD>\n"
+        "--------------------\n\n"
+        "- Goals:\n"
+        "- Work done:\n"
+        "- Problems faced:\n"
+        "- Next steps:\n"
+    ),
+    "_static/custom-wide.css": (
+        ".wy-nav-content {\n"
+        "    max-width: none !important;\n"
+        "    width: 100% !important;\n"
+        "    margin: 0 !important;\n"
+        "}\n"
+    ),
+}
 AUTOAPI_CONF_MARKER_START = "# AUTODOC AUTOAPI RUNTIME SETTINGS START"
 AUTOAPI_CONF_MARKER_END = "# AUTODOC AUTOAPI RUNTIME SETTINGS END"
 AUTOAPI_WARNINGS_TO_SUPPRESS = ["autoapi.python_import_resolution"]
@@ -323,7 +421,15 @@ def _project_name_from_repo_path(repo_path: str) -> str:
 
 
 def _load_sample_text(relative_path: str) -> str:
-    return (SAMPLE_DOCS_DIR / relative_path).read_text(encoding="utf-8")
+    sample_path = DOCS_SCAFFOLD_DIR / relative_path
+    if sample_path.exists():
+        return sample_path.read_text(encoding="utf-8")
+
+    fallback_text = SAMPLE_DOCS_FALLBACK_TEXTS.get(relative_path)
+    if fallback_text is not None:
+        return fallback_text
+
+    raise FileNotFoundError(f"Missing sample template for {relative_path}: {sample_path}")
 
 
 def _build_sample_conf(project_name: str) -> str:

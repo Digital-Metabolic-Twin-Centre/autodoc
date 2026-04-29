@@ -1,50 +1,54 @@
 # Auto-Doc
 
-Auto-Doc is a FastAPI service that analyzes a GitHub or GitLab repository for missing
-docstrings, suggests docstrings with OpenAI, and prepares Sphinx AutoAPI documentation files
-in the target repository.
+Auto-Doc is a FastAPI service that analyzes a GitHub or GitLab repository, generates
+docstring suggestions with OpenAI, scaffolds a Sphinx documentation site, and publishes
+reviewed HTML to GitHub Pages.
 
-This branch uses branch-based GitHub Pages publishing. The `/generate` endpoint prepares the
-selected source branch for review, and the `/publish-pages` endpoint builds the reviewed Sphinx
-site and publishes the generated HTML to `gh-pages`.
+The current workflow is branch-first:
+
+- `/generate` analyzes a target branch and writes documentation scaffold files directly to that branch
+- `/publish-pages` builds the reviewed Sphinx site from that branch and publishes the HTML to `gh-pages`
+- `/suggest-python-docstrings-pr` opens a separate GitHub pull request with Python docstring insertions
 
 ## What It Does
 
 - Reads repository trees from GitHub or GitLab using provider APIs.
 - Scans Python, JavaScript, TypeScript, and MATLAB source files.
 - Detects function, class, and module-level documentation coverage.
-- Writes analysis results to `logs/<provider>/<repo>/app_<timestamp>/block_analysis.csv`.
-- Writes OpenAI-generated suggestions for missing docstrings to
-  `logs/<provider>/<repo>/app_<timestamp>/suggested_docstring.txt`.
-- Can open a GitHub pull request with generated Python docstring suggestions for review.
-- Copies files with at least 75% docstring coverage into `autoapi_include/` in the target
-  repository.
-- Adds `update_conf.py` so the target repository can enable `sphinx-autoapi`.
-- For GitLab, creates or updates `.gitlab-ci.yml` and optionally triggers a pipeline.
-- For GitHub, creates a review guide on the selected branch and can publish built HTML to
-  `gh-pages` through `/publish-pages`.
+- Generates missing docstring suggestions with OpenAI using `gpt-4o-mini` by default.
+- Supports `reuse_doc=true` so previously generated suggestions can be reused instead of calling OpenAI again.
+- Writes per-run logs and analysis artifacts under `logs/<provider>/<repo>/app_<timestamp>/`.
+- Copies files with at least 75% docstring coverage into `autoapi_include/` in the target repository.
+- Preserves nested package structure inside `autoapi_include/` and removes stale old files during regeneration.
+- Scaffolds the target repo using the shared `docs/scaffold` Sphinx layout.
+- Configures AutoAPI against `autoapi_include/` and pre-filters risky files before building docs.
+- Writes a skipped-files report when AutoAPI files are excluded during publish fallback.
+- Can publish built HTML to `gh-pages` without requiring a GitHub Actions workflow.
 
 ## Project Layout
 
 ```text
 .
+├── docs/scaffold/              # Shared Sphinx template used for generated repos
 ├── Dockerfile
 ├── docker-compose.yaml
 ├── docs/
-│   └── source/                 # Sphinx documentation for this service
-├── prepush_check.py            # Local quality gate helper
+│   └── source/                 # Sphinx docs for this Auto-Doc service
+├── prepush_check.py
 ├── pyproject.toml
 ├── src/
 │   ├── main.py                 # FastAPI application entry point
 │   ├── config/                 # Runtime constants and logging setup
 │   ├── models/                 # Pydantic request models
 │   ├── router/                 # API routes
-│   ├── services/               # Repository analysis and Sphinx publishing flows
-│   └── utils/                  # Git provider, docstring, and generated file helpers
-└── tests/                      # Unit tests
+│   ├── services/               # Repository analysis, scaffold, and publish flows
+│   └── utils/                  # Git provider, docstring, path, and helper utilities
+└── tests/
 ```
 
-Runtime output directories are created as needed:
+## Runtime Outputs
+
+Each repo run gets its own folder:
 
 ```text
 logs/
@@ -54,42 +58,43 @@ logs/
             ├── app.log
             ├── block_analysis.csv
             ├── suggested_docstring.txt
-            └── suggested_docstrings.json
+            ├── suggested_docstrings.json
+            └── skipped_autoapi_files.txt   # only when publish skips files
 ```
+
+What these files mean:
+
+- `app.log`: runtime logs for that repo run
+- `block_analysis.csv`: flattened coverage report for analyzed code blocks
+- `suggested_docstring.txt`: human-readable generated or reused suggestions
+- `suggested_docstrings.json`: structured suggestion cache used by reuse and PR creation
+- `skipped_autoapi_files.txt`: files excluded from the publish build because they were risky or failed AutoAPI
 
 ## Requirements
 
 - Python 3.11+
 - `uv`
 - An OpenAI API key
-- A GitHub or GitLab access token for the repository you want to analyze
+- A GitHub or GitLab access token for the target repository
 - Docker, if you want to run the service in a container
-
-For GitHub publishing, the token must be able to read repository contents, write contents, and
-manage GitHub Pages settings. For GitLab setup, the token must be able to read the repository and
-write files to the selected branch.
 
 ### GitHub Token Permissions
 
 For a fine-grained GitHub personal access token, use repository-scoped access and select the target
-repository. The minimum permissions are:
+repository. Recommended minimum permissions:
 
-- **Contents:** Read and write
-- **Metadata:** Read-only
+- `Contents`: Read and write
+- `Metadata`: Read-only
 
-Those permissions are enough for `/generate`, which reads source files and commits generated docs
-setup files back to the selected branch.
+For `/publish-pages`, also set:
 
-For `/publish-pages`, also set this permission when GitHub shows it on the token form:
-
-- **Pages:** Read and write
-
-If the token does not include Pages write access, `/publish-pages` may fail when it tries to
-configure GitHub Pages, even if `/generate` works.
+- `Pages`: Read and write
 
 For `/suggest-python-docstrings-pr`, also set:
 
-- **Pull requests:** Read and write
+- `Pull requests`: Read and write
+
+GitHub can still reject Pages configuration if the token owner lacks enough repository-level access.
 
 ## Setup
 
@@ -129,8 +134,7 @@ uv run python src/main.py
 docker compose up --build
 ```
 
-The compose file exposes port `8000` and mounts the local `logs/` directory into the container
-path used by the app.
+The compose file exposes port `8000` and mounts the local `logs/` directory into the container.
 
 ## API
 
@@ -140,7 +144,7 @@ Returns a simple welcome message.
 
 ### `POST /generate`
 
-Analyzes a repository branch and prepares Sphinx documentation support in that same branch.
+Analyzes a repository branch and writes documentation scaffold files to that same branch.
 
 ```json
 {
@@ -148,13 +152,20 @@ Analyzes a repository branch and prepares Sphinx documentation support in that s
   "repo_url": "owner/repository",
   "token": "access-token",
   "branch": "docs-review",
-  "model": "gpt-4o-mini"
+  "target_folders": ["api", "tools"],
+  "model": "gpt-4o-mini",
+  "reuse_doc": true
 }
 ```
 
-`provider` must be `github` or `gitlab`. `repo_url` can be a provider URL such as
-`https://github.com/owner/repository` or a repository path such as `owner/repository`.
-`model` is optional; when omitted, Auto-Doc defaults to `gpt-4o-mini`.
+Notes:
+
+- `provider` must be `github` or `gitlab`
+- `repo_url` can be a full URL or `owner/repo`
+- `target_folders` is optional and limits analysis scope
+- `model` is optional; when omitted, Auto-Doc defaults to `gpt-4o-mini`
+- `reuse_doc=false` starts fresh for that repo and clears prior run history
+- `reuse_doc=true` loads the latest matching `suggested_docstrings.json` for the same repo and branch and only generates missing suggestions
 
 Successful responses include:
 
@@ -168,8 +179,8 @@ Successful responses include:
 
 ### `POST /publish-pages`
 
-GitHub only. Builds Sphinx HTML from a reviewed source branch, publishes the generated static site
-to `gh-pages`, configures branch-based GitHub Pages, and requests a Pages rebuild.
+GitHub only. Downloads the reviewed source branch, builds the Sphinx HTML locally, and publishes the
+resulting static site to `gh-pages`.
 
 ```json
 {
@@ -178,6 +189,13 @@ to `gh-pages`, configures branch-based GitHub Pages, and requests a Pages rebuil
   "branch": "docs-review"
 }
 ```
+
+Important behavior:
+
+- Auto-Doc publishes from the branch you specify, so that branch should be reviewed first.
+- The build uses the sample Sphinx layout plus AutoAPI over `autoapi_include/`.
+- Auto-Doc proactively ignores risky AutoAPI files such as common config, URL, migration, and view modules.
+- If Sphinx still fails on a module, Auto-Doc performs one fallback skip pass and writes `skipped_autoapi_files.txt`.
 
 Successful responses include:
 
@@ -191,10 +209,8 @@ Successful responses include:
 
 ### `POST /suggest-python-docstrings-pr`
 
-GitHub only. Applies previously generated Python function/class docstring suggestions, commits the
-changes to a suggestion branch, and opens a pull request for review. Run `/generate` first; this
-endpoint uses the structured suggestions created during that analysis instead of making another
-OpenAI request.
+GitHub only. Applies previously generated Python docstring suggestions, commits them to a suggestion
+branch, and opens a pull request for review.
 
 ```json
 {
@@ -208,44 +224,49 @@ OpenAI request.
 }
 ```
 
-`suggestion_branch` is optional. When omitted, Auto-Doc creates a unique branch name such as
-`autodocs-docstring-suggestions-20260424-1430`.
+This endpoint reuses `suggested_docstrings.json` from `/generate`; it does not call OpenAI again.
 
-Successful responses include:
+## Generated Repo Structure
 
-```json
-{
-  "status": "success",
-  "provider": "github",
-  "base_branch": "main",
-  "suggestion_branch": "autodocs-docstring-suggestions-20260424-1430",
-  "pull_request_url": "https://github.com/owner/repository/pull/12",
-  "files_changed": 3,
-  "docstrings_added": 10,
-  "changed_files": ["src/example.py"]
-}
+When `/generate` prepares a target repo branch, it can add or update files like:
+
+```text
+autoapi_include/
+docs/
+├── Makefile
+└── source/
+    ├── conf.py
+    ├── index.rst
+    ├── README.rst
+    ├── _static/custom-wide.css
+    ├── logbook/weekly_updates.rst
+    └── project/
+        ├── overview.rst
+        ├── objectives.rst
+        ├── plan.rst
+        └── results.rst
+update_conf.py
 ```
 
-## Repository Flow
+The generated docs scaffold is based on `docs/scaffold/`.
 
-1. Call `/generate` with a repository, token, branch, and provider.
-2. Auto-Doc scans supported files and writes local analysis output.
-3. Files with at least 75% docstring coverage are copied into `autoapi_include/` in the target
-   repository branch.
-4. Auto-Doc commits `update_conf.py` to the target branch.
-5. For GitLab, Auto-Doc commits `.gitlab-ci.yml` and tries to trigger a pipeline when
-   `CI_TRIGGER_PIPELINE_TOKEN` is set.
-6. For GitHub, review the generated branch changes, then call `/publish-pages` to build the docs
-   and publish the HTML to `gh-pages`.
-7. Optionally call `/suggest-python-docstrings-pr` to open a separate GitHub pull request with
-   Python docstring suggestions for missing function/class docstrings.
+## Recommended Workflow
+
+Use a review branch, not a production branch:
+
+1. Create a branch such as `docs-review`.
+2. Call `/generate` on that branch.
+3. Review the committed scaffold, `autoapi_include/`, and analysis outputs.
+4. Call `/publish-pages` only after the branch looks correct.
+5. Merge the reviewed branch when you are satisfied.
+6. Optionally call `/suggest-python-docstrings-pr` for a separate source-docstring PR flow.
 
 ## Local Checks
 
 ```sh
 uv run ruff check src tests
 uv run pytest
-uv run sphinx-build -W -b html docs/source docs/build/html
+uv run sphinx-build -b html docs/source docs/build/html
 ```
 
 Or run the combined helper:
@@ -262,9 +283,10 @@ python3 prepush_check.py --docker
 
 ## Notes
 
-- Generated docstrings should be reviewed before being applied to source code.
+- `/generate` writes directly to the target branch; it does not open a PR.
+- `/suggest-python-docstrings-pr` is the PR-based path for Python docstring insertions.
+- Reuse matching is exact first, then fuzzy by file path, symbol name, block type, and language.
+- A new `app_<timestamp>` log folder is still created for every run, even when `reuse_doc=true`.
+- Auto-Doc does not try to fix user code; it either includes, ignores, or skips files for docs generation.
 - Unsupported files are skipped during analysis.
-- Empty repositories, inaccessible branches, or tokens without enough permissions cause the API to
-  return an error.
-- The current GitHub flow does not create a GitHub Actions workflow. It publishes by building
-  reviewed docs server-side and committing static HTML to `gh-pages`.
+- Empty repositories, inaccessible branches, or insufficient permissions return API errors.
