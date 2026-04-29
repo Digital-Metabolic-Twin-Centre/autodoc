@@ -1,5 +1,5 @@
-import textwrap
 import json
+import textwrap
 from pathlib import Path
 
 from services.docstring_pr_services import (
