@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from utils.docstring_validation import (
     analyze_docstring_in_blocks,

@@ -7,15 +7,15 @@ from services.sphinx_services import (
     _apply_autoapi_runtime_settings,
     _classify_autoapi_file,
     _collect_prebuild_autoapi_ignores,
+    _ensure_api_index,
+    _ensure_sphinx_project_name,
     _extract_autoapi_module_names,
     _extract_module_name_from_autoapi_path,
     _find_autoapi_skip_candidates,
     _module_names_to_ignore_patterns,
+    _project_name_from_repo_path,
     _run_sphinx_build_with_autoapi_filters,
     _to_autoapi_ignore_pattern,
-    _ensure_api_index,
-    _ensure_sphinx_project_name,
-    _project_name_from_repo_path,
 )
 
 client = TestClient(app)

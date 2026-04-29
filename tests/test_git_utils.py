@@ -3,13 +3,13 @@ import pytest
 from utils.git_utils import (
     GitHubApiError,
     RepositoryAccessError,
-    create_directory_and_add_files,
     configure_github_pages,
+    create_directory_and_add_files,
     create_github_pull_request,
     extract_repo_path,
-    fetch_repo_tree,
     fetch_content_bytes_from_github,
     fetch_content_from_github,
+    fetch_repo_tree,
     should_ignore,
 )
 from utils.update_conf_content import _append_extension

@@ -21,8 +21,13 @@ from utils.git_utils import (
     fetch_content_from_gitlab,
     fetch_repo_tree,
 )
-from utils.output_paths import bind_repo_run_log_dir, build_repo_output_dir, build_repo_output_file
-from utils.output_paths import clear_repo_output_history, find_latest_repo_run_dir
+from utils.output_paths import (
+    bind_repo_run_log_dir,
+    build_repo_output_dir,
+    build_repo_output_file,
+    clear_repo_output_history,
+    find_latest_repo_run_dir,
+)
 
 logger = get_logger(__name__)
 
