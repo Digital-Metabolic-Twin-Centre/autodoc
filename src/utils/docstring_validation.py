@@ -13,6 +13,25 @@ from utils.output_paths import build_repo_output_file
 logger = get_logger(__name__)
 
 
+def _suggestion_key(
+    file_path: str,
+    function_name: str,
+    block_type: str,
+    line_number: int,
+    language: str,
+):
+    return (file_path, function_name, block_type, line_number, language)
+
+
+def _suggestion_fuzzy_key(
+    file_path: str,
+    function_name: str,
+    block_type: str,
+    language: str,
+):
+    return (file_path, function_name, block_type, language)
+
+
 def analyze_docstring_in_blocks(
     code_blocks: list,
     file_name: str = "unknown",
@@ -20,6 +39,7 @@ def analyze_docstring_in_blocks(
     language: str = None,
     suggested_file: str | None = None,
     model: str | None = None,
+    existing_suggestions: dict | None = None,
 ) -> dict:
     """
     Analyzes code blocks to find docstring and identify missing ones.
@@ -42,6 +62,7 @@ def analyze_docstring_in_blocks(
         "blocks_without_docstring": 0,
         "docstring_analysis": [],
     }
+    existing_suggestions = existing_suggestions or {"exact": {}, "fuzzy": {}}
 
     def analyze_python_block(clean_code: str) -> dict:
         """Analyze Python code block for docstring"""
@@ -194,11 +215,28 @@ def analyze_docstring_in_blocks(
             results["blocks_with_docstring"] += 1
         else:
             results["blocks_without_docstring"] += 1
-            generated_docstring = generate_docstring_with_openai(
-                clean_code,
+            suggestion_key = _suggestion_key(
+                file_path,
+                block_analysis["function_name"],
+                block_analysis["block_type"],
+                block_analysis["line_number"],
                 language,
-                model=model,
             )
+            fuzzy_suggestion_key = _suggestion_fuzzy_key(
+                file_path,
+                block_analysis["function_name"],
+                block_analysis["block_type"],
+                language,
+            )
+            generated_docstring = existing_suggestions["exact"].get(suggestion_key)
+            if not generated_docstring:
+                generated_docstring = existing_suggestions["fuzzy"].get(fuzzy_suggestion_key)
+            if not generated_docstring:
+                generated_docstring = generate_docstring_with_openai(
+                    clean_code,
+                    language,
+                    model=model,
+                )
             if generated_docstring:
                 block_analysis["generated_docstring"] = generated_docstring
                 logger.info("Generated Docstring:")

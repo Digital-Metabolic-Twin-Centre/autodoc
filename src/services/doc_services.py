@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -21,6 +22,7 @@ from utils.git_utils import (
     fetch_repo_tree,
 )
 from utils.output_paths import bind_repo_run_log_dir, build_repo_output_dir, build_repo_output_file
+from utils.output_paths import clear_repo_output_history, find_latest_repo_run_dir
 
 logger = get_logger(__name__)
 
@@ -59,7 +61,92 @@ def _file_matches_target_folders(file_path, target_folders):
     )
 
 
-def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=None):
+def _suggestion_key(
+    file_path: str,
+    function_name: str,
+    block_type: str,
+    line_number: int,
+    language: str,
+):
+    return (file_path, function_name, block_type, line_number, language)
+
+
+def _suggestion_fuzzy_key(
+    file_path: str,
+    function_name: str,
+    block_type: str,
+    language: str,
+):
+    return (file_path, function_name, block_type, language)
+
+
+def _load_reusable_suggestions(repo_path: str, provider: str, branch: str) -> dict:
+    latest_run_dir = find_latest_repo_run_dir(repo_path, provider)
+    if not latest_run_dir:
+        return {}
+    repo_run_dirs = sorted(
+        [
+            os.path.join(os.path.dirname(latest_run_dir), entry)
+            for entry in os.listdir(os.path.dirname(latest_run_dir))
+            if entry.startswith("app_")
+        ],
+        reverse=True,
+    )
+    for run_dir in repo_run_dirs:
+        suggestions_path = os.path.join(run_dir, "suggested_docstrings.json")
+        if not os.path.exists(suggestions_path):
+            continue
+        with open(suggestions_path, "r", encoding="utf-8") as file_handle:
+            payload = json.load(file_handle)
+        if payload.get("repo_path") != repo_path or payload.get("branch") != branch:
+            continue
+        suggestions = {"exact": {}, "fuzzy": {}}
+        for suggestion in payload.get("suggestions", []):
+            exact_key = _suggestion_key(
+                suggestion.get("file_path", ""),
+                suggestion.get("function_name", ""),
+                suggestion.get("block_type", ""),
+                suggestion.get("line_number", 0),
+                suggestion.get("language", ""),
+            )
+            fuzzy_key = _suggestion_fuzzy_key(
+                suggestion.get("file_path", ""),
+                suggestion.get("function_name", ""),
+                suggestion.get("block_type", ""),
+                suggestion.get("language", ""),
+            )
+            generated_docstring = suggestion.get("generated_docstring")
+            suggestions["exact"][exact_key] = generated_docstring
+            suggestions["fuzzy"].setdefault(fuzzy_key, generated_docstring)
+        return suggestions
+    return {"exact": {}, "fuzzy": {}}
+
+
+def _write_suggested_docstring_report(suggested_file: str, suggestions: list[dict]) -> None:
+    Path(suggested_file).parent.mkdir(parents=True, exist_ok=True)
+    with open(suggested_file, "w", encoding="utf-8") as file_handle:
+        for suggestion in suggestions:
+            file_handle.write(
+                "\n# File: "
+                f"{suggestion.get('file_name', '')}, Path: {suggestion.get('file_path', '')}, "
+                f"Function: {suggestion.get('function_name', '')}, "
+                f"Line: {suggestion.get('line_number', 0)}\n"
+            )
+            file_handle.write(
+                f"{format_docstring_for_language(suggestion['generated_docstring'], suggestion['language'])}\n"
+            )
+            file_handle.write(f"{'-' * 100}\n")
+
+
+def analyze_repo(
+    provider,
+    repo_url,
+    token,
+    branch,
+    target_folders=None,
+    model=None,
+    reuse_doc=False,
+):
     """
     Analyze a repository for source files missing docstring.
 
@@ -93,6 +180,11 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=N
     # Extract repo path from URL
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
+    existing_suggestions = {"exact": {}, "fuzzy": {}}
+    if reuse_doc:
+        existing_suggestions = _load_reusable_suggestions(repo_path, provider, branch)
+    else:
+        clear_repo_output_history(repo_path, provider)
 
     # Keep each repository analysis isolated under logs/<provider>/<repo>/app_<timestamp>/.
     bind_repo_run_log_dir(repo_path, provider)
@@ -100,13 +192,13 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=N
     suggested_file = build_repo_output_file(repo_path, provider, "suggested_docstring.txt")
     suggested_json_file = build_repo_output_file(repo_path, provider, "suggested_docstrings.json")
     block_analysis_file = build_repo_output_file(repo_path, provider, "block_analysis.csv")
-    if os.path.exists(suggested_file):
+    if not reuse_doc and os.path.exists(suggested_file):
         os.remove(suggested_file)
         logger.debug(f"Deleted {suggested_file}")
-    if os.path.exists(suggested_json_file):
+    if not reuse_doc and os.path.exists(suggested_json_file):
         os.remove(suggested_json_file)
         logger.debug(f"Deleted {suggested_json_file}")
-    if os.path.exists(block_analysis_file):
+    if not reuse_doc and os.path.exists(block_analysis_file):
         os.remove(block_analysis_file)
         logger.debug(f"Deleted {block_analysis_file}")
 
@@ -215,11 +307,28 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=N
                         }
                     ],
                 }
-                generated_docstring = generate_docstring_with_openai(
-                    content,
+                suggestion_key = _suggestion_key(
+                    file_path,
+                    f"Module: {file_name}",
+                    "module",
+                    1,
                     language,
-                    model=model,
                 )
+                fuzzy_suggestion_key = _suggestion_fuzzy_key(
+                    file_path,
+                    f"Module: {file_name}",
+                    "module",
+                    language,
+                )
+                generated_docstring = existing_suggestions["exact"].get(suggestion_key)
+                if not generated_docstring:
+                    generated_docstring = existing_suggestions["fuzzy"].get(fuzzy_suggestion_key)
+                if not generated_docstring:
+                    generated_docstring = generate_docstring_with_openai(
+                        content,
+                        language,
+                        model=model,
+                    )
 
                 if generated_docstring:
                     block_analysis["docstring_analysis"][0]["generated_docstring"] = (
@@ -251,6 +360,7 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=N
             language=language,
             suggested_file=suggested_file,
             model=model,
+            existing_suggestions=existing_suggestions,
         )
         block_analysis_list.append(block_analysis)
 
@@ -302,6 +412,7 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=N
             suggestions.append(
                 {
                     "file_path": file_path,
+                    "file_name": block_analysis.get("file_name", ""),
                     "function_name": analysis.get("function_name", ""),
                     "block_type": analysis.get("block_type", ""),
                     "line_number": analysis.get("line_number", 0),
@@ -309,6 +420,8 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=N
                     "generated_docstring": generated_docstring,
                 }
             )
+
+    _write_suggested_docstring_report(suggested_file, suggestions)
 
     with open(suggested_json_file, "w", encoding="utf-8") as file_handle:
         json.dump(

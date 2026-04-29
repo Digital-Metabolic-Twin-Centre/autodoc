@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 
 from config.log_config import LOG_DIR, RUN_TIMESTAMP, bind_repo_log_dir
 
@@ -26,3 +27,23 @@ def build_repo_output_file(repo_path: str, provider: str, filename: str) -> str:
 
 def bind_repo_run_log_dir(repo_path: str, provider: str) -> str:
     return bind_repo_log_dir(build_repo_output_dir(repo_path, provider))
+
+
+def clear_repo_output_history(repo_path: str, provider: str) -> None:
+    repo_dir = _repo_base_dir(repo_path, provider)
+    if os.path.isdir(repo_dir):
+        shutil.rmtree(repo_dir)
+
+
+def find_latest_repo_run_dir(repo_path: str, provider: str) -> str | None:
+    repo_dir = _repo_base_dir(repo_path, provider)
+    if not os.path.isdir(repo_dir):
+        return None
+    run_dirs = [
+        os.path.join(repo_dir, entry)
+        for entry in os.listdir(repo_dir)
+        if entry.startswith("app_") and os.path.isdir(os.path.join(repo_dir, entry))
+    ]
+    if not run_dirs:
+        return None
+    return sorted(run_dirs)[-1]
