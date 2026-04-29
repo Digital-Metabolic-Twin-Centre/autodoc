@@ -98,3 +98,35 @@ def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(
     assert captured["model"] == "gpt-4.1-mini"
     assert "File: worker.py, Path: worker.py, Function: run_task, Line: 1" in content
     assert "Run the task." in content
+
+
+def test_analyze_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(monkeypatch):
+    def fail_if_called(code, language, model=None):
+        raise AssertionError("OpenAI should not be called when a fuzzy cached suggestion exists")
+
+    monkeypatch.setattr(
+        "utils.docstring_validation.generate_docstring_with_openai",
+        fail_if_called,
+    )
+
+    blocks = [
+        "# --- Code Block starts at line 25 ---\n"
+        "def run_task():\n"
+        "    return True\n"
+        "# --- Code Block ends at line 26 ---"
+    ]
+
+    result = analyze_docstring_in_blocks(
+        blocks,
+        file_name="worker.py",
+        file_path="worker.py",
+        language="python",
+        existing_suggestions={
+            "exact": {},
+            "fuzzy": {
+                ("worker.py", "run_task", "function", "python"): "Run the task.",
+            },
+        },
+    )
+
+    assert result["docstring_analysis"][0]["generated_docstring"] == "Run the task."

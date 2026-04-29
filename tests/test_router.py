@@ -24,8 +24,8 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
 
     monkeypatch.setattr(
         "router.router.analyze_repo",
-        lambda provider, repo_url, token, branch, target_folders, model: (
-            captured.update({"model": model}) or "analysis.csv",
+        lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
+            captured.update({"model": model, "reuse_doc": reuse_doc}) or "analysis.csv",
             [{"file_name": "a.py"}],
         ),
     )
@@ -47,10 +47,11 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
     assert response.status_code == 200
     assert response.json()["status"] == "success"
     assert captured["model"] == "gpt-4o-mini"
+    assert captured["reuse_doc"] is False
 
 
 def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch):
-    def fail_analysis(provider, repo_url, token, branch, target_folders, model):
+    def fail_analysis(provider, repo_url, token, branch, target_folders, model, reuse_doc):
         raise RepoAnalysisError(
             "Repository was reachable, but no supported source files were found.",
             status_code=404,
@@ -75,8 +76,9 @@ def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch)
 def test_generate_endpoint_uses_provided_model(monkeypatch):
     captured = {}
 
-    def fake_analyze_repo(provider, repo_url, token, branch, target_folders, model):
+    def fake_analyze_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
         captured["model"] = model
+        captured["reuse_doc"] = reuse_doc
         return "analysis.csv", [{"file_name": "a.py"}]
 
     monkeypatch.setattr("router.router.analyze_repo", fake_analyze_repo)
@@ -98,6 +100,35 @@ def test_generate_endpoint_uses_provided_model(monkeypatch):
 
     assert response.status_code == 200
     assert captured["model"] == "gpt-4.1-mini"
+    assert captured["reuse_doc"] is False
+
+
+def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
+    captured = {}
+
+    def fake_analyze_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
+        captured["reuse_doc"] = reuse_doc
+        return "analysis.csv", [{"file_name": "a.py"}]
+
+    monkeypatch.setattr("router.router.analyze_repo", fake_analyze_repo)
+    monkeypatch.setattr(
+        "router.router.create_sphinx_setup",
+        lambda provider, repo_url, token, branch, analysis_file: True,
+    )
+
+    response = client.post(
+        "/generate",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "reuse_doc": True,
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["reuse_doc"] is True
 
 
 def test_publish_pages_returns_specific_publish_error(monkeypatch):
