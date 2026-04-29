@@ -1,8 +1,10 @@
 import textwrap
+import json
 from pathlib import Path
 
 from services.docstring_pr_services import (
     PatchedPythonFile,
+    _load_generated_suggestions,
     _run_ruff_on_patched_files,
     _suggestion_generator,
     patch_python_docstrings,
@@ -119,6 +121,83 @@ def test_suggestion_generator_matches_by_name_and_kind():
     )
 
     assert '    """Add two values."""' in patched.content
+
+
+def test_load_generated_suggestions_reads_latest_repo_run_dir(tmp_path, monkeypatch):
+    repo_path = "example/project"
+    repo_key = "example__project"
+    repo_dir = tmp_path / "github" / repo_key
+    latest_run_dir = repo_dir / "app_20260429_120000"
+    latest_run_dir.mkdir(parents=True)
+    (latest_run_dir / "suggested_docstrings.json").write_text(
+        json.dumps(
+            {
+                "provider": "github",
+                "repo_path": repo_path,
+                "branch": "main",
+                "suggestions": [
+                    {
+                        "file_path": "src/example.py",
+                        "function_name": "add",
+                        "block_type": "function",
+                        "language": "python",
+                        "generated_docstring": "Add two values.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
+
+    suggestions = _load_generated_suggestions(repo_path, "main")
+
+    assert suggestions == {
+        "src/example.py": [
+            {
+                "file_path": "src/example.py",
+                "function_name": "add",
+                "block_type": "function",
+                "language": "python",
+                "generated_docstring": "Add two values.",
+            }
+        ]
+    }
+
+
+def test_load_generated_suggestions_skips_newer_run_dirs_without_suggestion_file(
+    tmp_path, monkeypatch
+):
+    repo_path = "example/project"
+    repo_key = "example__project"
+    repo_dir = tmp_path / "github" / repo_key
+    (repo_dir / "app_20260429_130000").mkdir(parents=True)
+    older_run_dir = repo_dir / "app_20260429_120000"
+    older_run_dir.mkdir(parents=True)
+    (older_run_dir / "suggested_docstrings.json").write_text(
+        json.dumps(
+            {
+                "provider": "github",
+                "repo_path": repo_path,
+                "branch": "main",
+                "suggestions": [
+                    {
+                        "file_path": "src/example.py",
+                        "function_name": "add",
+                        "block_type": "function",
+                        "language": "python",
+                        "generated_docstring": "Add two values.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
+
+    suggestions = _load_generated_suggestions(repo_path, "main")
+
+    assert suggestions["src/example.py"][0]["generated_docstring"] == "Add two values."
 
 
 def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):

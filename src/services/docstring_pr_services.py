@@ -18,7 +18,7 @@ from utils.git_utils import (
     fetch_content_from_github,
     fetch_repo_tree,
 )
-from utils.output_paths import build_repo_output_file
+from utils.output_paths import build_repo_output_file, find_latest_repo_run_dir
 
 logger = get_logger(__name__)
 
@@ -152,7 +152,26 @@ def patch_python_docstrings(
 
 
 def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[dict]]:
-    suggestions_path = build_repo_output_file(repo_path, "github", "suggested_docstrings.json")
+    latest_run_dir = find_latest_repo_run_dir(repo_path, "github")
+    suggestions_path = None
+    if latest_run_dir:
+        repo_run_root = os.path.dirname(latest_run_dir)
+        run_dirs = sorted(
+            (
+                os.path.join(repo_run_root, entry)
+                for entry in os.listdir(repo_run_root)
+                if entry.startswith("app_")
+                and os.path.isdir(os.path.join(repo_run_root, entry))
+            ),
+            reverse=True,
+        )
+        for run_dir in run_dirs:
+            candidate = os.path.join(run_dir, "suggested_docstrings.json")
+            if os.path.exists(candidate):
+                suggestions_path = candidate
+                break
+    if suggestions_path is None:
+        suggestions_path = build_repo_output_file(repo_path, "github", "suggested_docstrings.json")
     if not os.path.exists(suggestions_path):
         raise DocstringPullRequestError(
             "No generated docstring suggestions found. Run /generate for this repo "
