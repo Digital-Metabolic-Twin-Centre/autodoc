@@ -197,6 +197,17 @@ def test_extract_autoapi_module_names_reads_modules_from_sphinx_error():
     assert modules == ["autoapi_include.job_views", "settings_docker"]
 
 
+def test_extract_autoapi_module_names_reads_modules_from_docutils_errors():
+    build_output = (
+        "/tmp/repo/docs/source/autoapi/urls_v1/index.rst:18: ERROR: Unexpected indentation.\n"
+        "/tmp/repo/docs/source/autoapi/tools/gpu_embed_service/index.rst:4: WARNING: x\n"
+    )
+
+    modules = _extract_autoapi_module_names(build_output)
+
+    assert modules == ["urls_v1", "tools.gpu_embed_service"]
+
+
 def test_find_autoapi_skip_candidates_matches_module_leaf(tmp_path):
     autoapi_dir = tmp_path / "autoapi_include"
     (autoapi_dir / "api" / "views").mkdir(parents=True)
@@ -212,6 +223,18 @@ def test_find_autoapi_skip_candidates_matches_module_leaf(tmp_path):
     ]
     assert [path.relative_to(tmp_path).as_posix() for path in settings_matches] == [
         "autoapi_include/webKinPred/settings_docker.py"
+    ]
+
+
+def test_find_autoapi_skip_candidates_prefers_full_module_path(tmp_path):
+    autoapi_dir = tmp_path / "autoapi_include"
+    (autoapi_dir / "api").mkdir(parents=True)
+    (autoapi_dir / "api" / "urls_v1.py").write_text("", encoding="utf-8")
+
+    matches = _find_autoapi_skip_candidates(str(tmp_path), "api.urls_v1")
+
+    assert [path.relative_to(tmp_path).as_posix() for path in matches] == [
+        "autoapi_include/api/urls_v1.py"
     ]
 
 

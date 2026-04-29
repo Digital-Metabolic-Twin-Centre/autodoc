@@ -3,8 +3,8 @@ import re
 import subprocess
 import sys
 import tempfile
-import urllib
 from pathlib import Path
+from urllib.parse import quote_plus
 
 import pandas as pd
 import requests
@@ -57,6 +57,10 @@ def _raise_publish_error(message: str) -> None:
 
 def _extract_autoapi_module_names(build_output: str) -> list[str]:
     module_names = re.findall(r"module '([^']+)'", build_output or "")
+    module_names.extend(
+        match.replace("/", ".")
+        for match in re.findall(r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or "")
+    )
     unique_module_names = []
     seen = set()
     for module_name in module_names:
@@ -71,6 +75,14 @@ def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]
     autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
     if not autoapi_root.exists():
         return []
+    normalized_module_path = module_name.replace(".", "/")
+    path_candidates = [
+        autoapi_root / f"{normalized_module_path}.py",
+        autoapi_root / normalized_module_path / "__init__.py",
+    ]
+    existing_path_candidates = [candidate for candidate in path_candidates if candidate.exists()]
+    if existing_path_candidates:
+        return existing_path_candidates
     module_leaf = module_name.split(".")[-1]
     matches = []
     for path in autoapi_root.rglob("*.py"):
@@ -135,7 +147,7 @@ def _run_sphinx_build_with_autoapi_skips(temp_dir: str) -> subprocess.CompletedP
                     {
                         "file": relative_candidate,
                         "module": module_name,
-                        "reason": "AutoAPI relative import failure during Sphinx build",
+                        "reason": "AutoAPI module failure during Sphinx build",
                     }
                 )
                 candidate.unlink(missing_ok=True)
@@ -272,8 +284,8 @@ def _remote_text_file_exists(
             ).status_code
             == 200
         )
-    project_path_encoded = urllib.parse.quote_plus(repo_path)
-    file_path_encoded = urllib.parse.quote_plus(file_path)
+    project_path_encoded = quote_plus(repo_path)
+    file_path_encoded = quote_plus(file_path)
     return (
         requests.get(
             (
@@ -595,7 +607,9 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
     return True
 
 
-def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: dict = None) -> bool:
+def trigger_gitlab_pipeline(
+    repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None
+) -> bool:
     """
     Triggers a GitLab pipeline for the given project and branch.
 
@@ -608,7 +622,7 @@ def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: d
     Returns:
         bool: True if the pipeline was triggered successfully, False otherwise.
     """
-    project_path_encoded = urllib.parse.quote_plus(repo_url)
+    project_path_encoded = quote_plus(repo_url)
     api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/trigger/pipeline"
     headers = {"PRIVATE-TOKEN": token}
     trigger_token = os.getenv("CI_TRIGGER_PIPELINE_TOKEN")
