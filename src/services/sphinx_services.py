@@ -3,6 +3,14 @@ import re
 import subprocess
 import sys
 import tempfile
+from ast import (
+    AsyncFunctionDef,
+    ClassDef,
+    FunctionDef,
+    ImportFrom,
+    Module,
+    parse,
+)
 from pathlib import Path
 from urllib.parse import quote_plus
 
@@ -44,6 +52,33 @@ from utils.git_utils import (
 
 logger = get_logger(__name__)
 SAMPLE_DOCS_DIR = Path(__file__).resolve().parents[2] / "Documentation_sample"
+AUTOAPI_CONF_MARKER_START = "# AUTODOC AUTOAPI RUNTIME SETTINGS START"
+AUTOAPI_CONF_MARKER_END = "# AUTODOC AUTOAPI RUNTIME SETTINGS END"
+AUTOAPI_WARNINGS_TO_SUPPRESS = ["autoapi.python_import_resolution"]
+DEFAULT_AUTOAPI_IGNORE_PATTERNS = [
+    "*/migrations/*",
+    "*/migrations.py",
+    "*/tests/*",
+    "*/test_*.py",
+    "*/urls.py",
+    "*/urls_*.py",
+    "*/views.py",
+    "*/views_*.py",
+    "*/settings.py",
+    "*/settings_*.py",
+    "*/asgi.py",
+    "*/wsgi.py",
+]
+RISKY_AUTOAPI_PATH_PATTERNS = [
+    re.compile(r"(^|/)migrations/"),
+    re.compile(r"(^|/)migrations\.py$"),
+    re.compile(r"(^|/)tests?/"),
+    re.compile(r"(^|/)urls(_v\d+)?\.py$"),
+    re.compile(r"(^|/)views?(_.*)?\.py$"),
+    re.compile(r"(^|/)settings?(_.*)?\.py$"),
+    re.compile(r"(^|/)(asgi|wsgi)\.py$"),
+]
+LOW_CONTENT_MIN_MEANINGFUL_LINES = 8
 
 
 class PublishPagesError(RuntimeError):
@@ -71,6 +106,50 @@ def _extract_autoapi_module_names(build_output: str) -> list[str]:
     return unique_module_names
 
 
+def _extract_module_name_from_autoapi_path(autoapi_root: Path, file_path: Path) -> str:
+    relative_file = file_path.relative_to(autoapi_root).as_posix()
+    if relative_file.endswith("/__init__.py"):
+        return relative_file[: -len("/__init__.py")].replace("/", ".")
+    if relative_file.endswith(".py"):
+        return relative_file[:-3].replace("/", ".")
+    return relative_file.replace("/", ".")
+
+
+def _to_autoapi_ignore_pattern(relative_file: str) -> str:
+    return f"*/{relative_file.lstrip('/')}"
+
+
+def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, str]:
+    relative_file = file_path.relative_to(autoapi_root).as_posix()
+    for pattern in RISKY_AUTOAPI_PATH_PATTERNS:
+        if pattern.search(relative_file):
+            return False, f"path-pattern:{pattern.pattern}"
+
+    file_text = file_path.read_text(encoding="utf-8")
+    try:
+        parsed: Module = parse(file_text)
+    except SyntaxError:
+        return False, "syntax-error"
+
+    if any(
+        isinstance(node, ImportFrom) and any(alias.name == "*" for alias in node.names)
+        for node in parsed.body
+    ):
+        return False, "import-star"
+
+    meaningful_lines = [line for line in file_text.splitlines() if line.strip()]
+    if len(meaningful_lines) < LOW_CONTENT_MIN_MEANINGFUL_LINES:
+        return False, "low-content"
+
+    has_public_shape = any(
+        isinstance(node, (FunctionDef, AsyncFunctionDef, ClassDef)) for node in parsed.body
+    )
+    if not has_public_shape:
+        return False, "non-meaningful-module"
+
+    return True, "included"
+
+
 def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]:
     autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
     if not autoapi_root.exists():
@@ -91,6 +170,91 @@ def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]
     return matches
 
 
+def _collect_prebuild_autoapi_ignores(temp_dir: str) -> tuple[list[str], list[dict[str, str]]]:
+    autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
+    if not autoapi_root.exists():
+        return [], []
+
+    ignore_patterns: list[str] = []
+    skipped_files: list[dict[str, str]] = []
+    for file_path in autoapi_root.rglob("*.py"):
+        should_include, reason = _classify_autoapi_file(autoapi_root, file_path)
+        if should_include:
+            continue
+        relative_file = file_path.relative_to(autoapi_root).as_posix()
+        module_name = _extract_module_name_from_autoapi_path(autoapi_root, file_path)
+        ignore_patterns.append(_to_autoapi_ignore_pattern(relative_file))
+        skipped_files.append(
+            {
+                "file": f"{AUTOAPI_DIRECTORY}/{relative_file}",
+                "module": module_name,
+                "reason": reason,
+            }
+        )
+    return ignore_patterns, skipped_files
+
+
+def _module_names_to_ignore_patterns(
+    temp_dir: str, module_names: list[str]
+) -> tuple[list[str], list[dict[str, str]]]:
+    autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
+    if not autoapi_root.exists():
+        return [], []
+
+    ignore_patterns: list[str] = []
+    skipped_files: list[dict[str, str]] = []
+    for module_name in module_names:
+        for candidate in _find_autoapi_skip_candidates(temp_dir, module_name):
+            relative_file = candidate.relative_to(autoapi_root).as_posix()
+            ignore_patterns.append(_to_autoapi_ignore_pattern(relative_file))
+            skipped_files.append(
+                {
+                    "file": f"{AUTOAPI_DIRECTORY}/{relative_file}",
+                    "module": module_name,
+                    "reason": "fallback-module-failure",
+                }
+            )
+    return ignore_patterns, skipped_files
+
+
+def _format_python_list(values: list[str]) -> str:
+    return "[\n" + "".join(f"    {value!r},\n" for value in values) + "]"
+
+
+def _apply_autoapi_runtime_settings(conf_py_path: str, ignore_patterns: list[str]) -> None:
+    conf_path = Path(conf_py_path)
+    if not conf_path.exists():
+        return
+
+    unique_ignores = sorted(set(DEFAULT_AUTOAPI_IGNORE_PATTERNS + ignore_patterns))
+    runtime_block = (
+        f"{AUTOAPI_CONF_MARKER_START}\n"
+        f"autoapi_ignore = {_format_python_list(unique_ignores)}\n"
+        f"suppress_warnings = {_format_python_list(AUTOAPI_WARNINGS_TO_SUPPRESS)}\n"
+        f"{AUTOAPI_CONF_MARKER_END}\n"
+    )
+    conf_text = conf_path.read_text(encoding="utf-8")
+    marker_pattern = re.compile(
+        rf"{re.escape(AUTOAPI_CONF_MARKER_START)}.*?{re.escape(AUTOAPI_CONF_MARKER_END)}\n?",
+        flags=re.DOTALL,
+    )
+    if marker_pattern.search(conf_text):
+        conf_text = marker_pattern.sub(runtime_block, conf_text)
+    else:
+        conf_text = conf_text.rstrip() + "\n\n" + runtime_block
+    conf_path.write_text(conf_text, encoding="utf-8")
+
+
+def _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, "-m", "sphinx", "-b", "html", DOCS_SRC, BUILD_DIR],
+        cwd=temp_dir,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+
+
 def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
     if not skipped_files:
         return
@@ -107,56 +271,49 @@ def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
             report_file.write(f"  reason: {item['reason']}\n\n")
 
 
-def _run_sphinx_build_with_autoapi_skips(temp_dir: str) -> subprocess.CompletedProcess:
-    skipped_files: list[dict] = []
-    attempted_modules: set[str] = set()
+def _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str) -> subprocess.CompletedProcess:
+    prebuild_ignore_patterns, prebuild_skipped = _collect_prebuild_autoapi_ignores(temp_dir)
+    active_ignore_patterns = list(prebuild_ignore_patterns)
+    skipped_files = list(prebuild_skipped)
 
-    while True:
-        build_result = subprocess.run(
-            [sys.executable, "-m", "sphinx", "-W", "-b", "html", DOCS_SRC, BUILD_DIR],
-            cwd=temp_dir,
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
-        if build_result.returncode == 0:
-            _write_skipped_autoapi_report(skipped_files)
-            return build_result
+    logger.info(
+        "AutoAPI pre-filter completed: included rules=%s, proactively skipped files=%s.",
+        len(sorted(set(DEFAULT_AUTOAPI_IGNORE_PATTERNS + active_ignore_patterns))),
+        len(prebuild_skipped),
+    )
+    _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
+    build_result = _build_sphinx_once(temp_dir)
+    if build_result.returncode == 0:
+        _write_skipped_autoapi_report(skipped_files)
+        return build_result
 
-        build_output = "\n".join(
-            part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
-        )
-        module_names = _extract_autoapi_module_names(build_output)
-        skipped_any = False
+    build_output = "\n".join(
+        part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
+    )
+    failed_modules = _extract_autoapi_module_names(build_output)
+    fallback_ignore_patterns, fallback_skipped = _module_names_to_ignore_patterns(
+        temp_dir, failed_modules
+    )
+    new_fallback_ignores = sorted(set(fallback_ignore_patterns) - set(active_ignore_patterns))
+    if not new_fallback_ignores:
+        _write_skipped_autoapi_report(skipped_files)
+        return build_result
 
-        for module_name in module_names:
-            if module_name in attempted_modules:
-                continue
-            candidates = _find_autoapi_skip_candidates(temp_dir, module_name)
-            if not candidates:
-                attempted_modules.add(module_name)
-                continue
-            for candidate in candidates:
-                relative_candidate = candidate.relative_to(Path(temp_dir)).as_posix()
-                logger.warning(
-                    "Skipping AutoAPI file %s after build failure for module %s.",
-                    relative_candidate,
-                    module_name,
-                )
-                skipped_files.append(
-                    {
-                        "file": relative_candidate,
-                        "module": module_name,
-                        "reason": "AutoAPI module failure during Sphinx build",
-                    }
-                )
-                candidate.unlink(missing_ok=True)
-                skipped_any = True
-            attempted_modules.add(module_name)
-
-        if not skipped_any:
-            _write_skipped_autoapi_report(skipped_files)
-            return build_result
+    skipped_files.extend(
+        item
+        for item in fallback_skipped
+        if _to_autoapi_ignore_pattern(item["file"].replace(f"{AUTOAPI_DIRECTORY}/", ""))
+        in new_fallback_ignores
+    )
+    active_ignore_patterns.extend(new_fallback_ignores)
+    logger.warning(
+        "AutoAPI fallback activated. Added %s module ignores after initial Sphinx failure.",
+        len(new_fallback_ignores),
+    )
+    _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
+    retry_result = _build_sphinx_once(temp_dir)
+    _write_skipped_autoapi_report(skipped_files)
+    return retry_result
 
 
 def _project_name_from_repo_path(repo_path: str) -> str:
@@ -578,7 +735,7 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
 
-        build_result = _run_sphinx_build_with_autoapi_skips(temp_dir)
+        build_result = _run_sphinx_build_with_autoapi_filters(temp_dir, conf_py_path)
         if build_result.returncode != 0:
             build_output = "\n".join(
                 part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
