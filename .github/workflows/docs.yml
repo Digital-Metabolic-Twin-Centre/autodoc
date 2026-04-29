@@ -110,7 +110,7 @@ jobs:
         run: uv sync --group docs --no-install-project
 
       - name: Build documentation
-        run: uv run sphinx-build -W -b html docs/source docs/build/html
+        run: uv run sphinx-build -W -b html docs docs/build/html
 
       - name: Upload documentation artifact
         uses: actions/upload-pages-artifact@v3

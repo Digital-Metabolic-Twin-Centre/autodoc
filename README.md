@@ -266,7 +266,7 @@ Use a review branch, not a production branch:
 ```sh
 uv run ruff check src tests
 uv run pytest
-uv run sphinx-build -b html docs/source docs/build/html
+uv run sphinx-build -b html docs docs/build/html
 ```
 
 Or run the combined helper:

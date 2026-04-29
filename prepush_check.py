@@ -86,7 +86,7 @@ def main() -> int:
                 "-W",
                 "-b",
                 "html",
-                "docs/source",
+                "docs",
                 "docs/build/html",
             ],
         )

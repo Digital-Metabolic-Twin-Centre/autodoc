@@ -8,7 +8,7 @@ include:
 
 variables:
   PY_VERSION: "3.11"
-  DOCS_SRC: "docs/source"
+  DOCS_SRC: "docs"
   BUILD_DIR: "docs/build/html"
 
 docs:
