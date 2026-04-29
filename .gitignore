@@ -246,3 +246,8 @@ coverage.xml
 htmlcov/
 .coverage
 .coverage.*
+
+docs/_build/
+dist/
+build/
+node_modules/

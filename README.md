@@ -13,9 +13,9 @@ site and publishes the generated HTML to `gh-pages`.
 - Reads repository trees from GitHub or GitLab using provider APIs.
 - Scans Python, JavaScript, TypeScript, and MATLAB source files.
 - Detects function, class, and module-level documentation coverage.
-- Writes analysis results to `logs/<provider>/<repo>/block_analysis.csv`.
+- Writes analysis results to `logs/<provider>/<repo>/app_<timestamp>/block_analysis.csv`.
 - Writes OpenAI-generated suggestions for missing docstrings to
-  `logs/<provider>/<repo>/suggested_docstring.txt`.
+  `logs/<provider>/<repo>/app_<timestamp>/suggested_docstring.txt`.
 - Can open a GitHub pull request with generated Python docstring suggestions for review.
 - Copies files with at least 75% docstring coverage into `autoapi_include/` in the target
   repository.
@@ -48,12 +48,13 @@ Runtime output directories are created as needed:
 
 ```text
 logs/
-├── app_<timestamp>.log
 └── github/
     └── owner__repository/
-        ├── block_analysis.csv
-        ├── suggested_docstring.txt
-        └── suggested_docstrings.json
+        └── app_<timestamp>/
+            ├── app.log
+            ├── block_analysis.csv
+            ├── suggested_docstring.txt
+            └── suggested_docstrings.json
 ```
 
 ## Requirements

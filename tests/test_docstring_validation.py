@@ -68,7 +68,14 @@ def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(
             captured.update({"model": model}) or "Run the task."
         ),
     )
-    suggested_file = tmp_path / "logs" / "github" / "owner__repo" / "suggested_docstring.txt"
+    suggested_file = (
+        tmp_path
+        / "logs"
+        / "app_20260428_000000"
+        / "github"
+        / "owner__repo"
+        / "suggested_docstring.txt"
+    )
     suggested_file.parent.mkdir(parents=True, exist_ok=True)
 
     blocks = [

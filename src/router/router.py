@@ -5,12 +5,14 @@ from fastapi import APIRouter, HTTPException, status
 from config.log_config import get_logger
 from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
 from services.doc_services import RepoAnalysisError, analyze_repo
-from utils.docstring_generation import DEFAULT_OPENAI_MODEL
 from services.docstring_pr_services import (
     DocstringPullRequestError,
     create_python_docstring_pull_request,
 )
 from services.sphinx_services import PublishPagesError, create_sphinx_setup, publish_github_pages
+from utils.docstring_generation import DEFAULT_OPENAI_MODEL
+from utils.git_utils import extract_repo_path
+from utils.output_paths import bind_repo_run_log_dir
 
 logger = get_logger(__name__)
 
@@ -97,6 +99,7 @@ async def generate_docs(req: RepoRequest):
 
 @router.post("/publish-pages")
 async def publish_pages(req: PublishPagesRequest):
+    bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
     logger.info(
         "/publish-pages endpoint called with repo_url=%s, branch=%s",
         req.repo_url,
@@ -140,6 +143,7 @@ async def publish_pages(req: PublishPagesRequest):
 @router.post("/suggest-python-docstrings-pr")
 async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
     suggestion_branch = req.suggestion_branch or _default_docstring_suggestion_branch()
+    bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
     logger.info(
         "/suggest-python-docstrings-pr endpoint called with provider=%s, repo_url=%s, "
         "base_branch=%s, suggestion_branch=%s",

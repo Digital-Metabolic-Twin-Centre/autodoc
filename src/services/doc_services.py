@@ -20,7 +20,7 @@ from utils.git_utils import (
     fetch_content_from_gitlab,
     fetch_repo_tree,
 )
-from utils.output_paths import build_repo_output_dir, build_repo_output_file
+from utils.output_paths import bind_repo_run_log_dir, build_repo_output_dir, build_repo_output_file
 
 logger = get_logger(__name__)
 
@@ -94,7 +94,8 @@ def analyze_repo(provider, repo_url, token, branch, target_folders=None, model=N
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
 
-    # Keep each repository analysis isolated under logs/<provider>/<repo>/.
+    # Keep each repository analysis isolated under logs/<provider>/<repo>/app_<timestamp>/.
+    bind_repo_run_log_dir(repo_path, provider)
     output_dir = build_repo_output_dir(repo_path, provider)
     suggested_file = build_repo_output_file(repo_path, provider, "suggested_docstring.txt")
     suggested_json_file = build_repo_output_file(repo_path, provider, "suggested_docstrings.json")
