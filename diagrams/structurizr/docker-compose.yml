@@ -1,0 +1,13 @@
+services:
+  structurizr:
+    image: structurizr/structurizr
+    container_name: structurizr
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/usr/local/structurizr
+    command: local
+    restart: unless-stopped
+
+    environment:
+      - STRUCTURIZR_WORKSPACE=workspace.dsl
