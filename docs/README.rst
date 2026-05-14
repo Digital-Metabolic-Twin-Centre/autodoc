@@ -8,8 +8,8 @@ Local preview
 
 .. code-block:: bash
 
-   cd Documentation
+   cd docs
    python -m pip install -r requirements.txt
    make html
 
-Open ``Documentation/_build/html/index.html`` in your browser.
+Open ``docs/_build/html/index.html`` in your browser.

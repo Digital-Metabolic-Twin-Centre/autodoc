@@ -33,7 +33,9 @@ The current workflow is branch-first:
 ├── Dockerfile
 ├── docker-compose.yaml
 ├── docs/
-│   └── source/                 # Sphinx docs for this Auto-Doc service
+│   ├── conf.py
+│   ├── index.rst
+│   └── ...                     # Sphinx docs for this Auto-Doc service
 ├── prepush_check.py
 ├── pyproject.toml
 ├── src/
@@ -234,17 +236,16 @@ When `/generate` prepares a target repo branch, it can add or update files like:
 autoapi_include/
 docs/
 ├── Makefile
-└── source/
-    ├── conf.py
-    ├── index.rst
-    ├── README.rst
-    ├── _static/custom-wide.css
-    ├── logbook/weekly_updates.rst
-    └── project/
-        ├── overview.rst
-        ├── objectives.rst
-        ├── plan.rst
-        └── results.rst
+├── conf.py
+├── index.rst
+├── README.rst
+├── _static/custom-wide.css
+├── logbook/weekly_updates.rst
+└── project/
+    ├── overview.rst
+    ├── objectives.rst
+    ├── plan.rst
+    └── results.rst
 update_conf.py
 ```
 
