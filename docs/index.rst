@@ -1,4 +1,4 @@
-Student Project Documentation
+Auto Doc
 =============================
 
 Welcome to your project docs.

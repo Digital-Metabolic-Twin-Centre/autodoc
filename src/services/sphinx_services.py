@@ -55,7 +55,7 @@ DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
 SAMPLE_DOCS_FALLBACK_TEXTS = {
     "conf.py": (
         'from datetime import datetime\n\n'
-        'project = "Student Project Documentation"\n'
+        'project = "Auto Doc"\n'
         'author = "Digital Metabolic Twin Centre"\n'
         'copyright = f"{datetime.now().year}, {author}"\n\n'
         "extensions = [\n"
@@ -69,7 +69,7 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         'html_css_files = ["custom-wide.css"]\n'
     ),
     "index.rst": (
-        "Student Project Documentation\n"
+        "Auto Doc\n"
         "=============================\n\n"
         "Welcome to your project docs.\n\n"
         ".. toctree::\n"
