@@ -1,5 +1,139 @@
+:root {
+    --autodoc-ink: #1f2933;
+    --autodoc-muted: #52606d;
+    --autodoc-accent: #0f766e;
+    --autodoc-border: #d9e2ec;
+    --autodoc-surface: rgba(255, 253, 248, 0.9);
+    --autodoc-surface-strong: #f4efe4;
+}
+
+.wy-body-for-nav {
+    background:
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 28%),
+        linear-gradient(180deg, #fcfbf7 0%, #f3efe5 100%);
+}
+
+.wy-nav-side {
+    background: linear-gradient(180deg, #163a39 0%, #102a2c 100%);
+}
+
+.wy-side-nav-search,
+.wy-nav-top {
+    background: #0f766e;
+}
+
+.wy-menu-vertical a {
+    color: #d9f3ee;
+}
+
+.wy-menu-vertical a:hover,
+.wy-menu-vertical a:focus,
+.wy-menu-vertical li.current > a {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.wy-nav-content-wrap {
+    background: transparent;
+}
+
 .wy-nav-content {
     max-width: none !important;
     width: 100% !important;
     margin: 0 !important;
+    padding: 2rem 3rem 3rem !important;
+    color: var(--autodoc-ink);
+}
+
+.wy-breadcrumbs,
+.rst-content {
+    color: var(--autodoc-ink);
+}
+
+.rst-content h1,
+.rst-content h2,
+.rst-content h3 {
+    color: #102a43;
+}
+
+.rst-content h1 {
+    font-size: 2.4rem;
+    letter-spacing: -0.03em;
+}
+
+.rst-content p,
+.rst-content li,
+.rst-content td,
+.rst-content th {
+    line-height: 1.7;
+}
+
+.hero-panel {
+    margin: 0 0 2rem;
+    padding: 2rem;
+    border: 1px solid rgba(15, 118, 110, 0.14);
+    border-radius: 24px;
+    background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(255, 255, 255, 0.82)),
+        var(--autodoc-surface);
+    box-shadow: 0 18px 45px rgba(16, 42, 67, 0.08);
+}
+
+.hero-panel h1 {
+    margin: 0.2rem 0 0.8rem;
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    line-height: 1.08;
+}
+
+.hero-panel .eyebrow {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--autodoc-accent);
+}
+
+.hero-panel .lead {
+    max-width: 70rem;
+    margin: 0;
+    font-size: 1.08rem;
+    color: var(--autodoc-muted);
+}
+
+.rst-content table.docutils,
+.rst-content table.field-list {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--autodoc-border);
+    box-shadow: 0 10px 30px rgba(16, 42, 67, 0.05);
+}
+
+.rst-content table.docutils td,
+.rst-content table.docutils th {
+    padding: 0.85rem 1rem;
+}
+
+.rst-content table.docutils th {
+    background: var(--autodoc-surface-strong);
+}
+
+.rst-content code.literal,
+.rst-content tt.literal {
+    color: #0b6e69;
+}
+
+@media screen and (max-width: 768px) {
+    .wy-nav-content {
+        padding: 1.25rem 1rem 2rem !important;
+    }
+
+    .hero-panel {
+        padding: 1.25rem;
+        border-radius: 18px;
+    }
+
+    .rst-content h1 {
+        font-size: 2rem;
+    }
 }
