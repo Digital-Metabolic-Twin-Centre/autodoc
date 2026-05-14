@@ -29,19 +29,23 @@
 .wy-menu-vertical a:hover,
 .wy-menu-vertical a:focus,
 .wy-menu-vertical li.current > a {
-    background: rgba(255, 255, 255, 0.08);
-    color: #ffffff;
+    background: rgba(190, 198, 205, 0.22);
+    color: #000000;
 }
 
 .wy-nav-content-wrap {
     background: transparent;
+    min-height: 100vh;
 }
 
 .wy-nav-content {
     max-width: none !important;
     width: 100% !important;
     margin: 0 !important;
-    padding: 2rem 3rem 3rem !important;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 3rem 1rem !important;
     color: var(--autodoc-ink);
 }
 
@@ -195,9 +199,17 @@
     color: #0b6e69;
 }
 
+footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(15, 118, 110, 0.12);
+    color: var(--autodoc-muted);
+}
+
 @media screen and (max-width: 768px) {
     .wy-nav-content {
-        padding: 1.25rem 1rem 2rem !important;
+        min-height: 100vh;
+        padding: 1.25rem 1rem 0.75rem !important;
     }
 
     .hero-panel {
