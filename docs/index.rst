@@ -6,10 +6,13 @@ Auto Doc
    <section class="hero-panel">
      <div class="hero-copy">
        <p class="eyebrow">Repository Analysis and Sphinx Publishing</p>
-       <h1>Turn repository structure, docstring coverage, and code context into a publishable documentation site.</h1>
+       <h1>Turn repository structure, docstring coverage, and 
+       code context into a publishable documentation site.</h1>
        <p class="lead">
-         Auto Doc reviews source trees, generates documentation suggestions, scaffolds a Sphinx site,
-         and helps teams publish reviewed HTML without hand-assembling the whole docs workflow.
+         Auto Doc reviews source trees, generates
+          documentation suggestions, scaffolds a Sphinx site,
+         and helps teams publish reviewed HTML 
+         without hand-assembling the whole docs workflow.
        </p>
      </div>
      <div class="hero-stat-grid">

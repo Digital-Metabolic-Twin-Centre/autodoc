@@ -27,8 +27,7 @@ def configure_openai(api_key: str = None):
         api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise ValueError(
-            "OpenAI API key not provided. Set OPENAI_API_KEY environment "
-            "variable or pass api_key parameter."
+            "OpenAI API key not provided. Set OPENAI_API_KEY environment variable or pass api_key parameter."
         )
     openai.api_key = api_key
 
@@ -203,9 +202,7 @@ def format_docstring_for_language(docstring: str, language: str) -> str:
                 lines.append("")
                 continue
             leading_spaces = stripped[: len(stripped) - len(stripped.lstrip())]
-            lines.extend(
-                textwrap.wrap(stripped, width=96, subsequent_indent=leading_spaces) or [""]
-            )
+            lines.extend(textwrap.wrap(stripped, width=96, subsequent_indent=leading_spaces) or [""])
         if any(line.startswith((" ", "\t")) for line in lines):
             lines.append("")
         indented_lines = ["    " + line if line.strip() else "" for line in lines]

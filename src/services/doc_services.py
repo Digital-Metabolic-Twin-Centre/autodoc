@@ -238,9 +238,7 @@ def analyze_repo(
             language = "matlab"
         # File type not supported
         else:
-            logger.warning(
-                f"File {file_name} is not supported for docstring validation. Skipping..."
-            )
+            logger.warning(f"File {file_name} is not supported for docstring validation. Skipping...")
             continue
         supported_files_found += 1
         file_path = file.get("path", "")
@@ -269,9 +267,7 @@ def analyze_repo(
         code_blocks = extractor.code_block_extractor()
         # If no code blocks found, check for module-level docstring
         if not code_blocks:
-            logger.warning(
-                f"No code blocks found in {file_name}. Checking for module-level docstring..."
-            )
+            logger.warning(f"No code blocks found in {file_name}. Checking for module-level docstring...")
             module_docstring = analyze_docstring_in_module(content, language)
             if module_docstring:
                 block_analysis = {
@@ -343,9 +339,7 @@ def analyze_repo(
                         docstring_source = "openai"
 
                 if generated_docstring:
-                    block_analysis["docstring_analysis"][0]["generated_docstring"] = (
-                        generated_docstring
-                    )
+                    block_analysis["docstring_analysis"][0]["generated_docstring"] = generated_docstring
                     if docstring_source == "openai":
                         logger.info("Generated Docstring:")
                     elif docstring_source == "exact-cache":

@@ -49,9 +49,7 @@ def _parse_response_message(response) -> str:
     return response.text.strip() or "Unknown error"
 
 
-def _raise_github_repository_access_error(
-    response, repo_path: str, branch: str, path: str = ""
-) -> None:
+def _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = "") -> None:
     message = _parse_response_message(response)
     branch_label = branch or "<unspecified>"
     if response.status_code == 404:
@@ -62,8 +60,7 @@ def _raise_github_repository_access_error(
             )
         target = f"/{path}" if path else ""
         raise RepositoryAccessError(
-            "GitHub repository "
-            f"'{repo_path}'{target} was not found or is not accessible with this token.",
+            f"GitHub repository '{repo_path}'{target} was not found or is not accessible with this token.",
             status_code=404,
         )
     if response.status_code in {401, 403}:
@@ -74,8 +71,7 @@ def _raise_github_repository_access_error(
             status_code=response.status_code,
         )
     raise RepositoryAccessError(
-        "GitHub repository access failed for "
-        f"'{repo_path}' on branch '{branch_label}': {message}",
+        f"GitHub repository access failed for '{repo_path}' on branch '{branch_label}': {message}",
         status_code=response.status_code,
     )
 
@@ -142,9 +138,7 @@ def should_ignore(name: str, patterns: List[str]) -> bool:
     return False
 
 
-def fetch_content_from_github(
-    repo_path: str, branch: str, file_path: str, access_token: str
-) -> Optional[str]:
+def fetch_content_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitHub repository.
     Args:
@@ -173,9 +167,7 @@ def fetch_content_from_github(
     return None
 
 
-def fetch_content_bytes_from_github(
-    repo_path: str, branch: str, file_path: str, access_token: str
-) -> Optional[bytes]:
+def fetch_content_bytes_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[bytes]:
     """
     Fetches the raw bytes of a file from a GitHub repository.
     """
@@ -197,9 +189,7 @@ def fetch_content_bytes_from_github(
     return None
 
 
-def fetch_content_from_gitlab(
-    repo_path: str, branch: str, file_path: str, private_token: str
-) -> Optional[str]:
+def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, private_token: str) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitLab repository.
     Args:
@@ -212,10 +202,7 @@ def fetch_content_from_gitlab(
     """
     project_path_encoded = urllib.parse.quote_plus(repo_path)
     file_path_encoded = urllib.parse.quote_plus(file_path)
-    url = (
-        f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/"
-        f"{file_path_encoded}/raw"
-    )
+    url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}/raw"
     try:
         response = requests.get(
             url,
@@ -230,9 +217,7 @@ def fetch_content_from_gitlab(
     return None
 
 
-def fetch_repo_tree(
-    repo_path: str, access_token: str, branch: str = "main", provider: str = "github"
-) -> List[Dict]:
+def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", provider: str = "github") -> List[Dict]:
     """
     Recursively fetches the file and directory tree for a given repository and branch.
     Args:
@@ -492,8 +477,7 @@ def create_directory_and_add_files(
         try:
             gitkeep_path_encoded = urllib.parse.quote_plus(gitkeep_path)
             check_url = (
-                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/"
-                f"repository/files/{gitkeep_path_encoded}"
+                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{gitkeep_path_encoded}"
             )
             check_resp = requests.get(
                 check_url,
@@ -536,8 +520,7 @@ def create_directory_and_add_files(
             try:
                 target_path_encoded = urllib.parse.quote_plus(target_path)
                 check_url = (
-                    f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/"
-                    f"repository/files/{target_path_encoded}"
+                    f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{target_path_encoded}"
                 )
                 check_resp = requests.get(
                     check_url,
@@ -550,9 +533,7 @@ def create_directory_and_add_files(
                 pass
 
             action_type = "update" if file_exists else "create"
-            logger.info(
-                f"{'Updating' if file_exists else 'Adding'} file {target_path} to commit actions."
-            )
+            logger.info(f"{'Updating' if file_exists else 'Adding'} file {target_path} to commit actions.")
             actions.append({"action": action_type, "file_path": target_path, "content": content})
 
         if not actions:
@@ -618,10 +599,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         # GitLab: Create or update a file using the REST API
         project_path_encoded = urllib.parse.quote_plus(repo_url)
         file_path_encoded = urllib.parse.quote_plus(file_path)
-        api_url = (
-            f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/"
-            f"{file_path_encoded}"
-        )
+        api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"
         headers = {"PRIVATE-TOKEN": token}
         # Check if file exists
         get_resp = requests.get(api_url, headers=headers, params={"ref": branch})
@@ -730,9 +708,7 @@ def list_github_tree(repo_url: str, ref: str, token: str, recursive: bool = True
     return data.get("tree", [])
 
 
-def download_github_branch_snapshot(
-    repo_url: str, branch: str, token: str, destination_dir: str
-) -> bool:
+def download_github_branch_snapshot(repo_url: str, branch: str, token: str, destination_dir: str) -> bool:
     """
     Downloads a GitHub branch snapshot into a local directory.
     """
@@ -796,8 +772,7 @@ def publish_github_directory_to_branch(
     source_files = [
         item
         for item in source_items
-        if item.get("type") == "blob"
-        and item.get("path", "").startswith(f"{source_prefix}/")
+        if item.get("type") == "blob" and item.get("path", "").startswith(f"{source_prefix}/")
     ]
     if not source_files:
         logger.warning(

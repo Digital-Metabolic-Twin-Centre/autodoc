@@ -1,4 +1,3 @@
-
 from utils.docstring_validation import (
     analyze_docstring_in_blocks,
     analyze_docstring_in_module,
@@ -20,10 +19,7 @@ def test_analyze_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch
     )
 
     blocks = [
-        "# --- Code Block starts at line 1 ---\n"
-        "def run_task():\n"
-        "    return True\n"
-        "# --- Code Block ends at line 2 ---"
+        "# --- Code Block starts at line 1 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 2 ---"
     ]
 
     result = analyze_docstring_in_blocks(
@@ -56,32 +52,18 @@ def test_analyze_docstring_in_blocks_detects_existing_python_docstrings():
     assert result["docstring_analysis"][0]["docstring_content"] == "Run the task."
 
 
-def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(
-    monkeypatch, tmp_path
-):
+def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(monkeypatch, tmp_path):
     captured = {}
 
     monkeypatch.setattr(
         "utils.docstring_validation.generate_docstring_with_openai",
-        lambda code, language, model=None: (
-            captured.update({"model": model}) or "Run the task."
-        ),
+        lambda code, language, model=None: (captured.update({"model": model}) or "Run the task."),
     )
-    suggested_file = (
-        tmp_path
-        / "logs"
-        / "app_20260428_000000"
-        / "github"
-        / "owner__repo"
-        / "suggested_docstring.txt"
-    )
+    suggested_file = tmp_path / "logs" / "app_20260428_000000" / "github" / "owner__repo" / "suggested_docstring.txt"
     suggested_file.parent.mkdir(parents=True, exist_ok=True)
 
     blocks = [
-        "# --- Code Block starts at line 1 ---\n"
-        "def run_task():\n"
-        "    return True\n"
-        "# --- Code Block ends at line 2 ---"
+        "# --- Code Block starts at line 1 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 2 ---"
     ]
 
     analyze_docstring_in_blocks(
@@ -109,10 +91,7 @@ def test_analyze_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(
     )
 
     blocks = [
-        "# --- Code Block starts at line 25 ---\n"
-        "def run_task():\n"
-        "    return True\n"
-        "# --- Code Block ends at line 26 ---"
+        "# --- Code Block starts at line 25 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 26 ---"
     ]
 
     result = analyze_docstring_in_blocks(
@@ -140,10 +119,7 @@ def test_analyze_docstring_in_blocks_logs_cache_reuse(monkeypatch, caplog):
     )
 
     blocks = [
-        "# --- Code Block starts at line 1 ---\n"
-        "def run_task():\n"
-        "    return True\n"
-        "# --- Code Block ends at line 2 ---"
+        "# --- Code Block starts at line 1 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 2 ---"
     ]
 
     analyze_docstring_in_blocks(

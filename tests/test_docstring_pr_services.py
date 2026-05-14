@@ -165,9 +165,7 @@ def test_load_generated_suggestions_reads_latest_repo_run_dir(tmp_path, monkeypa
     }
 
 
-def test_load_generated_suggestions_skips_newer_run_dirs_without_suggestion_file(
-    tmp_path, monkeypatch
-):
+def test_load_generated_suggestions_skips_newer_run_dirs_without_suggestion_file(tmp_path, monkeypatch):
     repo_path = "example/project"
     repo_key = "example__project"
     repo_dir = tmp_path / "github" / repo_key

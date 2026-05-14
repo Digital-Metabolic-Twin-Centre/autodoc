@@ -58,10 +58,7 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
             cleaned_lines.append("")
             continue
         leading_spaces = stripped[: len(stripped) - len(stripped.lstrip())]
-        cleaned_lines.extend(
-            textwrap.wrap(stripped, width=content_width, subsequent_indent=leading_spaces)
-            or [""]
-        )
+        cleaned_lines.extend(textwrap.wrap(stripped, width=content_width, subsequent_indent=leading_spaces) or [""])
 
     if not cleaned_lines:
         cleaned_lines = ["TODO: Add documentation."]
@@ -141,7 +138,7 @@ def patch_python_docstrings(
             )
             continue
         formatted = _format_python_docstring(docstring, insertion.indent)
-        lines[insertion.insert_index:insertion.insert_index] = formatted
+        lines[insertion.insert_index : insertion.insert_index] = formatted
         inserted.append(insertion)
         remaining -= 1
 
@@ -160,8 +157,7 @@ def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[d
             (
                 os.path.join(repo_run_root, entry)
                 for entry in os.listdir(repo_run_root)
-                if entry.startswith("app_")
-                and os.path.isdir(os.path.join(repo_run_root, entry))
+                if entry.startswith("app_") and os.path.isdir(os.path.join(repo_run_root, entry))
             ),
             reverse=True,
         )
@@ -174,8 +170,7 @@ def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[d
         suggestions_path = build_repo_output_file(repo_path, "github", "suggested_docstrings.json")
     if not os.path.exists(suggestions_path):
         raise DocstringPullRequestError(
-            "No generated docstring suggestions found. Run /generate for this repo "
-            "and branch first."
+            "No generated docstring suggestions found. Run /generate for this repo and branch first."
         )
 
     with open(suggestions_path, "r", encoding="utf-8") as file_handle:
@@ -218,8 +213,7 @@ def _suggestion_generator(suggestions: List[dict]) -> Callable[[DocstringInserti
 def _build_pull_request_body(base_branch: str, files_changed: Dict[str, PatchedPythonFile]) -> str:
     docstring_count = sum(len(patched.inserted) for patched in files_changed.values())
     file_lines = "\n".join(
-        f"- `{file_path}`: {len(patched.inserted)} docstring(s)"
-        for file_path, patched in files_changed.items()
+        f"- `{file_path}`: {len(patched.inserted)} docstring(s)" for file_path, patched in files_changed.items()
     )
     return (
         "## Summary\n\n"
@@ -287,16 +281,12 @@ def create_python_docstring_pull_request(
     Creates a GitHub pull request with generated Python docstring suggestions.
     """
     if provider.lower() != "github":
-        raise DocstringPullRequestError(
-            "Python docstring pull requests currently support GitHub only."
-        )
+        raise DocstringPullRequestError("Python docstring pull requests currently support GitHub only.")
 
     repo_path = extract_repo_path(repo_url, "github")
     suggestions_by_file = _load_generated_suggestions(repo_path, base_branch)
     if not suggestions_by_file:
-        raise DocstringPullRequestError(
-            "No generated Python docstring suggestions were found. Run /generate first."
-        )
+        raise DocstringPullRequestError("No generated Python docstring suggestions were found. Run /generate first.")
 
     files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
     python_files = [
@@ -348,9 +338,7 @@ def create_python_docstring_pull_request(
         "Add generated Python docstring suggestions",
     )
     if not committed:
-        raise DocstringPullRequestError(
-            "Could not commit docstring suggestions to the suggestion branch."
-        )
+        raise DocstringPullRequestError("Could not commit docstring suggestions to the suggestion branch.")
 
     try:
         pr_url = create_github_pull_request(

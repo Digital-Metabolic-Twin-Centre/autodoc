@@ -195,8 +195,7 @@ def test_ensure_sphinx_project_name_replaces_placeholder(tmp_path):
 
 def test_extract_autoapi_module_names_reads_modules_from_sphinx_error():
     build_output = (
-        "ExtensionError: ... module 'autoapi_include.job_views'\n"
-        "ExtensionError: ... module 'settings_docker'\n"
+        "ExtensionError: ... module 'autoapi_include.job_views'\nExtensionError: ... module 'settings_docker'\n"
     )
 
     modules = _extract_autoapi_module_names(build_output)
@@ -240,9 +239,7 @@ def test_find_autoapi_skip_candidates_prefers_full_module_path(tmp_path):
 
     matches = _find_autoapi_skip_candidates(str(tmp_path), "api.urls_v1")
 
-    assert [path.relative_to(tmp_path).as_posix() for path in matches] == [
-        "autoapi_include/api/urls_v1.py"
-    ]
+    assert [path.relative_to(tmp_path).as_posix() for path in matches] == ["autoapi_include/api/urls_v1.py"]
 
 
 def test_extract_module_name_from_autoapi_path_handles_package_init(tmp_path):
@@ -303,9 +300,7 @@ def test_collect_prebuild_autoapi_ignores_tracks_skipped_files(tmp_path):
         encoding="utf-8",
     )
     skipped_file.write_text(
-        "def endpoint():\n    return 1\n"
-        "def secondary():\n    return 2\n"
-        "def tertiary():\n    return 3\n",
+        "def endpoint():\n    return 1\ndef secondary():\n    return 2\ndef tertiary():\n    return 3\n",
         encoding="utf-8",
     )
 
@@ -415,9 +410,7 @@ def test_run_sphinx_build_with_autoapi_filters_uses_single_fallback_retry(tmp_pa
 def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
     captured = {}
 
-    def fake_create_pr(
-        provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings
-    ):
+    def fake_create_pr(provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings):
         captured["suggestion_branch"] = suggestion_branch
         return {
             "status": "success",
@@ -445,18 +438,13 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["status"] == "success"
-    assert (
-        captured["suggestion_branch"]
-        == "autodocs-docstring-suggestions-20260424-1430"
-    )
+    assert captured["suggestion_branch"] == "autodocs-docstring-suggestions-20260424-1430"
 
 
 def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatch):
     captured = {}
 
-    def fake_create_pr(
-        provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings
-    ):
+    def fake_create_pr(provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings):
         captured["suggestion_branch"] = suggestion_branch
         return {
             "status": "success",

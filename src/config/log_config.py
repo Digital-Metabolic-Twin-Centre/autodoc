@@ -54,6 +54,7 @@ def bind_repo_log_dir(repo_log_dir: str) -> str:
     LOG_FILE = log_file
     return log_file
 
+
 # Suppress logs from 'watchfiles' and 'uvicorn' in app.log
 logging.getLogger("watchfiles").setLevel(logging.WARNING)
 logging.getLogger("uvicorn").setLevel(logging.WARNING)

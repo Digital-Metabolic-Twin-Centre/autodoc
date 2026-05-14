@@ -54,7 +54,7 @@ logger = get_logger(__name__)
 DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
 SAMPLE_DOCS_FALLBACK_TEXTS = {
     "conf.py": (
-        'from datetime import datetime\n\n'
+        "from datetime import datetime\n\n"
         'project = "Auto Doc"\n'
         'author = "Digital Metabolic Twin Centre"\n'
         'copyright = f"{datetime.now().year}, {author}"\n\n'
@@ -72,46 +72,51 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         "Auto Doc\n"
         "=============================\n\n"
         ".. raw:: html\n\n"
-        "   <section class=\"hero-panel\">\n"
-        "     <div class=\"hero-copy\">\n"
-        "       <p class=\"eyebrow\">Repository Analysis and Sphinx Publishing</p>\n"
-        "       <h1>Turn repository structure, docstring coverage, and code context into a publishable documentation site.</h1>\n"
-        "       <p class=\"lead\">\n"
+        '   <section class="hero-panel">\n'
+        '     <div class="hero-copy">\n'
+        '       <p class="eyebrow">Repository Analysis and Sphinx Publishing</p>\n'
+        "       <h1>Turn repository structure, docstring coverage, and code "
+        "context into a publishable documentation site.</h1>\n"
+        '       <p class="lead">\n'
         "         Auto Doc reviews source trees, generates documentation suggestions, scaffolds a Sphinx site,\n"
         "         and helps teams publish reviewed HTML without hand-assembling the whole docs workflow.\n"
         "       </p>\n"
         "     </div>\n"
-        "     <div class=\"hero-stat-grid\">\n"
-        "       <div class=\"hero-stat\">\n"
-        "         <span class=\"hero-stat-label\">Input</span>\n"
+        '     <div class="hero-stat-grid">\n'
+        '       <div class="hero-stat">\n'
+        '         <span class="hero-stat-label">Input</span>\n'
         "         <strong>GitHub and GitLab repos</strong>\n"
         "       </div>\n"
-        "       <div class=\"hero-stat\">\n"
-        "         <span class=\"hero-stat-label\">Output</span>\n"
+        '       <div class="hero-stat">\n'
+        '         <span class="hero-stat-label">Output</span>\n'
         "         <strong>Sphinx docs and Pages HTML</strong>\n"
         "       </div>\n"
-        "       <div class=\"hero-stat\">\n"
-        "         <span class=\"hero-stat-label\">Workflow</span>\n"
+        '       <div class="hero-stat">\n'
+        '         <span class="hero-stat-label">Workflow</span>\n'
         "         <strong>Generate, review, publish</strong>\n"
         "       </div>\n"
         "     </div>\n"
         "   </section>\n\n"
         ".. raw:: html\n\n"
-        "   <section class=\"feature-band\">\n"
-        "     <article class=\"feature-card\">\n"
-        "       <p class=\"feature-kicker\">Generate</p>\n"
+        '   <section class="feature-band">\n'
+        '     <article class="feature-card">\n'
+        '       <p class="feature-kicker">Generate</p>\n'
         "       <h2>Analyze a target branch</h2>\n"
-        "       <p>Scan source files, measure documentation coverage, and prepare a working docs scaffold tied to the repository.</p>\n"
+        "       <p>Scan source files, measure documentation coverage, and "
+        "prepare a working docs scaffold tied to the repository.</p>\n"
         "     </article>\n"
-        "     <article class=\"feature-card\">\n"
-        "       <p class=\"feature-kicker\">Refine</p>\n"
+        '     <article class="feature-card">\n'
+        '       <p class="feature-kicker">Refine</p>\n'
         "       <h2>Shape the documentation set</h2>\n"
-        "       <p>Review project pages, keep weekly progress visible, and extend the generated material into something people can actually navigate.</p>\n"
+        "       <p>Review project pages, keep weekly progress visible, and "
+        "extend the generated material into something people can actually "
+        "navigate.</p>\n"
         "     </article>\n"
-        "     <article class=\"feature-card\">\n"
-        "       <p class=\"feature-kicker\">Publish</p>\n"
+        '     <article class="feature-card">\n'
+        '       <p class="feature-kicker">Publish</p>\n'
         "       <h2>Ship reviewed HTML</h2>\n"
-        "       <p>Build the Sphinx site, filter risky AutoAPI content when needed, and publish the final result to GitHub Pages.</p>\n"
+        "       <p>Build the Sphinx site, filter risky AutoAPI content when "
+        "needed, and publish the final result to GitHub Pages.</p>\n"
         "     </article>\n"
         "   </section>\n\n"
         ".. toctree::\n"
@@ -439,8 +444,7 @@ def _raise_publish_error(message: str) -> None:
 def _extract_autoapi_module_names(build_output: str) -> list[str]:
     module_names = re.findall(r"module '([^']+)'", build_output or "")
     module_names.extend(
-        match.replace("/", ".")
-        for match in re.findall(r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or "")
+        match.replace("/", ".") for match in re.findall(r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or "")
     )
     unique_module_names = []
     seen = set()
@@ -477,19 +481,14 @@ def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, s
     except SyntaxError:
         return False, "syntax-error"
 
-    if any(
-        isinstance(node, ImportFrom) and any(alias.name == "*" for alias in node.names)
-        for node in parsed.body
-    ):
+    if any(isinstance(node, ImportFrom) and any(alias.name == "*" for alias in node.names) for node in parsed.body):
         return False, "import-star"
 
     meaningful_lines = [line for line in file_text.splitlines() if line.strip()]
     if len(meaningful_lines) < LOW_CONTENT_MIN_MEANINGFUL_LINES:
         return False, "low-content"
 
-    has_public_shape = any(
-        isinstance(node, (FunctionDef, AsyncFunctionDef, ClassDef)) for node in parsed.body
-    )
+    has_public_shape = any(isinstance(node, (FunctionDef, AsyncFunctionDef, ClassDef)) for node in parsed.body)
     if not has_public_shape:
         return False, "non-meaningful-module"
 
@@ -540,9 +539,7 @@ def _collect_prebuild_autoapi_ignores(temp_dir: str) -> tuple[list[str], list[di
     return ignore_patterns, skipped_files
 
 
-def _module_names_to_ignore_patterns(
-    temp_dir: str, module_names: list[str]
-) -> tuple[list[str], list[dict[str, str]]]:
+def _module_names_to_ignore_patterns(temp_dir: str, module_names: list[str]) -> tuple[list[str], list[dict[str, str]]]:
     autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
     if not autoapi_root.exists():
         return [], []
@@ -633,13 +630,9 @@ def _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str) -> 
         _write_skipped_autoapi_report(skipped_files)
         return build_result
 
-    build_output = "\n".join(
-        part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
-    )
+    build_output = "\n".join(part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part)
     failed_modules = _extract_autoapi_module_names(build_output)
-    fallback_ignore_patterns, fallback_skipped = _module_names_to_ignore_patterns(
-        temp_dir, failed_modules
-    )
+    fallback_ignore_patterns, fallback_skipped = _module_names_to_ignore_patterns(temp_dir, failed_modules)
     new_fallback_ignores = sorted(set(fallback_ignore_patterns) - set(active_ignore_patterns))
     if not new_fallback_ignores:
         _write_skipped_autoapi_report(skipped_files)
@@ -648,8 +641,7 @@ def _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str) -> 
     skipped_files.extend(
         item
         for item in fallback_skipped
-        if _to_autoapi_ignore_pattern(item["file"].replace(f"{AUTOAPI_DIRECTORY}/", ""))
-        in new_fallback_ignores
+        if _to_autoapi_ignore_pattern(item["file"].replace(f"{AUTOAPI_DIRECTORY}/", "")) in new_fallback_ignores
     )
     active_ignore_patterns.extend(new_fallback_ignores)
     logger.warning(
@@ -700,9 +692,7 @@ def _build_sample_conf(project_name: str) -> str:
         "autoapi_generate_api_docs = True",
     ]
     if not all(addition in conf_text for addition in additions):
-        conf_text += "\n\n" + "\n".join(
-            addition for addition in additions if addition not in conf_text
-        ) + "\n"
+        conf_text += "\n\n" + "\n".join(addition for addition in additions if addition not in conf_text) + "\n"
     return conf_text
 
 
@@ -714,12 +704,7 @@ def _build_sample_index(project_name: str) -> str:
         lines[1] = "=" * len(project_name)
     index_text = "\n".join(lines).rstrip() + "\n"
     if "autoapi/index" not in index_text:
-        index_text += (
-            "\n.. toctree::\n"
-            "   :maxdepth: 1\n"
-            "   :caption: API Reference\n\n"
-            "   autoapi/index\n"
-        )
+        index_text += "\n.. toctree::\n   :maxdepth: 1\n   :caption: API Reference\n\n   autoapi/index\n"
     return index_text
 
 
@@ -799,10 +784,7 @@ def _remote_text_file_exists(
     file_path_encoded = quote_plus(file_path)
     return (
         requests.get(
-            (
-                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/"
-                f"{file_path_encoded}"
-            ),
+            (f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"),
             headers={"PRIVATE-TOKEN": token},
             params={"ref": branch},
             timeout=10,
@@ -886,7 +868,6 @@ API Reference
 
 
 def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file):
-
     # Extract repo path from URL
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
@@ -933,37 +914,28 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     # Skip directory creation if no files meet criteria
     if not files_to_document:
         logger.warning(
-            "No files with ≥%.0f%% docstring coverage found. "
-            "Skipping Sphinx setup.",
+            "No files with ≥%.0f%% docstring coverage found. Skipping Sphinx setup.",
             DOCSTRING_THRESHOLD * 100,
         )
         return False
 
     # CREATE DIRECTORY AND ADD FILES WITH ADEQUATE DOCSTRING COVERAGE
-    dir = create_directory_and_add_files(
-        repo_path, AUTOAPI_DIRECTORY, files_to_document, branch, token, provider
-    )
+    dir = create_directory_and_add_files(repo_path, AUTOAPI_DIRECTORY, files_to_document, branch, token, provider)
     if not dir:
         logger.error("Directory creation failed.")
         return False
 
-    scaffold_created = _create_sample_sphinx_scaffold(
-        repo_path, branch, token, provider, project_name
-    )
+    scaffold_created = _create_sample_sphinx_scaffold(repo_path, branch, token, provider, project_name)
     if not scaffold_created:
         logger.error("Sample Sphinx scaffold creation failed.")
         return False
 
     # CREATE A FILE TO UPDATE CONF.PY FILE FOR SPHINX AUTOAPI
-    conf_file_path = os.path.join(
-        os.path.dirname(__file__), "..", "utils", "update_conf_content.py"
-    )
+    conf_file_path = os.path.join(os.path.dirname(__file__), "..", "utils", "update_conf_content.py")
     conf_file_path = os.path.abspath(conf_file_path)
     with open(conf_file_path, "r") as f:
         conf_content = f.read()
-    config_file_created = create_a_file(
-        repo_path, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider
-    )
+    config_file_created = create_a_file(repo_path, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider)
     if not config_file_created:
         logger.error(f"{CONFIGURATION_UPDATE_FILE} file creation failed.")
         return False
@@ -971,9 +943,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     if provider == "gitlab":
         # CREATE A .gitlab-ci.yml FILE
         gitlab_ci_content = generate_gitlab_ci_file()
-        yml_file_created = create_a_file(
-            repo_path, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider
-        )
+        yml_file_created = create_a_file(repo_path, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider)
         if not yml_file_created:
             logger.error(f"{GITLAB_YML_FILE} file creation failed.")
             return False
@@ -1039,9 +1009,7 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             "the token can read and write repository contents."
         )
 
-    pages_configured = configure_github_pages(
-        repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH
-    )
+    pages_configured = configure_github_pages(repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH)
     if not pages_configured:
         _raise_publish_error(
             "GitHub Pages configuration failed. GitHub usually returns this when the "
@@ -1051,9 +1019,7 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         )
 
     with tempfile.TemporaryDirectory(prefix="autodoc-pages-") as temp_dir:
-        snapshot_downloaded = download_github_branch_snapshot(
-            repo_path, source_branch, token, temp_dir
-        )
+        snapshot_downloaded = download_github_branch_snapshot(repo_path, source_branch, token, temp_dir)
         if not snapshot_downloaded:
             _raise_publish_error(
                 "Downloading the reviewed GitHub branch failed. Check that the branch "
@@ -1081,10 +1047,7 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             )
             if update_conf_result.returncode != 0:
                 logger.error("Updating conf.py failed: %s", update_conf_result.stderr)
-                _raise_publish_error(
-                    "Updating Sphinx conf.py failed: "
-                    f"{update_conf_result.stderr.strip()}"
-                )
+                _raise_publish_error(f"Updating Sphinx conf.py failed: {update_conf_result.stderr.strip()}")
 
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
@@ -1118,9 +1081,7 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
     return True
 
 
-def trigger_gitlab_pipeline(
-    repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None
-) -> bool:
+def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None) -> bool:
     """
     Triggers a GitLab pipeline for the given project and branch.
 
@@ -1145,9 +1106,7 @@ def trigger_gitlab_pipeline(
             data[f"variables[{key}]"] = value
 
     if not trigger_token:
-        logger.warning(
-            "CI_TRIGGER_PIPELINE_TOKEN environment variable not set. Cannot trigger pipeline."
-        )
+        logger.warning("CI_TRIGGER_PIPELINE_TOKEN environment variable not set. Cannot trigger pipeline.")
         return False
 
     try:
@@ -1156,9 +1115,7 @@ def trigger_gitlab_pipeline(
             logger.info(f"Pipeline triggered for {repo_url} on branch {branch}.")
             return True
         else:
-            logger.error(
-                f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})"
-            )
+            logger.error(f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})")
             return False
     except Exception as e:
         logger.error(f"Exception while triggering pipeline: {e}")

@@ -65,9 +65,5 @@ def test_load_reusable_suggestions_reads_latest_matching_run(monkeypatch, tmp_pa
 
     suggestions = _load_reusable_suggestions("octo-org/example-repo", "github", "main")
 
-    assert suggestions["exact"][
-        ("src/job_views.py", "build_job", "function", 12, "python")
-    ] == "Build a job."
-    assert suggestions["fuzzy"][
-        ("src/job_views.py", "build_job", "function", "python")
-    ] == "Build a job."
+    assert suggestions["exact"][("src/job_views.py", "build_job", "function", 12, "python")] == "Build a job."
+    assert suggestions["fuzzy"][("src/job_views.py", "build_job", "function", "python")] == "Build a job."

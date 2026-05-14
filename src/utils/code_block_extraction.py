@@ -86,9 +86,7 @@ class GenericCodeBlockExtractor:
                                 if len(body_line) - len(body_line.lstrip()) > base_indent:
                                     body_lines.append(body_line)
                         if body_lines:
-                            self._extract_blocks_recursive(
-                                body_lines, 0, len(body_lines), blocks, base_indent + 4
-                            )
+                            self._extract_blocks_recursive(body_lines, 0, len(body_lines), blocks, base_indent + 4)
                     i = block_info["end_line"]
                 else:
                     i += 1
@@ -178,9 +176,7 @@ class GenericCodeBlockExtractor:
         while i < len(lines):
             line = lines[i]
             block.append(line.rstrip())
-            if re.match(r"^\s*(if|for|while|switch|try|function|classdef)\b", line) or re.match(
-                r"^\s*parfor\b", line
-            ):
+            if re.match(r"^\s*(if|for|while|switch|try|function|classdef)\b", line) or re.match(r"^\s*parfor\b", line):
                 nested_level += 1
             elif re.match(r"^\s*end\b", line):
                 if nested_level == 0:
