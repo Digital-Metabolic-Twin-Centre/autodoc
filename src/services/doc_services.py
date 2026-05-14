@@ -457,7 +457,7 @@ def analyze_repo(
         if supported_files_found == 0:
             raise RepoAnalysisError(
                 "Repository was reachable, but no supported source files were found. "
-                "Auto-Doc currently analyzes .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
+                "Auto Doc currently analyzes .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
                 status_code=404,
             )
         if normalized_target_folders and supported_files_in_scope == 0:
@@ -468,13 +468,13 @@ def analyze_repo(
             )
         if supported_files_in_scope > 0 and unreadable_supported_files == supported_files_in_scope:
             raise RepoAnalysisError(
-                "Repository tree was found, but Auto-Doc could not read any matching source file "
+                "Repository tree was found, but Auto Doc could not read any matching source file "
                 f"contents on branch '{branch}'. Check that the branch exists and that the token "
                 "can read file contents for this repository or fork.",
                 status_code=403,
             )
         raise RepoAnalysisError(
-            "Repository was reachable, but Auto-Doc could not extract any analyzable code blocks "
+            "Repository was reachable, but Auto Doc could not extract any analyzable code blocks "
             f"from the supported files on branch '{branch}'.",
             status_code=422,
         )

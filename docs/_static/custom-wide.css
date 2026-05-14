@@ -77,6 +77,10 @@
         linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(255, 255, 255, 0.82)),
         var(--autodoc-surface);
     box-shadow: 0 18px 45px rgba(16, 42, 67, 0.08);
+    display: grid;
+    grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr);
+    gap: 1.5rem;
+    align-items: end;
 }
 
 .hero-panel h1 {
@@ -98,6 +102,74 @@
     max-width: 70rem;
     margin: 0;
     font-size: 1.08rem;
+    color: var(--autodoc-muted);
+}
+
+.hero-copy {
+    min-width: 0;
+}
+
+.hero-stat-grid {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.hero-stat,
+.feature-card,
+.map-card {
+    border: 1px solid rgba(15, 118, 110, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 24px rgba(16, 42, 67, 0.05);
+}
+
+.hero-stat {
+    padding: 1rem 1.1rem;
+}
+
+.hero-stat strong {
+    display: block;
+    font-size: 1.05rem;
+    color: #102a43;
+}
+
+.hero-stat-label,
+.feature-kicker {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--autodoc-accent);
+}
+
+.feature-band,
+.map-grid {
+    display: grid;
+    gap: 1rem;
+    margin: 1rem 0 2rem;
+}
+
+.feature-band,
+.map-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.feature-card,
+.map-card {
+    padding: 1.35rem;
+}
+
+.feature-card h2,
+.map-card h3 {
+    margin-top: 0;
+}
+
+.feature-card p:last-child,
+.map-card p:last-child {
+    margin-bottom: 0;
     color: var(--autodoc-muted);
 }
 
@@ -131,9 +203,15 @@
     .hero-panel {
         padding: 1.25rem;
         border-radius: 18px;
+        grid-template-columns: 1fr;
     }
 
     .rst-content h1 {
         font-size: 2rem;
+    }
+
+    .feature-band,
+    .map-grid {
+        grid-template-columns: 1fr;
     }
 }

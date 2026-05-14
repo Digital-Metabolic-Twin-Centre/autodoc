@@ -1,18 +1,18 @@
-workspace "Auto-Doc Architecture" "Structurizr DSL model for the Auto-Doc project." {
+workspace "Auto Doc Architecture" "Structurizr DSL model for the Auto Doc project." {
 
     !identifiers hierarchical
 
     model {
-        user = person "User" "Developer, reviewer, or automation client invoking the Auto-Doc API."
+        user = person "User" "Developer, reviewer, or automation client invoking the Auto Doc API."
 
         github = softwareSystem "GitHub" "Source repository hosting, branch/file APIs, pull requests, and Pages publishing." "External"
         gitlab = softwareSystem "GitLab" "Source repository hosting and pipeline execution for GitLab-backed repositories." "External"
         openai = softwareSystem "OpenAI API" "Generates missing docstring suggestions." "External"
         pages = softwareSystem "GitHub Pages" "Hosts published static documentation built from reviewed branches." "External"
         gitlabCi = softwareSystem "GitLab CI/CD" "Runs GitLab pipeline jobs for generated documentation workflows." "External,CI"
-        repoCi = softwareSystem "GitHub Actions" "Builds, tests, lint-checks, and publishes documentation for this Auto-Doc repository." "External,CI"
+        repoCi = softwareSystem "GitHub Actions" "Builds, tests, lint-checks, and publishes documentation for this Auto Doc repository." "External,CI"
 
-        autodoc = softwareSystem "Auto-Doc" "FastAPI service that analyzes remote repositories, generates docstring suggestions, scaffolds Sphinx documentation, and publishes reviewed HTML." {
+        autodoc = softwareSystem "Auto Doc" "FastAPI service that analyzes remote repositories, generates docstring suggestions, scaffolds Sphinx documentation, and publishes reviewed HTML." {
 
             api = container "FastAPI API Service" "Application entry point exposing endpoints." "Python 3.11, FastAPI, Uvicorn" "API" {
 
@@ -32,7 +32,7 @@ workspace "Auto-Doc Architecture" "Structurizr DSL model for the Auto-Doc projec
             logs = container "Run Logs and Artifacts" "Stores logs and generated artifacts." "Filesystem" "Storage"
             temp = container "Temporary Workspace" "Ephemeral build workspace." "Filesystem" "Storage"
             scaffold = container "Docs Scaffold Templates" "Reusable Sphinx scaffold templates used for generated repositories." "Sphinx template files" "Storage"
-            docs = container "Project Documentation" "Sphinx docs for Auto-Doc." "Sphinx" "Docs"
+            docs = container "Project Documentation" "Sphinx docs for Auto Doc." "Sphinx" "Docs"
             tests = container "Test Suite" "Automated tests." "Pytest" "Testing"
         }
 
@@ -82,19 +82,19 @@ workspace "Auto-Doc Architecture" "Structurizr DSL model for the Auto-Doc projec
         systemContext autodoc {
             include *
             autoLayout lr
-            title "Auto-Doc - System Context"
+            title "Auto Doc - System Context"
         }
 
         container autodoc {
             include *
             autoLayout lr
-            title "Auto-Doc - Container View"
+            title "Auto Doc - Container View"
         }
 
         component autodoc.api {
             include *
             autoLayout lr
-            title "Auto-Doc API - Component View"
+            title "Auto Doc API - Component View"
         }
 
         styles {

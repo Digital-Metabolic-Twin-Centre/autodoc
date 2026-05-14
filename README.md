@@ -1,6 +1,6 @@
-# Auto-Doc
+# Auto Doc
 
-Auto-Doc is a FastAPI service that analyzes a GitHub or GitLab repository, generates
+Auto Doc is a FastAPI service that analyzes a GitHub or GitLab repository, generates
 docstring suggestions with OpenAI, scaffolds a Sphinx documentation site, and publishes
 reviewed HTML to GitHub Pages.
 
@@ -35,7 +35,7 @@ The current workflow is branch-first:
 ├── docs/
 │   ├── conf.py
 │   ├── index.rst
-│   └── ...                     # Sphinx docs for this Auto-Doc service
+│   └── ...                     # Sphinx docs for this Auto Doc service
 ├── prepush_check.py
 ├── pyproject.toml
 ├── src/
@@ -111,7 +111,7 @@ Create a `.env` file in the project root:
 ```env
 OPENAI_API_KEY=your-openai-api-key
 
-# Optional, only needed if Auto-Doc should trigger GitLab pipelines.
+# Optional, only needed if Auto Doc should trigger GitLab pipelines.
 CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 ```
 
@@ -165,7 +165,7 @@ Notes:
 - `provider` must be `github` or `gitlab`
 - `repo_url` can be a full URL or `owner/repo`
 - `target_folders` is optional and limits analysis scope
-- `model` is optional; when omitted, Auto-Doc defaults to `gpt-4o-mini`
+- `model` is optional; when omitted, Auto Doc defaults to `gpt-4o-mini`
 - `reuse_doc=false` starts fresh for that repo and clears prior run history
 - `reuse_doc=true` loads the latest matching `suggested_docstrings.json` for the same repo and branch and only generates missing suggestions
 
@@ -194,10 +194,10 @@ resulting static site to `gh-pages`.
 
 Important behavior:
 
-- Auto-Doc publishes from the branch you specify, so that branch should be reviewed first.
+- Auto Doc publishes from the branch you specify, so that branch should be reviewed first.
 - The build uses the sample Sphinx layout plus AutoAPI over `autoapi_include/`.
-- Auto-Doc proactively ignores risky AutoAPI files such as common config, URL, migration, and view modules.
-- If Sphinx still fails on a module, Auto-Doc performs one fallback skip pass and writes `skipped_autoapi_files.txt`.
+- Auto Doc proactively ignores risky AutoAPI files such as common config, URL, migration, and view modules.
+- If Sphinx still fails on a module, Auto Doc performs one fallback skip pass and writes `skipped_autoapi_files.txt`.
 
 Successful responses include:
 
@@ -288,6 +288,6 @@ python3 prepush_check.py --docker
 - `/suggest-python-docstrings-pr` is the PR-based path for Python docstring insertions.
 - Reuse matching is exact first, then fuzzy by file path, symbol name, block type, and language.
 - A new `app_<timestamp>` log folder is still created for every run, even when `reuse_doc=true`.
-- Auto-Doc does not try to fix user code; it either includes, ignores, or skips files for docs generation.
+- Auto Doc does not try to fix user code; it either includes, ignores, or skips files for docs generation.
 - Unsupported files are skipped during analysis.
 - Empty repositories, inaccessible branches, or insufficient permissions return API errors.
