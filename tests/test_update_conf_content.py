@@ -10,4 +10,4 @@ def test_update_conf_adds_autoapi_and_napoleon_extensions(tmp_path):
     text = conf_path.read_text(encoding="utf-8")
     assert "'autoapi.extension'" in text
     assert "'sphinx.ext.napoleon'" in text
-    assert "autoapi_dirs = ['../../autoapi_include']" in text
+    assert "autoapi_dirs = ['../autoapi_include']" in text

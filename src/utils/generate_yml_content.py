@@ -16,9 +16,9 @@ def generate_gitlab_ci_file() -> bool:
 
 variables:
   PY_VERSION: "3.11"
-  DOCS_SRC: "docs/source"
+  DOCS_SRC: "docs"
   BUILD_DIR: "docs/build/html"
-  CONF_PY: "docs/source/conf.py"
+  CONF_PY: "docs/conf.py"
   PROJECT_NAME: "API Documentation"
   PROJECT_AUTHOR: "Development Team"
 
@@ -30,11 +30,11 @@ build_sphinx:
     - uv pip install --system sphinx==8.2.3 sphinx-autoapi==3.6.0 sphinx-rtd-theme==3.0.2
   script:
     # Create docs directory structure if it doesn't exist
-    - mkdir -p docs/source
+    - mkdir -p docs
     - |
       if [ ! -f "$CONF_PY" ]; then
         sphinx-quickstart --quiet --project "$PROJECT_NAME" \\
-          --author "$PROJECT_AUTHOR" --sep --makefile \\
+          --author "$PROJECT_AUTHOR" --makefile \\
           --batchfile --ext-autodoc docs
       fi
     # Update conf.py with autoapi settings
@@ -111,21 +111,21 @@ jobs:
 
       - name: Ensure docs scaffolding exists
         run: |
-          mkdir -p docs/source
-          if [ ! -f "docs/source/conf.py" ]; then
+          mkdir -p docs
+          if [ ! -f "docs/conf.py" ]; then
             sphinx-quickstart --quiet --project "API Documentation" \
-              --author "Development Team" --sep --makefile \
+              --author "Development Team" --makefile \
               --batchfile --ext-autodoc docs
           fi
 
       - name: Update Sphinx AutoAPI configuration
         run: |
           if [ -f "update_conf.py" ]; then
-            python update_conf.py "docs/source/conf.py"
+            python update_conf.py "docs/conf.py"
           fi
 
       - name: Build documentation
-        run: sphinx-build -b html docs/source docs/build/html
+        run: sphinx-build -b html docs docs/build/html
 
       - name: Upload documentation artifact
         uses: actions/upload-artifact@v4

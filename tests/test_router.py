@@ -206,8 +206,8 @@ def test_extract_autoapi_module_names_reads_modules_from_sphinx_error():
 
 def test_extract_autoapi_module_names_reads_modules_from_docutils_errors():
     build_output = (
-        "/tmp/repo/docs/source/autoapi/urls_v1/index.rst:18: ERROR: Unexpected indentation.\n"
-        "/tmp/repo/docs/source/autoapi/tools/gpu_embed_service/index.rst:4: WARNING: x\n"
+        "/tmp/repo/docs/autoapi/urls_v1/index.rst:18: ERROR: Unexpected indentation.\n"
+        "/tmp/repo/docs/autoapi/tools/gpu_embed_service/index.rst:4: WARNING: x\n"
     )
 
     modules = _extract_autoapi_module_names(build_output)
@@ -395,7 +395,7 @@ def test_run_sphinx_build_with_autoapi_filters_uses_single_fallback_retry(tmp_pa
                 (),
                 {
                     "returncode": 1,
-                    "stderr": "/tmp/docs/source/autoapi/api/broken/index.rst:10: ERROR: bad",
+                    "stderr": "/tmp/docs/autoapi/api/broken/index.rst:10: ERROR: bad",
                     "stdout": "",
                 },
             )()

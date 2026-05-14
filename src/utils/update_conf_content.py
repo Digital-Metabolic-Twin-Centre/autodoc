@@ -28,7 +28,7 @@ def update_conf(conf_py: str) -> None:
         text += "\nextensions = ['autoapi.extension', 'sphinx.ext.napoleon']\n"
     # Set autoapi_dirs
     if not re.search(r"autoapi_dirs\s*=", text):
-        text += "\nautoapi_dirs = ['../../autoapi_include']\n"
+        text += "\nautoapi_dirs = ['../autoapi_include']\n"
     conf_path.write_text(text, encoding="utf-8")
 
 

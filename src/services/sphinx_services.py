@@ -447,7 +447,7 @@ def _build_sample_conf(project_name: str) -> str:
         )
     additions = [
         'autoapi_type = "python"',
-        'autoapi_dirs = ["../../autoapi_include"]',
+        'autoapi_dirs = ["../autoapi_include"]',
         "autoapi_keep_files = False",
         "autoapi_generate_api_docs = True",
     ]
