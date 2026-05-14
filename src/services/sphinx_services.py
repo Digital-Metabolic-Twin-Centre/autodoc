@@ -125,11 +125,6 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         ".. toctree::\n"
         "   :hidden:\n"
         "   :maxdepth: 1\n"
-        "   :caption: Progress\n\n"
-        "   logbook/weekly_updates\n\n"
-        ".. toctree::\n"
-        "   :hidden:\n"
-        "   :maxdepth: 1\n"
         "   :caption: Notes\n\n"
         "   README\n"
     ),

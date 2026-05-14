@@ -61,13 +61,6 @@ Auto Doc
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Progress
-
-   logbook/weekly_updates
-
-.. toctree::
-   :hidden:
-   :maxdepth: 1
    :caption: Notes
 
    README
