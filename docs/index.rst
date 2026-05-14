@@ -48,36 +48,8 @@ Auto Doc
      </article>
    </section>
 
-Project map
------------
-
-This homepage is organized around the real Auto Doc workflow rather than a generic template.
-
-.. raw:: html
-
-   <section class="map-grid">
-     <article class="map-card">
-       <h3>Project</h3>
-       <p>Define the purpose of the repository, the documentation objectives, the implementation plan, and the final outcomes.</p>
-     </article>
-     <article class="map-card">
-       <h3>Progress</h3>
-       <p>Capture weekly movement, blockers, and decisions so the delivery story stays visible while the docs evolve.</p>
-     </article>
-     <article class="map-card">
-       <h3>Notes</h3>
-       <p>Keep local build instructions and practical maintenance details close to the documentation itself.</p>
-     </article>
-   </section>
-
-Quick path
-----------
-
-1. Review the project pages to understand scope and intended outcomes.
-2. Use the weekly log to track progress, blockers, and next actions.
-3. Open the notes section when you need to build or maintain the Sphinx site.
-
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Project
 
@@ -87,12 +59,14 @@ Quick path
    project/results
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Progress
 
    logbook/weekly_updates
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Notes
 
