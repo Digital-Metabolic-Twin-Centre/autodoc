@@ -68,6 +68,7 @@ dependencies = [
     { name = "python-gitlab" },
     { name = "requests" },
     { name = "tqdm" },
+    { name = "urllib3" },
     { name = "uvicorn" },
 ]
 
@@ -101,6 +102,7 @@ requires-dist = [
     { name = "python-gitlab", specifier = "==6.2.0" },
     { name = "requests", specifier = "==2.33.0" },
     { name = "tqdm", specifier = "==4.67.1" },
+    { name = "urllib3", specifier = ">=2.5.0" },
     { name = "uvicorn", specifier = "==0.35.0" },
 ]
 
