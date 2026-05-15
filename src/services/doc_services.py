@@ -86,9 +86,10 @@ def _suggestion_fuzzy_key(
 
 
 def _load_reusable_suggestions(repo_path: str, provider: str, branch: str) -> dict:
+    empty_suggestions = {"exact": {}, "fuzzy": {}}
     latest_run_dir = find_latest_repo_run_dir(repo_path, provider)
     if not latest_run_dir:
-        return {}
+        return empty_suggestions
     repo_run_dirs = sorted(
         [
             os.path.join(os.path.dirname(latest_run_dir), entry)
@@ -124,7 +125,7 @@ def _load_reusable_suggestions(repo_path: str, provider: str, branch: str) -> di
             suggestions["exact"][exact_key] = generated_docstring
             suggestions["fuzzy"].setdefault(fuzzy_key, generated_docstring)
         return suggestions
-    return {"exact": {}, "fuzzy": {}}
+    return empty_suggestions
 
 
 def _write_suggested_docstring_report(suggested_file: str, suggestions: list[dict]) -> None:

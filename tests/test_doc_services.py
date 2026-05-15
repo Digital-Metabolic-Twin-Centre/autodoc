@@ -32,6 +32,14 @@ def test_file_matches_target_folders_matches_nested_paths():
     assert _file_matches_target_folders("scripts/build.py", targets) is False
 
 
+def test_load_reusable_suggestions_returns_empty_cache_shape_when_no_runs(monkeypatch, tmp_path):
+    monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
+
+    suggestions = _load_reusable_suggestions("octo-org/example-repo", "github", "main")
+
+    assert suggestions == {"exact": {}, "fuzzy": {}}
+
+
 def test_load_reusable_suggestions_reads_latest_matching_run(monkeypatch, tmp_path):
     monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
     repo_dir = tmp_path / "github" / "octo-org__example-repo"
