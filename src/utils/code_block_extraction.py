@@ -3,6 +3,18 @@ from typing import List
 
 
 class GenericCodeBlockExtractor:
+    """
+    Extracts code blocks from source files based on detected programming language.
+
+    Args:
+        file_content (str): The content of the source file.
+        file_name (str): The name of the source file, used for language detection.
+
+    Returns:
+        List[str]: A list of extracted code blocks with headers and footers.
+
+    """
+
     LANGUAGE_PATTERNS = {
         "python": [
             r"^\s*def\s+\w+\s*\(",  # Python function
@@ -36,11 +48,29 @@ class GenericCodeBlockExtractor:
     }
 
     def __init__(self, file_content: str, file_name: str):
+        """
+        Initialize a file with content and name, detecting its language.
+
+            Args:
+                file_content (str): The content of the file.
+                file_name (str): The name of the file.
+
+            Returns:
+                None
+
+        """
         self.file_content = file_content
         self.file_name = file_name
         self.language = self._detect_language()
 
     def _detect_language(self):
+        """
+        Detects the programming language based on the file extension.
+
+            Returns:
+                str: The detected language or 'python' as default.
+
+        """
         for ext, lang in self.EXT_LANGUAGE_MAP.items():
             if self.file_name.endswith(ext):
                 return lang
@@ -63,6 +93,20 @@ class GenericCodeBlockExtractor:
         blocks: List[str],
         base_indent: int,
     ):
+        """
+        Recursively extracts code blocks from a list of lines based on language-specific patterns.
+
+        Args:
+            lines (List[str]): The lines of code to analyze.
+            start (int): The starting index for extraction.
+            end (int): The ending index for extraction.
+            blocks (List[str]): The list to store extracted blocks.
+            base_indent (int): The base indentation level for the blocks.
+
+        Returns:
+            None
+
+        """
         patterns = self.LANGUAGE_PATTERNS.get(self.language, [])
         combined_pattern = "|".join(patterns)
         i = start
@@ -83,17 +127,24 @@ class GenericCodeBlockExtractor:
                         for j in range(body_start, body_end):
                             if j < len(lines):
                                 body_line = lines[j]
-                                if len(body_line) - len(body_line.lstrip()) > base_indent:
+                                if (
+                                    len(body_line) - len(body_line.lstrip())
+                                    > base_indent
+                                ):
                                     body_lines.append(body_line)
                         if body_lines:
-                            self._extract_blocks_recursive(body_lines, 0, len(body_lines), blocks, base_indent + 4)
+                            self._extract_blocks_recursive(
+                                body_lines, 0, len(body_lines), blocks, base_indent + 4
+                            )
                     i = block_info["end_line"]
                 else:
                     i += 1
             else:
                 i += 1
 
-    def _extract_single_block(self, lines: List[str], start_idx: int, pattern: str) -> dict:
+    def _extract_single_block(
+        self, lines: List[str], start_idx: int, pattern: str
+    ) -> dict:
         """
         Extracts a single code block starting from start_idx.
         Returns dict with 'block' content and 'end_line' index.
@@ -113,7 +164,20 @@ class GenericCodeBlockExtractor:
                 return self._extract_matlab_class(lines, start_idx)
         return None
 
-    def _extract_python_function_complete(self, lines: List[str], start_idx: int) -> dict:
+    def _extract_python_function_complete(
+        self, lines: List[str], start_idx: int
+    ) -> dict:
+        """
+        Extracts a complete Python function from a list of code lines.
+
+            Args:
+                lines (List[str]): The list of code lines.
+                start_idx (int): The starting index to search for the function.
+
+            Returns:
+                dict: A dictionary containing the function code block and the ending line index.
+
+        """
         block = []
         header = f"# --- Code Block starts at line {start_idx + 1} ---"
         i = start_idx
@@ -145,6 +209,17 @@ class GenericCodeBlockExtractor:
         return {"block": full_block, "end_line": i}
 
     def _extract_python_class_complete(self, lines: List[str], start_idx: int) -> dict:
+        """
+        Extracts a complete Python class code block from a list of lines.
+
+            Args:
+                lines (List[str]): The list of code lines.
+                start_idx (int): The starting index of the class.
+
+            Returns:
+                dict: A dictionary containing the class code block and the ending line index.
+
+        """
         block = []
         header = f"# --- Code Block starts at line {start_idx + 1} ---"
         line = lines[start_idx]
@@ -167,6 +242,17 @@ class GenericCodeBlockExtractor:
         return {"block": full_block, "end_line": i}
 
     def _extract_matlab_function(self, lines: List[str], start_idx: int) -> dict:
+        """
+        Extracts a MATLAB code block from a list of lines starting at a given index.
+
+            Args:
+                lines (List[str]): The list of code lines.
+                start_idx (int): The index to start extraction from.
+
+            Returns:
+                dict: A dictionary containing the extracted code block and the ending line index.
+
+        """
         block = []
         header = f"# --- Code Block starts at line {start_idx + 1} ---"
         line = lines[start_idx]
@@ -176,7 +262,9 @@ class GenericCodeBlockExtractor:
         while i < len(lines):
             line = lines[i]
             block.append(line.rstrip())
-            if re.match(r"^\s*(if|for|while|switch|try|function|classdef)\b", line) or re.match(r"^\s*parfor\b", line):
+            if re.match(
+                r"^\s*(if|for|while|switch|try|function|classdef)\b", line
+            ) or re.match(r"^\s*parfor\b", line):
                 nested_level += 1
             elif re.match(r"^\s*end\b", line):
                 if nested_level == 0:
@@ -190,6 +278,17 @@ class GenericCodeBlockExtractor:
         return {"block": full_block, "end_line": i}
 
     def _extract_matlab_class(self, lines: List[str], start_idx: int) -> dict:
+        """
+        Extracts a MATLAB code block from a list of lines starting at a given index.
+
+            Args:
+                lines (List[str]): The list of code lines.
+                start_idx (int): The index to start extraction from.
+
+            Returns:
+                dict: A dictionary containing the extracted code block and the ending line index.
+
+        """
         block = []
         header = f"# --- Code Block starts at line {start_idx + 1} ---"
         line = lines[start_idx]
@@ -207,6 +306,17 @@ class GenericCodeBlockExtractor:
         return {"block": full_block, "end_line": i}
 
     def _extract_curly_brace_block(self, lines: List[str], start_idx: int) -> dict:
+        """
+        Extracts a block of code enclosed in curly braces from a list of lines.
+
+            Args:
+                lines (List[str]): The list of code lines.
+                start_idx (int): The starting index to search for the code block.
+
+            Returns:
+                dict: A dictionary containing the extracted code block and the ending line index.
+
+        """
         block = []
         header = f"# --- Code Block starts at line {start_idx + 1} ---"
         line = lines[start_idx]

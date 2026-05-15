@@ -398,6 +398,18 @@ def _build_no_changes_response(
     suggestion_branch: str,
     reason: str,
 ) -> dict:
+    """
+    Constructs a response indicating no changes between branches.
+
+        Args:
+            base_branch (str): The name of the base branch.
+            suggestion_branch (str): The name of the suggestion branch.
+            reason (str): The reason for no changes.
+
+        Returns:
+            dict: A dictionary containing the response details.
+
+    """
     return {
         "status": "no_changes",
         "provider": "github",

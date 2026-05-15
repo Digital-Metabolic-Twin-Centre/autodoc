@@ -439,16 +439,48 @@ class PublishPagesError(RuntimeError):
     """Raised when a GitHub Pages publish step fails."""
 
     def __init__(self, message: str, status_code: int = 403):
+        """
+        Initializes an exception with a message and status code.
+
+            Args:
+                message (str): The error message.
+                status_code (int, optional): The HTTP status code, default is 403.
+
+            Returns:
+                None
+
+        """
         super().__init__(message)
         self.status_code = status_code
 
 
 def _raise_publish_error(message: str, status_code: int = 403) -> None:
+    """
+    Logs an error message and raises a PublishPagesError.
+
+        Args:
+            message (str): The error message to log and raise.
+            status_code (int, optional): The HTTP status code, defaults to 403.
+
+        Returns:
+            None: This function does not return a value.
+
+    """
     logger.error(message)
     raise PublishPagesError(message, status_code=status_code)
 
 
 def _extract_autoapi_module_names(build_output: str) -> list[str]:
+    """
+    Extracts unique module names from the given build output string.
+
+    Args:
+        build_output (str): The output string from the build process.
+
+    Returns:
+        list[str]: A list of unique module names extracted from the build output.
+
+    """
     module_names = re.findall(r"module '([^']+)'", build_output or "")
     module_names.extend(
         match.replace("/", ".")
@@ -1340,7 +1372,10 @@ def create_sphinx_setup(
         len(files_with_high_coverage),
         files_with_high_coverage,
     )
-    logger.info("Total analyzed Python files to mirror into AutoAPI: %s", len(analyzed_python_files))
+    logger.info(
+        "Total analyzed Python files to mirror into AutoAPI: %s",
+        len(analyzed_python_files),
+    )
 
     # Skip directory creation if there are no analyzed Python files to mirror.
     if not analyzed_python_files:
