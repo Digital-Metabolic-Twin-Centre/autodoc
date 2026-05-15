@@ -707,6 +707,41 @@ def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatc
     assert captured["suggestion_branch"] == "autodocs/custom-branch"
 
 
+def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkeypatch):
+    monkeypatch.setattr(
+        "router.router.create_python_docstring_pull_request",
+        lambda provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings: {
+            "status": "no_changes",
+            "provider": "github",
+            "base_branch": base_branch,
+            "suggestion_branch": suggestion_branch,
+            "pull_request_url": None,
+            "files_changed": 0,
+            "docstrings_added": 0,
+            "changed_files": [],
+            "message": "No new Python docstring suggestions are available for this branch.",
+            "detail": "No new Python docstring suggestions are available for this branch.",
+        },
+    )
+
+    response = client.post(
+        "/suggest-python-docstrings-pr",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "base_branch": "main",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "no_changes"
+    assert response.json()["pull_request_url"] is None
+    assert response.json()["message"] == (
+        "No new Python docstring suggestions are available for this branch."
+    )
+
+
 def test_suggest_python_docstrings_pr_requires_base_branch():
     response = client.post(
         "/suggest-python-docstrings-pr",

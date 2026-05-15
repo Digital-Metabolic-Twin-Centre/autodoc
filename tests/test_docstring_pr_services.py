@@ -259,7 +259,10 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
     )
 
     assert result["status"] == "no_changes"
+    assert result["pull_request_url"] is None
     assert result["files_changed"] == 0
+    assert result["message"] == "No new Python docstring suggestions are available for this branch."
+    assert result["detail"] == result["message"]
 
 
 def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_current(
@@ -329,4 +332,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_
     )
 
     assert result["status"] == "no_changes"
+    assert result["pull_request_url"] is None
     assert result["files_changed"] == 0
+    assert result["message"] == "No new Python docstring suggestions are available for this branch."
+    assert result["detail"] == result["message"]
