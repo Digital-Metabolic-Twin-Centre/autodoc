@@ -193,7 +193,7 @@ async def publish_pages(req: PublishPagesRequest):
     except HTTPException:
         raise
     except PublishPagesError as pe:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
+        raise HTTPException(status_code=pe.status_code, detail=str(pe))
     except Exception as e:
         logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(

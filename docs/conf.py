@@ -5,8 +5,9 @@ author = "Digital Metabolic Twin Centre"
 copyright = f"{datetime.now().year}, {author}"
 
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'autoapi.extension',
 ]
 
 templates_path = ["_templates"]
@@ -19,3 +20,5 @@ html_favicon = "_static/img/favicon.ico"
 
 
 html_show_sphinx = False
+
+autoapi_dirs = ['../autoapi_include']

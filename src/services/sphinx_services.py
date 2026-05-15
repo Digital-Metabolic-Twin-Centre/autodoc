@@ -437,10 +437,14 @@ LOW_CONTENT_MIN_MEANINGFUL_LINES = 8
 class PublishPagesError(RuntimeError):
     """Raised when a GitHub Pages publish step fails."""
 
+    def __init__(self, message: str, status_code: int = 403):
+        super().__init__(message)
+        self.status_code = status_code
 
-def _raise_publish_error(message: str) -> None:
+
+def _raise_publish_error(message: str, status_code: int = 403) -> None:
     logger.error(message)
-    raise PublishPagesError(message)
+    raise PublishPagesError(message, status_code=status_code)
 
 
 def _extract_autoapi_module_names(build_output: str) -> list[str]:
@@ -1426,7 +1430,8 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             if update_conf_result.returncode != 0:
                 logger.error("Updating conf.py failed: %s", update_conf_result.stderr)
                 _raise_publish_error(
-                    f"Updating Sphinx conf.py failed: {update_conf_result.stderr.strip()}"
+                    f"Updating Sphinx conf.py failed: {update_conf_result.stderr.strip()}",
+                    status_code=422,
                 )
 
         _ensure_sphinx_project_name(conf_py_path, project_name)
@@ -1440,10 +1445,16 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
                 if part
             )
             logger.error("Sphinx build failed: %s", build_output)
-            _raise_publish_error(f"Sphinx build failed: {build_output}")
+            _raise_publish_error(
+                f"Sphinx build failed: {build_output}",
+                status_code=422,
+            )
 
         if not os.path.isdir(build_dir):
-            _raise_publish_error(f"Sphinx build did not produce {BUILD_DIR}.")
+            _raise_publish_error(
+                f"Sphinx build did not produce {BUILD_DIR}.",
+                status_code=422,
+            )
 
         published = publish_local_directory_to_github_branch(
             repo_path,
