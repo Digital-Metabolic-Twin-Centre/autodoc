@@ -53,6 +53,7 @@ from utils.git_utils import (
 logger = get_logger(__name__)
 DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
 DOCS_ASSET_DIR = Path(__file__).resolve().parents[2] / "docs" / "_static" / "img"
+AUTOAPI_DOCSTRING_THRESHOLD = 0.50
 SAMPLE_DOCS_FALLBACK_TEXTS = {
     "conf.py": (
         "from datetime import datetime\n\n"
@@ -431,7 +432,7 @@ RISKY_AUTOAPI_PATH_PATTERNS = [
     re.compile(r"(^|/)settings?(_.*)?\.py$"),
     re.compile(r"(^|/)(asgi|wsgi)\.py$"),
 ]
-LOW_CONTENT_MIN_MEANINGFUL_LINES = 8
+LOW_CONTENT_MIN_MEANINGFUL_LINES = 4
 
 
 class PublishPagesError(RuntimeError):
@@ -499,7 +500,11 @@ def _to_autoapi_ignore_pattern(relative_file: str) -> str:
     return f"*/{relative_file.lstrip('/')}"
 
 
-def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, str]:
+def _classify_autoapi_file(
+    autoapi_root: Path,
+    file_path: Path,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
+) -> tuple[bool, str]:
     """
     Classifies an AutoAPI file based on various criteria.
 
@@ -529,7 +534,7 @@ def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, s
         return False, "import-star"
 
     meaningful_lines = [line for line in file_text.splitlines() if line.strip()]
-    if len(meaningful_lines) < LOW_CONTENT_MIN_MEANINGFUL_LINES:
+    if len(meaningful_lines) < low_content_min_meaningful_lines:
         return False, "low-content"
 
     has_public_shape = any(
@@ -577,6 +582,7 @@ def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]
 
 def _collect_prebuild_autoapi_ignores(
     temp_dir: str,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
 ) -> tuple[list[str], list[dict[str, str]]]:
     """
     Collects patterns and details of files to ignore in AutoAPI documentation.
@@ -596,7 +602,11 @@ def _collect_prebuild_autoapi_ignores(
     ignore_patterns: list[str] = []
     skipped_files: list[dict[str, str]] = []
     for file_path in autoapi_root.rglob("*.py"):
-        should_include, reason = _classify_autoapi_file(autoapi_root, file_path)
+        should_include, reason = _classify_autoapi_file(
+            autoapi_root,
+            file_path,
+            low_content_min_meaningful_lines,
+        )
         if should_include:
             continue
         relative_file = file_path.relative_to(autoapi_root).as_posix()
@@ -745,7 +755,9 @@ def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
 
 
 def _run_sphinx_build_with_autoapi_filters(
-    temp_dir: str, conf_py_path: str
+    temp_dir: str,
+    conf_py_path: str,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
 ) -> subprocess.CompletedProcess:
     """
     Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries on failure.\n\n
@@ -754,7 +766,8 @@ def _run_sphinx_build_with_autoapi_filters(
     subprocess.CompletedProcess: The result of the Sphinx build process.
     """
     prebuild_ignore_patterns, prebuild_skipped = _collect_prebuild_autoapi_ignores(
-        temp_dir
+        temp_dir,
+        low_content_min_meaningful_lines,
     )
     active_ignore_patterns = list(prebuild_ignore_patterns)
     skipped_files = list(prebuild_skipped)
@@ -1254,7 +1267,15 @@ API Reference
             api_reference_file.write(_build_sample_api_reference())
 
 
-def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file):
+def create_sphinx_setup(
+    provider,
+    repo_url,
+    token,
+    branch,
+    docstring_analysis_file,
+    docstring_threshold: float = AUTOAPI_DOCSTRING_THRESHOLD,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
+):
     # Extract repo path from URL
     """
     Set up Sphinx documentation for a repository based on docstring coverage.
@@ -1273,9 +1294,13 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
     project_name = _project_name_from_repo_path(repo_path)
+    logger.info(
+        "Creating Sphinx setup with docstring_threshold=%.2f and low_content_min_meaningful_lines=%s",
+        docstring_threshold,
+        low_content_min_meaningful_lines,
+    )
 
     # FETCH FILES WITH COMPLETE OR HIGH DOCSTRING COVERAGE
-    DOCSTRING_THRESHOLD = 0.75  # 75% threshold for including files
     files_with_all_docstrings = []
     files_with_high_coverage = []
 
@@ -1293,11 +1318,16 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
 
         if coverage == 1.0:
             files_with_all_docstrings.append(file_path)
-        elif coverage >= DOCSTRING_THRESHOLD:
+        elif coverage >= docstring_threshold:
             files_with_high_coverage.append(file_path)
 
-    # Combine files with 100% and high coverage
-    files_to_document = files_with_all_docstrings + files_with_high_coverage
+    analyzed_python_files = sorted(
+        {
+            str(file_path)
+            for file_path in df["file_path"].dropna().tolist()
+            if str(file_path).endswith((".py", ".pyw"))
+        }
+    )
 
     logger.info(
         "Files with 100%% docstrings (%s): %s",
@@ -1306,23 +1336,27 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     )
     logger.info(
         "Files with ≥%.0f%% docstrings (%s): %s",
-        DOCSTRING_THRESHOLD * 100,
+        docstring_threshold * 100,
         len(files_with_high_coverage),
         files_with_high_coverage,
     )
-    logger.info(f"Total files to document: {len(files_to_document)}")
+    logger.info("Total analyzed Python files to mirror into AutoAPI: %s", len(analyzed_python_files))
 
-    # Skip directory creation if no files meet criteria
-    if not files_to_document:
+    # Skip directory creation if there are no analyzed Python files to mirror.
+    if not analyzed_python_files:
         logger.warning(
-            "No files with ≥%.0f%% docstring coverage found. Skipping Sphinx setup.",
-            DOCSTRING_THRESHOLD * 100,
+            "No analyzed Python files were found to mirror into AutoAPI. Skipping Sphinx setup."
         )
         return False
 
-    # CREATE DIRECTORY AND ADD FILES WITH ADEQUATE DOCSTRING COVERAGE
+    # CREATE DIRECTORY AND ADD ALL ANALYZED PYTHON FILES FOR API DOCUMENTATION
     dir = create_directory_and_add_files(
-        repo_path, AUTOAPI_DIRECTORY, files_to_document, branch, token, provider
+        repo_path,
+        AUTOAPI_DIRECTORY,
+        analyzed_python_files,
+        branch,
+        token,
+        provider,
     )
     if not dir:
         logger.error("Directory creation failed.")
@@ -1406,7 +1440,12 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     return False
 
 
-def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
+def publish_github_pages(
+    repo_url: str,
+    source_branch: str,
+    token: str,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
+) -> bool:
     """
     Publishes reviewed GitHub docs output from a source branch to gh-pages.
     """
@@ -1472,7 +1511,11 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
 
-        build_result = _run_sphinx_build_with_autoapi_filters(temp_dir, conf_py_path)
+        build_result = _run_sphinx_build_with_autoapi_filters(
+            temp_dir,
+            conf_py_path,
+            low_content_min_meaningful_lines,
+        )
         if build_result.returncode != 0:
             build_output = "\n".join(
                 part

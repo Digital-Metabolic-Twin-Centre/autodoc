@@ -393,6 +393,23 @@ def _run_ruff_on_patched_files(
         return cleaned_files
 
 
+def _build_no_changes_response(
+    base_branch: str,
+    suggestion_branch: str,
+    reason: str,
+) -> dict:
+    return {
+        "status": "no_changes",
+        "provider": "github",
+        "base_branch": base_branch,
+        "suggestion_branch": suggestion_branch,
+        "files_changed": 0,
+        "docstrings_added": 0,
+        "changed_files": [],
+        "detail": reason,
+    }
+
+
 def create_python_docstring_pull_request(
     provider: str,
     repo_url: str,
@@ -451,7 +468,11 @@ def create_python_docstring_pull_request(
             remaining -= len(patched.inserted)
 
     if not patched_files:
-        raise DocstringPullRequestError("No missing Python docstrings were patched.")
+        return _build_no_changes_response(
+            base_branch,
+            suggestion_branch,
+            "No new Python docstring suggestions are available for this branch.",
+        )
 
     patched_files = _run_ruff_on_patched_files(patched_files)
 
@@ -463,10 +484,23 @@ def create_python_docstring_pull_request(
             "Could not create or access the suggestion branch."
         )
 
+    changed_files = {
+        file_path: patched
+        for file_path, patched in patched_files.items()
+        if fetch_content_from_github(repo_path, suggestion_branch, file_path, token)
+        != patched.content
+    }
+    if not changed_files:
+        return _build_no_changes_response(
+            base_branch,
+            suggestion_branch,
+            "No new Python docstring suggestions are available for this branch.",
+        )
+
     committed = commit_files_to_github_branch(
         repo_path,
         suggestion_branch,
-        {file_path: patched.content for file_path, patched in patched_files.items()},
+        {file_path: patched.content for file_path, patched in changed_files.items()},
         token,
         "Add generated Python docstring suggestions",
     )
@@ -481,7 +515,7 @@ def create_python_docstring_pull_request(
             suggestion_branch,
             base_branch,
             title,
-            _build_pull_request_body(base_branch, patched_files),
+            _build_pull_request_body(base_branch, changed_files),
             token,
         )
     except GitHubApiError as error:
@@ -495,9 +529,9 @@ def create_python_docstring_pull_request(
         "base_branch": base_branch,
         "suggestion_branch": suggestion_branch,
         "pull_request_url": pr_url,
-        "files_changed": len(patched_files),
+        "files_changed": len(changed_files),
         "docstrings_added": sum(
-            len(patched.inserted) for patched in patched_files.values()
+            len(patched.inserted) for patched in changed_files.values()
         ),
-        "changed_files": sorted(patched_files.keys()),
+        "changed_files": sorted(changed_files.keys()),
     }

@@ -51,12 +51,14 @@ async def root():
 @router.post("/generate")
 async def generate_docs(req: RepoRequest):
     logger.info(
-        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s, reuse_doc=%s",
+        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s, reuse_doc=%s, docstring_threshold=%s, low_content_min_lines=%s",
         req.provider,
         req.repo_url,
         req.branch,
         req.model or DEFAULT_OPENAI_MODEL,
         req.reuse_doc,
+        req.docstring_threshold,
+        req.low_content_min_lines,
     )
     if not req.repo_url or not req.token or not req.branch or not req.provider:
         logger.warning("Missing required parameters in request.")
@@ -80,7 +82,13 @@ async def generate_docs(req: RepoRequest):
 
         # 2. CREATE SPHINX SETUP
         sphinx_setup_created = create_sphinx_setup(
-            req.provider, req.repo_url, req.token, req.branch, docstring_analysis_file
+            req.provider,
+            req.repo_url,
+            req.token,
+            req.branch,
+            docstring_analysis_file,
+            req.docstring_threshold,
+            req.low_content_min_lines,
         )
         if not sphinx_setup_created:
             logger.error("Sphinx setup creation failed.")
@@ -163,9 +171,10 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
 async def publish_pages(req: PublishPagesRequest):
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
     logger.info(
-        "/publish-pages endpoint called with repo_url=%s, branch=%s",
+        "/publish-pages endpoint called with repo_url=%s, branch=%s, low_content_min_lines=%s",
         req.repo_url,
         req.branch,
+        req.low_content_min_lines,
     )
     if not req.repo_url or not req.token or not req.branch:
         raise HTTPException(
@@ -174,7 +183,12 @@ async def publish_pages(req: PublishPagesRequest):
         )
 
     try:
-        published = publish_github_pages(req.repo_url, req.branch, req.token)
+        published = publish_github_pages(
+            req.repo_url,
+            req.branch,
+            req.token,
+            req.low_content_min_lines,
+        )
         if not published:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
