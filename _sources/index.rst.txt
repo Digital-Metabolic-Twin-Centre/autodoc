@@ -64,6 +64,7 @@ Auto Doc
 .. toctree::
    :hidden:
    :maxdepth: 1
-   :caption: Notes
+   :caption: Reference
 
+   api_reference
    README

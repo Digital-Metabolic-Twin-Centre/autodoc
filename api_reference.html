@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Documentation Notes &mdash; Auto Doc  documentation</title>
+  <title>API Reference &mdash; Auto Doc  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -22,7 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="API Reference" href="api_reference.html" /> 
+    <link rel="next" title="Documentation Notes" href="README.html" />
+    <link rel="prev" title="Results" href="project/results.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -74,14 +75,14 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a><ul class="simple">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul class="simple">
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Documentation Notes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#application-setup">Application setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#run-the-application-locally">Run the application locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#run-with-docker">Run with Docker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build-these-docs-locally">Build these docs locally</a></li>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Documentation Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="README.html#application-setup">Application setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="README.html#run-the-application-locally">Run the application locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="README.html#run-with-docker">Run with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="README.html#build-these-docs-locally">Build these docs locally</a></li>
 </ul>
 </li>
 </ul>
@@ -100,9 +101,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Documentation Notes</li>
+      <li class="breadcrumb-item active">API Reference</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/README.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/api_reference.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -110,74 +111,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="documentation-notes">
-<h1>Documentation Notes<a class="headerlink" href="#documentation-notes" title="Link to this heading"></a></h1>
-<p>This project includes two related setups:</p>
-<ul class="simple">
-<li><p>running the Auto Doc API service</p></li>
-<li><p>building these Sphinx documentation pages locally</p></li>
-</ul>
-<section id="application-setup">
-<h2>Application setup<a class="headerlink" href="#application-setup" title="Link to this heading"></a></h2>
-<p>Requirements:</p>
-<ul class="simple">
-<li><p>Python 3.11 or newer</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">uv</span></code></p></li>
-<li><p>an OpenAI API key</p></li>
-<li><p>a GitHub or GitLab access token for the target repository</p></li>
-<li><p>Docker, if you want to run the service in a container</p></li>
-</ul>
-<p>Create a virtual environment and install dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv
-<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
-uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev<span class="w"> </span>--no-install-project
-</pre></div>
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>Browse the generated API pages directly from the sidebar.</p>
+<div class="toctree-wrapper compound">
 </div>
-<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file in the project root:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>OPENAI_API_KEY=your-openai-api-key
-
-# Optional, only needed if Auto Doc should trigger GitLab pipelines.
-CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
-</pre></div>
-</div>
-</section>
-<section id="run-the-application-locally">
-<h2>Run the application locally<a class="headerlink" href="#run-the-application-locally" title="Link to this heading"></a></h2>
-<p>Start the FastAPI service with auto-reload:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>main:app<span class="w"> </span>--app-dir<span class="w"> </span>src<span class="w"> </span>--reload
-</pre></div>
-</div>
-<p>The service runs at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code>.
-Interactive API docs are available at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000/docs</span></code>.</p>
-<p>You can also run the app directly:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>src/main.py
-</pre></div>
-</div>
-</section>
-<section id="run-with-docker">
-<h2>Run with Docker<a class="headerlink" href="#run-with-docker" title="Link to this heading"></a></h2>
-<p>Build and start the containerised service:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>--build
-</pre></div>
-</div>
-<p>The compose file exposes port <code class="docutils literal notranslate"><span class="pre">8000</span></code> and mounts the local <code class="docutils literal notranslate"><span class="pre">logs/</span></code> directory into the container.</p>
-</section>
-<section id="build-these-docs-locally">
-<h2>Build these docs locally<a class="headerlink" href="#build-these-docs-locally" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-make<span class="w"> </span>clean<span class="w"> </span>html
-</pre></div>
-</div>
-<p>Open <code class="docutils literal notranslate"><span class="pre">docs/_build/html/index.html</span></code> in your browser.</p>
-</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="api_reference.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="project/results.html" class="btn btn-neutral float-left" title="Results" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="README.html" class="btn btn-neutral float-right" title="Documentation Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
