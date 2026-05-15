@@ -166,7 +166,9 @@ def generate_docstrings_for_code_blocks_openai(
             continue
 
         try:
-            docstring = generate_docstring_with_openai(code_block, language, model=model)
+            docstring = generate_docstring_with_openai(
+                code_block, language, model=model
+            )
             if docstring:
                 code_blocks_data[i]["generated_docstring"] = docstring
             else:
@@ -208,7 +210,10 @@ def format_docstring_for_language(docstring: str, language: str | None) -> str:
                 lines.append("")
                 continue
             leading_spaces = stripped[: len(stripped) - len(stripped.lstrip())]
-            lines.extend(textwrap.wrap(stripped, width=96, subsequent_indent=leading_spaces) or [""])
+            lines.extend(
+                textwrap.wrap(stripped, width=96, subsequent_indent=leading_spaces)
+                or [""]
+            )
         if any(line.startswith((" ", "\t")) for line in lines):
             lines.append("")
         indented_lines = ["    " + line if line.strip() else "" for line in lines]
@@ -217,7 +222,9 @@ def format_docstring_for_language(docstring: str, language: str | None) -> str:
     elif language.lower() in ["javascript", "typescript"]:
         # JSDoc format
         lines = docstring.split("\n")
-        formatted_lines = ["    /**"] + [f"     * {line}" for line in lines] + ["     */"]
+        formatted_lines = (
+            ["    /**"] + [f"     * {line}" for line in lines] + ["     */"]
+        )
         return "\n".join(formatted_lines)
 
     elif language.lower() == "matlab":
@@ -231,6 +238,16 @@ def format_docstring_for_language(docstring: str, language: str | None) -> str:
 
 
 def _strip_docstring_wrapper(docstring: str) -> str:
+    """
+    Remove surrounding quotes from a docstring.
+
+    Args:
+        docstring (str): The docstring to clean.
+
+    Returns:
+        str: The cleaned docstring without surrounding quotes.
+
+    """
     cleaned = docstring.strip()
     quote_pairs = (('"""', '"""'), ("'''", "'''"), ("/**", "*/"))
     for opening, closing in quote_pairs:

@@ -19,6 +19,17 @@ class GitHubApiError(RuntimeError):
     """Raised when a GitHub API request fails."""
 
     def __init__(self, message: str, status_code: Optional[int] = None):
+        """
+        Initializes an exception with a message and an optional status code.
+
+            Args:
+                message (str): The error message.
+                status_code (Optional[int]): An optional status code associated with the error.
+
+            Returns:
+                None
+
+        """
         super().__init__(message)
         self.status_code = status_code
 
@@ -27,11 +38,35 @@ class RepositoryAccessError(RuntimeError):
     """Raised when a repository or branch cannot be accessed for analysis."""
 
     def __init__(self, message: str, status_code: Optional[int] = None):
+        """
+        Initializes an exception with a message and an optional status code.
+
+            Args:
+                message (str): The error message.
+                status_code (Optional[int]): An optional status code associated with the error.
+
+            Returns:
+                None
+
+        """
         super().__init__(message)
         self.status_code = status_code
 
 
-def _github_headers(token: str, accept: str = "application/vnd.github+json") -> Dict[str, str]:
+def _github_headers(
+    token: str, accept: str = "application/vnd.github+json"
+) -> Dict[str, str]:
+    """
+    Generate headers for GitHub API requests.
+
+    Args:
+        token (str): The authentication token for GitHub API.
+        accept (str): The media type to accept (default is 'application/vnd.github+json').
+
+    Returns:
+        Dict[str, str]: A dictionary containing the necessary headers for the request.
+
+    """
     return {
         "Authorization": f"Bearer {token}",
         "Accept": accept,
@@ -40,6 +75,16 @@ def _github_headers(token: str, accept: str = "application/vnd.github+json") -> 
 
 
 def _parse_response_message(response) -> str:
+    """
+    Parse the response message from an HTTP response.
+
+        Args:
+            response (Response): The HTTP response object to parse.
+
+        Returns:
+            str: The parsed message or 'Unknown error' if not found.
+
+    """
     try:
         payload = response.json()
     except Exception:
@@ -49,7 +94,22 @@ def _parse_response_message(response) -> str:
     return response.text.strip() or "Unknown error"
 
 
-def _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = "") -> None:
+def _raise_github_repository_access_error(
+    response, repo_path: str, branch: str, path: str = ""
+) -> None:
+    """
+    Raises a RepositoryAccessError based on the GitHub API response for a repository access attempt.
+
+        Args:
+            response: The API response object from GitHub.
+            repo_path (str): The path of the GitHub repository.
+            branch (str): The branch name to check.
+            path (str, optional): The specific path in the repository.
+
+        Returns:
+            None: Raises an error if access is denied or repository is not found.
+
+    """
     message = _parse_response_message(response)
     branch_label = branch or "<unspecified>"
     if response.status_code == 404:
@@ -108,9 +168,13 @@ def get_gitignore_patterns(
         List[str]: List of ignore patterns from .gitignore.
     """
     if provider == "github":
-        content = fetch_content_from_github(repo_path, branch, ".gitignore", access_token)
+        content = fetch_content_from_github(
+            repo_path, branch, ".gitignore", access_token
+        )
     elif provider == "gitlab":
-        content = fetch_content_from_gitlab(repo_path, branch, ".gitignore", access_token)
+        content = fetch_content_from_gitlab(
+            repo_path, branch, ".gitignore", access_token
+        )
     else:
         return []
     if not content:
@@ -138,7 +202,9 @@ def should_ignore(name: str, patterns: List[str]) -> bool:
     return False
 
 
-def fetch_content_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[str]:
+def fetch_content_from_github(
+    repo_path: str, branch: str, file_path: str, access_token: str
+) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitHub repository.
     Args:
@@ -167,7 +233,9 @@ def fetch_content_from_github(repo_path: str, branch: str, file_path: str, acces
     return None
 
 
-def fetch_content_bytes_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[bytes]:
+def fetch_content_bytes_from_github(
+    repo_path: str, branch: str, file_path: str, access_token: str
+) -> Optional[bytes]:
     """
     Fetches the raw bytes of a file from a GitHub repository.
     """
@@ -189,7 +257,9 @@ def fetch_content_bytes_from_github(repo_path: str, branch: str, file_path: str,
     return None
 
 
-def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, private_token: str) -> Optional[str]:
+def fetch_content_from_gitlab(
+    repo_path: str, branch: str, file_path: str, private_token: str
+) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitLab repository.
     Args:
@@ -220,7 +290,9 @@ def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, priva
     return None
 
 
-def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", provider: str = "github") -> List[Dict]:
+def fetch_repo_tree(
+    repo_path: str, access_token: str, branch: str = "main", provider: str = "github"
+) -> List[Dict]:
     """
     Recursively fetches the file and directory tree for a given repository and branch.
     Args:
@@ -232,10 +304,22 @@ def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", pro
         List[Dict]: List of files and directories in the repository.
     """
     repository_files = []
-    gitignore_patterns = get_gitignore_patterns(repo_path, access_token, branch, provider)
+    gitignore_patterns = get_gitignore_patterns(
+        repo_path, access_token, branch, provider
+    )
     logger.info(f"Gitignore patterns: {gitignore_patterns}")
 
     def _fetch_tree(path: str = "") -> List[Dict]:
+        """
+        Fetches the repository tree from GitHub or GitLab.
+
+            Args:
+                path (str): The path to the directory in the repository.
+
+            Returns:
+                List[Dict]: A list of files and directories in the specified path.
+
+        """
         if provider == "github":
             url = f"{GITHUB_API_URL}/repos/{repo_path}/contents/{path}"
             headers = {
@@ -270,7 +354,9 @@ def fetch_repo_tree(repo_path: str, access_token: str, branch: str = "main", pro
             if should_ignore(item["name"], gitignore_patterns):
                 continue
             if item.get("type") in ["dir", "tree"]:
-                sub_items = _fetch_tree(os.path.join(path, item["name"]) if path else item["name"])
+                sub_items = _fetch_tree(
+                    os.path.join(path, item["name"]) if path else item["name"]
+                )
                 all_files.extend(sub_items)
             elif item.get("type") in ["file", "blob"]:
                 all_files.append(item)
@@ -494,12 +580,16 @@ def create_directory_and_add_files(
             pass
 
         if not gitkeep_exists:
-            actions.append({"action": "create", "file_path": gitkeep_path, "content": ""})
+            actions.append(
+                {"action": "create", "file_path": gitkeep_path, "content": ""}
+            )
 
         try:
             gl = gitlab.Gitlab(GITLAB_API_URL, private_token=token)
             project = gl.projects.get(repo_url)
-            tree_items = project.repository_tree(path=dir_path, ref=branch, recursive=True)
+            tree_items = project.repository_tree(
+                path=dir_path, ref=branch, recursive=True
+            )
             stale_paths = sorted(
                 item.get("path", "")
                 for item in tree_items
@@ -538,8 +628,12 @@ def create_directory_and_add_files(
                 pass
 
             action_type = "update" if file_exists else "create"
-            logger.info(f"{'Updating' if file_exists else 'Adding'} file {target_path} to commit actions.")
-            actions.append({"action": action_type, "file_path": target_path, "content": content})
+            logger.info(
+                f"{'Updating' if file_exists else 'Adding'} file {target_path} to commit actions."
+            )
+            actions.append(
+                {"action": action_type, "file_path": target_path, "content": content}
+            )
 
         if not actions:
             logger.warning("No actions to commit.")
@@ -562,7 +656,10 @@ def create_directory_and_add_files(
                     "includes 'write_repository' scope in addition to "
                     "'api' and 'read_api'."
                 )
-            elif "not allowed to push" in error_msg.lower() or "protected" in error_msg.lower():
+            elif (
+                "not allowed to push" in error_msg.lower()
+                or "protected" in error_msg.lower()
+            ):
                 logger.error(
                     f"Branch '{branch}' is protected. Either use a different "
                     "branch, unprotect the branch, or add yourself as an "
@@ -577,6 +674,21 @@ def create_directory_and_add_files(
 
 
 def create_a_file(repo_url, branch, file_path, content, token, provider):
+    """
+    Create or update a file in a specified repository on GitHub or GitLab.
+
+        Args:
+            repo_url (str): The repository URL.
+            branch (str): The branch name.
+            file_path (str): The path of the file to create/update.
+            content (str or bytes): The content to write to the file.
+            token (str): The access token for authentication.
+            provider (str): The service provider ('github' or 'gitlab').
+
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+
+    """
     if isinstance(content, bytes):
         content_bytes = content
         content_text = None
@@ -632,7 +744,11 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
                 "encoding": "base64",
             }
         else:
-            data = {"branch": branch, "content": content_text, "commit_message": commit_message}
+            data = {
+                "branch": branch,
+                "content": content_text,
+                "commit_message": commit_message,
+            }
         resp = method(api_url, headers=headers, json=data)
         if resp.status_code not in (201, 200):
             logger.error(f"GitLab create/update file error: {resp.text}")
@@ -644,7 +760,9 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         return False
 
 
-def ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, token: str) -> bool:
+def ensure_github_branch(
+    repo_url: str, source_branch: str, new_branch: str, token: str
+) -> bool:
     """
     Ensures a GitHub branch exists by creating it from another branch when needed.
     """
@@ -674,7 +792,9 @@ def ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, tok
     return True
 
 
-def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: str = "/") -> bool:
+def configure_github_pages(
+    repo_url: str, pages_branch: str, token: str, path: str = "/"
+) -> bool:
     """
     Configures GitHub Pages to publish from a branch without GitHub Actions.
     """
@@ -687,8 +807,13 @@ def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: s
     if get_resp.status_code == 200:
         pages_config = get_resp.json()
         current_source = pages_config.get("source") or {}
-        if current_source.get("branch") == pages_branch and current_source.get("path") == path:
-            logger.info("GitHub Pages is already configured for %s%s.", pages_branch, path)
+        if (
+            current_source.get("branch") == pages_branch
+            and current_source.get("path") == path
+        ):
+            logger.info(
+                "GitHub Pages is already configured for %s%s.", pages_branch, path
+            )
             return True
         resp = requests.put(api_url, headers=_github_headers(token), json=payload)
         success_codes = (204,)
@@ -717,7 +842,9 @@ def request_github_pages_build(repo_url: str, token: str) -> bool:
     return True
 
 
-def list_github_tree(repo_url: str, ref: str, token: str, recursive: bool = True) -> List[Dict]:
+def list_github_tree(
+    repo_url: str, ref: str, token: str, recursive: bool = True
+) -> List[Dict]:
     """
     Lists files in a GitHub tree for the given ref.
     """
@@ -731,7 +858,9 @@ def list_github_tree(repo_url: str, ref: str, token: str, recursive: bool = True
     return data.get("tree", [])
 
 
-def download_github_branch_snapshot(repo_url: str, branch: str, token: str, destination_dir: str) -> bool:
+def download_github_branch_snapshot(
+    repo_url: str, branch: str, token: str, destination_dir: str
+) -> bool:
     """
     Downloads a GitHub branch snapshot into a local directory.
     """
@@ -763,7 +892,10 @@ def create_github_blob(repo_url: str, token: str, content: bytes) -> Optional[st
     try:
         payload = {"content": content.decode("utf-8"), "encoding": "utf-8"}
     except UnicodeDecodeError:
-        payload = {"content": base64.b64encode(content).decode("ascii"), "encoding": "base64"}
+        payload = {
+            "content": base64.b64encode(content).decode("ascii"),
+            "encoding": "base64",
+        }
 
     resp = requests.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/blobs",
@@ -795,7 +927,8 @@ def publish_github_directory_to_branch(
     source_files = [
         item
         for item in source_items
-        if item.get("type") == "blob" and item.get("path", "").startswith(f"{source_prefix}/")
+        if item.get("type") == "blob"
+        and item.get("path", "").startswith(f"{source_prefix}/")
     ]
     if not source_files:
         logger.warning(
@@ -832,10 +965,14 @@ def publish_github_directory_to_branch(
     for item in source_files:
         source_path = item["path"]
         relative_path = source_path[len(source_prefix) + 1 :]
-        target_path = f"{target_prefix}/{relative_path}" if target_prefix else relative_path
+        target_path = (
+            f"{target_prefix}/{relative_path}" if target_prefix else relative_path
+        )
         content = fetch_content_from_github(repo_url, source_branch, source_path, token)
         if content is None:
-            logger.warning(f"Could not fetch built documentation file {source_path}, skipping.")
+            logger.warning(
+                f"Could not fetch built documentation file {source_path}, skipping."
+            )
             continue
         tree.append(
             {
@@ -942,7 +1079,9 @@ def publish_local_directory_to_github_branch(
         for file_name in files:
             local_path = os.path.join(root, file_name)
             relative_path = os.path.relpath(local_path, local_dir).replace(os.sep, "/")
-            target_path = f"{target_prefix}/{relative_path}" if target_prefix else relative_path
+            target_path = (
+                f"{target_prefix}/{relative_path}" if target_prefix else relative_path
+            )
             with open(local_path, "rb") as file_handle:
                 blob_sha = create_github_blob(repo_url, token, file_handle.read())
             if not blob_sha:
@@ -960,7 +1099,9 @@ def publish_local_directory_to_github_branch(
     nojekyll_sha = create_github_blob(repo_url, token, b"")
     if not nojekyll_sha:
         return False
-    tree.append({"path": ".nojekyll", "mode": "100644", "type": "blob", "sha": nojekyll_sha})
+    tree.append(
+        {"path": ".nojekyll", "mode": "100644", "type": "blob", "sha": nojekyll_sha}
+    )
     published_paths.add(".nojekyll")
 
     stale_paths = sorted(target_paths - published_paths)
