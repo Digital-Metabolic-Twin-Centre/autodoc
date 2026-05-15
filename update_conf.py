@@ -8,6 +8,13 @@ AUTOAPI_DIRS_LINE = "autoapi_dirs = ['../autoapi_include']"
 AUTOAPI_ADD_TOCTREE_LINE = "autoapi_add_toctree_entry = False"
 
 
+def _append_extension(extensions: str, extension: str) -> str:
+    """Compatibility helper retained for existing tests and callers."""
+    if extensions.strip() == "[]":
+        return f"['{extension}']"
+    return extensions[:-1].rstrip() + f", '{extension}']"
+
+
 def _format_extension_block(extensions: list[str]) -> str:
     lines = ["extensions = ["]
     for extension in extensions:
