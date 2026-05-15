@@ -1,0 +1,215 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Plan &mdash; Auto Doc  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom-wide.css?v=74cdff9b" />
+
+  
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Results" href="results.html" />
+    <link rel="prev" title="Objectives" href="objectives.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Auto Doc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="objectives.html">Objectives</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Project Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#current-implementation-status">Current implementation status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#completed-and-active-capabilities">Completed and active capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#near-term-refinement-work">Near-term refinement work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#future-development">Future development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#validation-approach">Validation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#milestones">Milestones</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">Results</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Documentation Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Auto Doc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Project Plan</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/project/plan.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="project-plan">
+<h1>Project Plan<a class="headerlink" href="#project-plan" title="Link to this heading"></a></h1>
+<section id="current-implementation-status">
+<h2>Current implementation status<a class="headerlink" href="#current-implementation-status" title="Link to this heading"></a></h2>
+<p>The project already includes a working foundation that covers the main Auto Doc
+workflow from repository analysis to documentation publishing.</p>
+</section>
+<section id="completed-and-active-capabilities">
+<h2>Completed and active capabilities<a class="headerlink" href="#completed-and-active-capabilities" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>A FastAPI service has been implemented to coordinate repository analysis,
+documentation generation, and publishing workflows.</p></li>
+<li><p>Repository access has been integrated for both GitHub and GitLab.</p></li>
+<li><p>The system can scan Python, JavaScript, TypeScript, and MATLAB files and
+assess documentation coverage across supported source code blocks.</p></li>
+<li><p>OpenAI-powered docstring suggestion generation is available for missing
+documentation, with support for reuse of previously generated suggestions.</p></li>
+<li><p>A Sphinx documentation scaffold is generated automatically for reviewed
+repositories.</p></li>
+<li><p>AutoAPI integration is supported through the <code class="docutils literal notranslate"><span class="pre">autoapi_include/</span></code> workflow,
+including filtering of risky files and skipped-file reporting during build
+fallback.</p></li>
+<li><p>The project supports a review-first publishing flow in which documentation
+can be built and published to GitHub Pages.</p></li>
+<li><p>Runtime logs and analysis artifacts are stored to support traceability and
+review of each documentation run.</p></li>
+</ol>
+</section>
+<section id="near-term-refinement-work">
+<h2>Near-term refinement work<a class="headerlink" href="#near-term-refinement-work" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Improve the generated documentation templates so project pages are more
+structured, easier to review, and more visually consistent.</p></li>
+<li><p>Strengthen documentation quality checks and evaluation across generated
+outputs.</p></li>
+<li><p>Refine the publishing and scaffold workflow to reduce friction for teams
+adopting the system in real repositories.</p></li>
+</ol>
+</section>
+<section id="future-development">
+<h2>Future development<a class="headerlink" href="#future-development" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Introduce Retrieval-Augmented Generation (RAG) so docstring and
+documentation suggestions can be grounded in repository-specific context,
+existing documentation, architectural notes, and previously approved
+project knowledge.</p></li>
+<li><p>Extend the platform toward audit-ready documentation by generating more
+structured evidence trails, change histories, traceable outputs, and
+documentation artifacts suitable for regulated or compliance-aware
+environments.</p></li>
+<li><p>Expand support for stronger documentation intelligence, including richer
+contextual recommendations, improved summarization, and more reusable
+documentation outputs across project lifecycles.</p></li>
+</ol>
+</section>
+<section id="validation-approach">
+<h2>Validation approach<a class="headerlink" href="#validation-approach" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Test the workflow against representative repositories from supported
+languages and repository providers.</p></li>
+<li><p>Review the usefulness, clarity, and correctness of generated docstring
+suggestions.</p></li>
+<li><p>Assess the quality of generated Sphinx pages, published HTML output, and
+supporting logs and artifacts.</p></li>
+<li><p>Use developer feedback to guide improvements in usability, trust, and
+documentation completeness.</p></li>
+</ol>
+</section>
+<section id="milestones">
+<h2>Milestones<a class="headerlink" href="#milestones" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Milestone</p></th>
+<th class="head"><p>Outcome</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>M1</p></td>
+<td><p>Core FastAPI service and repository analysis implemented</p></td>
+</tr>
+<tr class="row-odd"><td><p>M2</p></td>
+<td><p>Docstring generation and Sphinx scaffold workflow active</p></td>
+</tr>
+<tr class="row-even"><td><p>M3</p></td>
+<td><p>Review-first publishing and reporting workflow stabilized</p></td>
+</tr>
+<tr class="row-odd"><td><p>M4</p></td>
+<td><p>RAG and audit-ready documentation features planned</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="objectives.html" class="btn btn-neutral float-left" title="Objectives" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="results.html" class="btn btn-neutral float-right" title="Results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Digital Metabolic Twin Centre.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

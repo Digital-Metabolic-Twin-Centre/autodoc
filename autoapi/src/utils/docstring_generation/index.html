@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.utils.docstring_generation &mdash; Auto Doc  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Auto Doc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/plan.html">Project Plan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/results.html">Results</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Notes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Auto Doc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.utils.docstring_generation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/src/utils/docstring_generation/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.utils.docstring_generation">
+<span id="src-utils-docstring-generation"></span><h1>src.utils.docstring_generation<a class="headerlink" href="#module-src.utils.docstring_generation" title="Link to this heading"></a></h1>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.logger" title="src.utils.docstring_generation.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation.DEFAULT_OPENAI_MODEL" title="src.utils.docstring_generation.DEFAULT_OPENAI_MODEL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_OPENAI_MODEL</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.configure_openai" title="src.utils.docstring_generation.configure_openai"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_openai</span></code></a>([api_key])</p></td>
+<td><p>Configure OpenAI API with the provided API key.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation._clean_json_block" title="src.utils.docstring_generation._clean_json_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_clean_json_block</span></code></a>(→ str)</p></td>
+<td><p>Clean JSON response from ChatGPT response.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.create_openai_docstring_prompt" title="src.utils.docstring_generation.create_openai_docstring_prompt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_openai_docstring_prompt</span></code></a>(→ str)</p></td>
+<td><p>Create a prompt for ChatGPT to generate a concise docstring.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation.generate_docstring_with_openai" title="src.utils.docstring_generation.generate_docstring_with_openai"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_docstring_with_openai</span></code></a>(→ Optional[str])</p></td>
+<td><p>Generate a concise docstring for the given code using OpenAI ChatGPT.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai" title="src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_docstrings_for_code_blocks_openai</span></code></a>(→ list)</p></td>
+<td><p>Generate docstrings for multiple code blocks using OpenAI ChatGPT.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation.format_docstring_for_language" title="src.utils.docstring_generation.format_docstring_for_language"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_docstring_for_language</span></code></a>(→ str)</p></td>
+<td><p>Format the generated docstring according to language conventions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation._strip_docstring_wrapper" title="src.utils.docstring_generation._strip_docstring_wrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_strip_docstring_wrapper</span></code></a>(→ str)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="src.utils.docstring_generation.logger">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#src.utils.docstring_generation.logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.utils.docstring_generation.DEFAULT_OPENAI_MODEL">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_OPENAI_MODEL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'gpt-4o-mini'</span></em><a class="headerlink" href="#src.utils.docstring_generation.DEFAULT_OPENAI_MODEL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.utils.docstring_generation.configure_openai">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">configure_openai</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.utils.docstring_generation.configure_openai" title="Link to this definition"></a></dt>
+<dd><p>Configure OpenAI API with the provided API key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>api_key</strong> (<em>str</em><em>, </em><em>optional</em>) – OpenAI API key. If None, reads from environment.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.utils.docstring_generation._clean_json_block">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">_clean_json_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.docstring_generation._clean_json_block" title="Link to this definition"></a></dt>
+<dd><p>Clean JSON response from ChatGPT response.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>response_text</strong> (<em>str</em>) – Raw response text from API.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cleaned JSON string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.utils.docstring_generation.create_openai_docstring_prompt">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">create_openai_docstring_prompt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'python'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.docstring_generation.create_openai_docstring_prompt" title="Link to this definition"></a></dt>
+<dd><p>Create a prompt for ChatGPT to generate a concise docstring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>code</strong> (<em>str</em>) – The code block to Analyse.</p></li>
+<li><p><strong>language</strong> (<em>str</em>) – Programming language of the code.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Formatted prompt for docstring generation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.utils.docstring_generation.generate_docstring_with_openai">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">generate_docstring_with_openai</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'python'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEFAULT_OPENAI_MODEL</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#src.utils.docstring_generation.generate_docstring_with_openai" title="Link to this definition"></a></dt>
+<dd><p>Generate a concise docstring for the given code using OpenAI ChatGPT.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>code</strong> (<em>str</em>) – The code block for which to generate docstring.</p></li>
+<li><p><strong>language</strong> (<em>str</em>) – Programming language of the code (default: “python”).</p></li>
+<li><p><strong>api_key</strong> (<em>str</em><em>, </em><em>optional</em>) – OpenAI API key.</p></li>
+<li><p><strong>model</strong> (<em>str</em>) – OpenAI model name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Generated docstring or None if generation fails.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">generate_docstrings_for_code_blocks_openai</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">code_blocks_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'python'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gpt-3.5-turbo'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="headerlink" href="#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai" title="Link to this definition"></a></dt>
+<dd><p>Generate docstrings for multiple code blocks using OpenAI ChatGPT.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>code_blocks_data</strong> (<em>list</em>) – List of dictionaries containing code block information.</p></li>
+<li><p><strong>language</strong> (<em>str</em>) – Programming language of the code blocks.</p></li>
+<li><p><strong>model</strong> (<em>str</em>) – OpenAI model name.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated list with generated docstrings.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.utils.docstring_generation.format_docstring_for_language">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">format_docstring_for_language</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docstring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.docstring_generation.format_docstring_for_language" title="Link to this definition"></a></dt>
+<dd><p>Format the generated docstring according to language conventions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>docstring</strong> (<em>str</em>) – Raw docstring content.</p></li>
+<li><p><strong>language</strong> (<em>str</em>) – Programming language.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Formatted docstring.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.utils.docstring_generation._strip_docstring_wrapper">
+<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">_strip_docstring_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docstring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.docstring_generation._strip_docstring_wrapper" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Digital Metabolic Twin Centre.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

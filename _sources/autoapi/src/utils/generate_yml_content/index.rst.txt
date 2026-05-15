@@ -1,0 +1,67 @@
+src.utils.generate_yml_content
+==============================
+
+.. py:module:: src.utils.generate_yml_content
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   src.utils.generate_yml_content.generate_gitlab_ci_file
+   src.utils.generate_yml_content.generate_github_actions_file
+   src.utils.generate_yml_content.generate_github_pages_index
+   src.utils.generate_yml_content.generate_github_pages_readme
+
+
+Module Contents
+---------------
+
+.. py:function:: generate_gitlab_ci_file() -> bool
+
+   Generates a .gitlab-ci.yml file in the specified remote GitLab repository.
+
+   :param repo_path: Repository path (e.g., 'user/repo').
+   :type repo_path: str
+   :param access_token: GitLab private token.
+   :type access_token: str
+   :param branch: Branch name. Defaults to "main".
+   :type branch: str, optional
+
+   :returns: True if the file was created successfully, False otherwise.
+   :rtype: bool
+
+
+.. py:function:: generate_github_actions_file() -> str
+
+   Generates a GitHub Actions workflow file for building Sphinx docs.
+
+   :returns: Workflow file content.
+   :rtype: str
+
+
+.. py:function:: generate_github_pages_index(project_name: str = 'API Documentation') -> str
+
+   Generates a small landing page for a branch-based GitHub Pages site.
+
+   :param project_name: Display name shown on the landing page.
+   :type project_name: str
+
+   :returns: Static HTML content.
+   :rtype: str
+
+
+.. py:function:: generate_github_pages_readme(source_branch: str, pages_branch: str) -> str
+
+   Generates a short README for the GitHub Pages deployment branch.
+
+   :param source_branch: The branch where the source repository content lives.
+   :type source_branch: str
+   :param pages_branch: The branch GitHub Pages serves.
+   :type pages_branch: str
+
+   :returns: Markdown content.
+   :rtype: str
+
+

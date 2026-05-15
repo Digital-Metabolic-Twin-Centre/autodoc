@@ -1,0 +1,280 @@
+src.utils.git_utils
+===================
+
+.. py:module:: src.utils.git_utils
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.utils.git_utils.logger
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   src.utils.git_utils.GitHubApiError
+   src.utils.git_utils.RepositoryAccessError
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   src.utils.git_utils._github_headers
+   src.utils.git_utils._parse_response_message
+   src.utils.git_utils._raise_github_repository_access_error
+   src.utils.git_utils.extract_repo_path
+   src.utils.git_utils.get_gitignore_patterns
+   src.utils.git_utils.should_ignore
+   src.utils.git_utils.fetch_content_from_github
+   src.utils.git_utils.fetch_content_bytes_from_github
+   src.utils.git_utils.fetch_content_from_gitlab
+   src.utils.git_utils.fetch_repo_tree
+   src.utils.git_utils.validate_docstring
+   src.utils.git_utils.create_directory_and_add_files
+   src.utils.git_utils.create_a_file
+   src.utils.git_utils.ensure_github_branch
+   src.utils.git_utils.configure_github_pages
+   src.utils.git_utils.request_github_pages_build
+   src.utils.git_utils.list_github_tree
+   src.utils.git_utils.download_github_branch_snapshot
+   src.utils.git_utils.create_github_blob
+   src.utils.git_utils.publish_github_directory_to_branch
+   src.utils.git_utils.publish_local_directory_to_github_branch
+   src.utils.git_utils.commit_files_to_github_branch
+   src.utils.git_utils.create_github_pull_request
+
+
+Module Contents
+---------------
+
+.. py:data:: logger
+
+.. py:exception:: GitHubApiError(message: str, status_code: Optional[int] = None)
+
+   Bases: :py:obj:`RuntimeError`
+
+
+   Raised when a GitHub API request fails.
+
+
+   .. py:attribute:: status_code
+      :value: None
+
+
+
+.. py:exception:: RepositoryAccessError(message: str, status_code: Optional[int] = None)
+
+   Bases: :py:obj:`RuntimeError`
+
+
+   Raised when a repository or branch cannot be accessed for analysis.
+
+
+   .. py:attribute:: status_code
+      :value: None
+
+
+
+.. py:function:: _github_headers(token: str, accept: str = 'application/vnd.github+json') -> Dict[str, str]
+
+.. py:function:: _parse_response_message(response) -> str
+
+.. py:function:: _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = '') -> None
+
+.. py:function:: extract_repo_path(repo_url: str, provider: str = 'github') -> str
+
+   Extracts the repository path from a full URL.
+   :param repo_url: Full repository URL (e.g., 'https://github.com/user/repo' or 'user/repo').
+   :type repo_url: str
+   :param provider: Git provider ("github" or "gitlab").
+   :type provider: str
+
+   :returns: Repository path (e.g., 'user/repo').
+   :rtype: str
+
+
+.. py:function:: get_gitignore_patterns(repo_path: str, access_token: str, branch: str = 'main', provider: str = 'github') -> List[str]
+
+   Fetches .gitignore file from the repository and returns a list of patterns to ignore.
+   :param repo_path: Repository path (e.g., 'user/repo').
+   :type repo_path: str
+   :param access_token: Authentication token.
+   :type access_token: str
+   :param branch: Branch name. Defaults to "main".
+   :type branch: str, optional
+   :param provider: Git provider ("github" or "gitlab"). Defaults to "github".
+   :type provider: str, optional
+
+   :returns: List of ignore patterns from .gitignore.
+   :rtype: List[str]
+
+
+.. py:function:: should_ignore(name: str, patterns: List[str]) -> bool
+
+   Checks if a file or directory name matches any ignore pattern.
+   :param name: File or directory name.
+   :type name: str
+   :param patterns: List of ignore patterns.
+   :type patterns: List[str]
+
+   :returns: True if the name should be ignored, False otherwise.
+   :rtype: bool
+
+
+.. py:function:: fetch_content_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[str]
+
+   Fetches the raw content of a file from a GitHub repository.
+   :param repo_path: Repository path (e.g., 'user/repo').
+   :type repo_path: str
+   :param branch: Branch name.
+   :type branch: str
+   :param file_path: Path to the file in the repository.
+   :type file_path: str
+   :param access_token: GitHub access token.
+   :type access_token: str
+
+   :returns: Raw file content if successful, None otherwise.
+   :rtype: Optional[str]
+
+
+.. py:function:: fetch_content_bytes_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[bytes]
+
+   Fetches the raw bytes of a file from a GitHub repository.
+
+
+.. py:function:: fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, private_token: str) -> Optional[str]
+
+   Fetches the raw content of a file from a GitLab repository.
+   :param repo_path: Repository path.
+   :type repo_path: str
+   :param branch: Branch name.
+   :type branch: str
+   :param file_path: Path to the file in the repository.
+   :type file_path: str
+   :param private_token: GitLab private token.
+   :type private_token: str
+
+   :returns: Raw file content if successful, None otherwise.
+   :rtype: Optional[str]
+
+
+.. py:function:: fetch_repo_tree(repo_path: str, access_token: str, branch: str = 'main', provider: str = 'github') -> List[Dict]
+
+   Recursively fetches the file and directory tree for a given repository and branch.
+   :param repo_path: Repository path.
+   :type repo_path: str
+   :param access_token: Authentication token.
+   :type access_token: str
+   :param branch: Branch name. Defaults to "main".
+   :type branch: str, optional
+   :param provider: Git provider ("github" or "gitlab"). Defaults to "github".
+   :type provider: str, optional
+
+   :returns: List of files and directories in the repository.
+   :rtype: List[Dict]
+
+
+.. py:function:: validate_docstring(tech_stack: str, repo_path: str, branch: str, file_path: str, access_token: str, provider: str = 'github') -> Optional[Tuple[bool, List[Dict[str, str]], List[Dict[str, str]]]]
+
+   Validates the presence of docstring in a file based on its technology stack.
+
+   :param tech_stack: Technology stack (e.g., "python").
+   :type tech_stack: str
+   :param repo_path: Repository path.
+   :type repo_path: str
+   :param branch: Branch name.
+   :type branch: str
+   :param file_path: Path to the file in the repository.
+   :type file_path: str
+   :param access_token: Authentication token.
+   :type access_token: str
+   :param provider: Git provider ("github" or "gitlab"). Defaults to "github".
+   :type provider: str, optional
+
+   :returns:     - bool: True if docstring is present, False otherwise.
+                 - List[Dict[str, str]]: Items missing docstring.
+                 - List[Dict[str, str]]: Items with docstring.
+   :rtype: Optional[Tuple[bool, List[Dict[str, str]], List[Dict[str, str]]]]
+
+
+.. py:function:: create_directory_and_add_files(repo_url: str, dir_path: str, file_paths: list, branch: str, token: str, provider: str = 'github') -> bool
+
+   Creates a new directory in the remote repository and adds multiple files
+   to it in a single commit.
+
+   :param repo_url: Repository path (e.g., 'user/repo').
+   :type repo_url: str
+   :param dir_path: Directory path to create (e.g., 'autoapi_include').
+   :type dir_path: str
+   :param file_paths: List of file paths in the repo to copy into the new directory.
+   :type file_paths: list
+   :param branch: Branch name.
+   :type branch: str
+   :param token: Access token.
+   :type token: str
+   :param provider: 'github' or 'gitlab'.
+   :type provider: str
+
+   :returns: True if operation succeeded, False otherwise.
+   :rtype: bool
+
+
+.. py:function:: create_a_file(repo_url, branch, file_path, content, token, provider)
+
+.. py:function:: ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, token: str) -> bool
+
+   Ensures a GitHub branch exists by creating it from another branch when needed.
+
+
+.. py:function:: configure_github_pages(repo_url: str, pages_branch: str, token: str, path: str = '/') -> bool
+
+   Configures GitHub Pages to publish from a branch without GitHub Actions.
+
+
+.. py:function:: request_github_pages_build(repo_url: str, token: str) -> bool
+
+   Requests a GitHub Pages rebuild for a legacy branch-based site.
+
+
+.. py:function:: list_github_tree(repo_url: str, ref: str, token: str, recursive: bool = True) -> List[Dict]
+
+   Lists files in a GitHub tree for the given ref.
+
+
+.. py:function:: download_github_branch_snapshot(repo_url: str, branch: str, token: str, destination_dir: str) -> bool
+
+   Downloads a GitHub branch snapshot into a local directory.
+
+
+.. py:function:: create_github_blob(repo_url: str, token: str, content: bytes) -> Optional[str]
+
+   Creates a GitHub blob and returns its SHA.
+
+
+.. py:function:: publish_github_directory_to_branch(repo_url: str, source_branch: str, source_dir: str, target_branch: str, token: str, target_dir: str = '') -> bool
+
+   Copies a built static directory from one branch to another in a single commit.
+
+
+.. py:function:: publish_local_directory_to_github_branch(repo_url: str, local_dir: str, target_branch: str, token: str, source_branch_for_seed: str, target_dir: str = '') -> bool
+
+   Publishes a local directory to a GitHub branch in a single commit.
+
+
+.. py:function:: commit_files_to_github_branch(repo_url: str, branch: str, files: Dict[str, str], token: str, commit_message: str) -> bool
+
+   Commits multiple text files to an existing GitHub branch.
+
+
+.. py:function:: create_github_pull_request(repo_url: str, head_branch: str, base_branch: str, title: str, body: str, token: str) -> Optional[str]
+
+   Opens a GitHub pull request and returns its URL.
+
+
