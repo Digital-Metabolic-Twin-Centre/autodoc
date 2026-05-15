@@ -432,7 +432,7 @@ RISKY_AUTOAPI_PATH_PATTERNS = [
     re.compile(r"(^|/)settings?(_.*)?\.py$"),
     re.compile(r"(^|/)(asgi|wsgi)\.py$"),
 ]
-LOW_CONTENT_MIN_MEANINGFUL_LINES = 8
+LOW_CONTENT_MIN_MEANINGFUL_LINES = 4
 
 
 class PublishPagesError(RuntimeError):
@@ -500,7 +500,11 @@ def _to_autoapi_ignore_pattern(relative_file: str) -> str:
     return f"*/{relative_file.lstrip('/')}"
 
 
-def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, str]:
+def _classify_autoapi_file(
+    autoapi_root: Path,
+    file_path: Path,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
+) -> tuple[bool, str]:
     """
     Classifies an AutoAPI file based on various criteria.
 
@@ -530,7 +534,7 @@ def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, s
         return False, "import-star"
 
     meaningful_lines = [line for line in file_text.splitlines() if line.strip()]
-    if len(meaningful_lines) < LOW_CONTENT_MIN_MEANINGFUL_LINES:
+    if len(meaningful_lines) < low_content_min_meaningful_lines:
         return False, "low-content"
 
     has_public_shape = any(
@@ -578,6 +582,7 @@ def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]
 
 def _collect_prebuild_autoapi_ignores(
     temp_dir: str,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
 ) -> tuple[list[str], list[dict[str, str]]]:
     """
     Collects patterns and details of files to ignore in AutoAPI documentation.
@@ -597,7 +602,11 @@ def _collect_prebuild_autoapi_ignores(
     ignore_patterns: list[str] = []
     skipped_files: list[dict[str, str]] = []
     for file_path in autoapi_root.rglob("*.py"):
-        should_include, reason = _classify_autoapi_file(autoapi_root, file_path)
+        should_include, reason = _classify_autoapi_file(
+            autoapi_root,
+            file_path,
+            low_content_min_meaningful_lines,
+        )
         if should_include:
             continue
         relative_file = file_path.relative_to(autoapi_root).as_posix()
@@ -746,7 +755,9 @@ def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
 
 
 def _run_sphinx_build_with_autoapi_filters(
-    temp_dir: str, conf_py_path: str
+    temp_dir: str,
+    conf_py_path: str,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
 ) -> subprocess.CompletedProcess:
     """
     Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries on failure.\n\n
@@ -755,7 +766,8 @@ def _run_sphinx_build_with_autoapi_filters(
     subprocess.CompletedProcess: The result of the Sphinx build process.
     """
     prebuild_ignore_patterns, prebuild_skipped = _collect_prebuild_autoapi_ignores(
-        temp_dir
+        temp_dir,
+        low_content_min_meaningful_lines,
     )
     active_ignore_patterns = list(prebuild_ignore_patterns)
     skipped_files = list(prebuild_skipped)
@@ -1413,7 +1425,12 @@ def create_sphinx_setup(
     return False
 
 
-def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
+def publish_github_pages(
+    repo_url: str,
+    source_branch: str,
+    token: str,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
+) -> bool:
     """
     Publishes reviewed GitHub docs output from a source branch to gh-pages.
     """
@@ -1479,7 +1496,11 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
 
-        build_result = _run_sphinx_build_with_autoapi_filters(temp_dir, conf_py_path)
+        build_result = _run_sphinx_build_with_autoapi_filters(
+            temp_dir,
+            conf_py_path,
+            low_content_min_meaningful_lines,
+        )
         if build_result.returncode != 0:
             build_output = "\n".join(
                 part

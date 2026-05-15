@@ -196,7 +196,7 @@ def test_generate_endpoint_rejects_invalid_docstring_threshold():
 
 
 def test_publish_pages_returns_specific_publish_error(monkeypatch):
-    def fail_publish(repo_url, branch, token):
+    def fail_publish(repo_url, branch, token, low_content_min_lines):
         raise PublishPagesError("GitHub Pages configuration failed.")
 
     monkeypatch.setattr("router.router.publish_github_pages", fail_publish)
@@ -212,6 +212,51 @@ def test_publish_pages_returns_specific_publish_error(monkeypatch):
 
     assert response.status_code == 403
     assert response.json()["detail"] == "GitHub Pages configuration failed."
+
+
+def test_publish_pages_uses_provided_low_content_min_lines(monkeypatch):
+    captured = {}
+
+    def fake_publish(repo_url, branch, token, low_content_min_lines):
+        captured["low_content_min_lines"] = low_content_min_lines
+        return True
+
+    monkeypatch.setattr("router.router.publish_github_pages", fake_publish)
+
+    response = client.post(
+        "/publish-pages",
+        json={
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "low_content_min_lines": 3,
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["low_content_min_lines"] == 3
+
+
+def test_publish_pages_uses_default_low_content_min_lines(monkeypatch):
+    captured = {}
+
+    def fake_publish(repo_url, branch, token, low_content_min_lines):
+        captured["low_content_min_lines"] = low_content_min_lines
+        return True
+
+    monkeypatch.setattr("router.router.publish_github_pages", fake_publish)
+
+    response = client.post(
+        "/publish-pages",
+        json={
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["low_content_min_lines"] == 4
 
 
 def test_create_sphinx_setup_includes_files_at_docstring_threshold(tmp_path, monkeypatch):
@@ -367,6 +412,27 @@ def test_classify_autoapi_file_skips_by_risky_name_pattern(tmp_path):
 
     assert should_include is False
     assert reason.startswith("path-pattern:")
+
+
+def test_classify_autoapi_file_uses_dynamic_low_content_threshold(tmp_path):
+    autoapi_root = tmp_path / "autoapi_include"
+    file_path = autoapi_root / "api" / "small_module.py"
+    file_path.parent.mkdir(parents=True)
+    file_path.write_text(
+        "def first():\n"
+        "    return 1\n\n"
+        "def second():\n"
+        "    return 2\n",
+        encoding="utf-8",
+    )
+
+    should_include_default, reason_default = _classify_autoapi_file(autoapi_root, file_path, 6)
+    should_include_lowered, reason_lowered = _classify_autoapi_file(autoapi_root, file_path, 4)
+
+    assert should_include_default is False
+    assert reason_default == "low-content"
+    assert should_include_lowered is True
+    assert reason_lowered == "included"
 
 
 def test_classify_autoapi_file_skips_import_star(tmp_path):

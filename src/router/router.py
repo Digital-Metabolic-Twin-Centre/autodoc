@@ -169,9 +169,10 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
 async def publish_pages(req: PublishPagesRequest):
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
     logger.info(
-        "/publish-pages endpoint called with repo_url=%s, branch=%s",
+        "/publish-pages endpoint called with repo_url=%s, branch=%s, low_content_min_lines=%s",
         req.repo_url,
         req.branch,
+        req.low_content_min_lines,
     )
     if not req.repo_url or not req.token or not req.branch:
         raise HTTPException(
@@ -180,7 +181,12 @@ async def publish_pages(req: PublishPagesRequest):
         )
 
     try:
-        published = publish_github_pages(req.repo_url, req.branch, req.token)
+        published = publish_github_pages(
+            req.repo_url,
+            req.branch,
+            req.token,
+            req.low_content_min_lines,
+        )
         if not published:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

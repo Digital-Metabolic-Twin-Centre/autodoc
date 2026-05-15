@@ -49,6 +49,7 @@ class PublishPagesRequest(BaseModel):
     repo_url: str
     token: str
     branch: str
+    low_content_min_lines: int = Field(default=4, ge=0)
 
 
 class DocstringPullRequestRequest(BaseModel):
