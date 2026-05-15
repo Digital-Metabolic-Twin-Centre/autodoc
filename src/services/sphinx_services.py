@@ -1255,7 +1255,14 @@ API Reference
             api_reference_file.write(_build_sample_api_reference())
 
 
-def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file):
+def create_sphinx_setup(
+    provider,
+    repo_url,
+    token,
+    branch,
+    docstring_analysis_file,
+    docstring_threshold: float = AUTOAPI_DOCSTRING_THRESHOLD,
+):
     # Extract repo path from URL
     """
     Set up Sphinx documentation for a repository based on docstring coverage.
@@ -1293,7 +1300,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
 
         if coverage == 1.0:
             files_with_all_docstrings.append(file_path)
-        elif coverage >= AUTOAPI_DOCSTRING_THRESHOLD:
+        elif coverage >= docstring_threshold:
             files_with_high_coverage.append(file_path)
 
     # Combine files with 100% and high coverage
@@ -1306,7 +1313,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     )
     logger.info(
         "Files with ≥%.0f%% docstrings (%s): %s",
-        AUTOAPI_DOCSTRING_THRESHOLD * 100,
+        docstring_threshold * 100,
         len(files_with_high_coverage),
         files_with_high_coverage,
     )
@@ -1316,7 +1323,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     if not files_to_document:
         logger.warning(
             "No files with ≥%.0f%% docstring coverage found. Skipping Sphinx setup.",
-            AUTOAPI_DOCSTRING_THRESHOLD * 100,
+            docstring_threshold * 100,
         )
         return False
 

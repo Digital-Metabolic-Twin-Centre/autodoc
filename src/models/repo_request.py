@@ -29,6 +29,7 @@ class RepoRequest(BaseModel):
     target_folders: list[str] = Field(default_factory=list)
     model: Optional[str] = None
     reuse_doc: bool = False
+    docstring_threshold: float = Field(default=0.50, ge=0.0, le=1.0)
 
 
 class PublishPagesRequest(BaseModel):
