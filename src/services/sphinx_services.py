@@ -931,9 +931,38 @@ def _build_sample_index(project_name: str) -> str:
         lines[0] = project_name
         lines[1] = "=" * len(project_name)
     index_text = "\n".join(lines).rstrip() + "\n"
-    if "autoapi/index" not in index_text:
-        index_text += "\n.. toctree::\n   :maxdepth: 1\n   :caption: API Reference\n\n   autoapi/index\n"
+    if "api_reference" not in index_text:
+        index_text += (
+            "\n.. toctree::\n"
+            "   :hidden:\n"
+            "   :maxdepth: 1\n"
+            "   :caption: Reference\n\n"
+            "   api_reference\n"
+            "   README\n"
+        )
     return index_text
+
+
+def _build_sample_api_reference() -> str:
+    """
+    Builds a curated API reference page that exposes useful AutoAPI pages in the sidebar.
+
+    Returns:
+        str: The API reference page content.
+
+    """
+    return (
+        "API Reference\n"
+        "=============\n\n"
+        "Browse the generated API pages directly from the sidebar.\n\n"
+        ".. toctree::\n"
+        "   :maxdepth: 2\n\n"
+        "   autoapi/src/index\n"
+        "   autoapi/src/utils/index\n"
+        "   autoapi/src/utils/docstring_generation/index\n"
+        "   autoapi/src/utils/generate_yml_content/index\n"
+        "   autoapi/src/utils/git_utils/index\n"
+    )
 
 
 def _build_sample_overview(project_name: str) -> str:
@@ -1010,6 +1039,7 @@ def _sample_docs_files(project_name: str) -> dict[str, str]:
         "docs/Makefile": _build_sample_makefile(),
         CONF_PY: _build_sample_conf(project_name),
         f"{DOCS_SRC}/index.rst": _build_sample_index(project_name),
+        f"{DOCS_SRC}/api_reference.rst": _build_sample_api_reference(),
         f"{DOCS_SRC}/README.rst": _build_sample_readme(),
         f"{DOCS_SRC}/project/overview.rst": _build_sample_overview(project_name),
         f"{DOCS_SRC}/project/objectives.rst": _load_sample_text(
