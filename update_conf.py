@@ -5,6 +5,7 @@ import sys
 
 REQUIRED_EXTENSIONS = ("autoapi.extension", "sphinx.ext.napoleon")
 AUTOAPI_DIRS_LINE = "autoapi_dirs = ['../autoapi_include']"
+AUTOAPI_ADD_TOCTREE_LINE = "autoapi_add_toctree_entry = False"
 
 
 def _format_extension_block(extensions: list[str]) -> str:
@@ -48,6 +49,8 @@ def update_conf(conf_py: str) -> None:
     text = _replace_extensions_block(original_text)
     if not re.search(r"^\s*autoapi_dirs\s*=", text, flags=re.MULTILINE):
         text = text.rstrip() + f"\n\n{AUTOAPI_DIRS_LINE}\n"
+    if not re.search(r"^\s*autoapi_add_toctree_entry\s*=", text, flags=re.MULTILINE):
+        text = text.rstrip() + f"\n{AUTOAPI_ADD_TOCTREE_LINE}\n"
 
     try:
         ast.parse(text)

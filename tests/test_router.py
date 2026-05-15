@@ -180,8 +180,9 @@ def test_ensure_api_index_replaces_sphinx_quickstart_homepage(tmp_path):
 
     index_text = index_path.read_text(encoding="utf-8")
     assert "Example Project" in index_text
-    assert "autoapi/index" in index_text
+    assert "api_reference" in index_text
     assert "Add your content" not in index_text
+    assert (index_path.parent / "api_reference.rst").exists()
 
 
 def test_ensure_sphinx_project_name_replaces_placeholder(tmp_path):

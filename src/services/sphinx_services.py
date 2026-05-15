@@ -877,6 +877,7 @@ def _build_sample_conf(project_name: str) -> str:
         'autoapi_dirs = ["../autoapi_include"]',
         "autoapi_keep_files = False",
         "autoapi_generate_api_docs = True",
+        "autoapi_add_toctree_entry = False",
     ]
     if not all(addition in conf_text for addition in additions):
         conf_text += (
@@ -956,12 +957,9 @@ def _build_sample_api_reference() -> str:
         "=============\n\n"
         "Browse the generated API pages directly from the sidebar.\n\n"
         ".. toctree::\n"
-        "   :maxdepth: 2\n\n"
+        "   :hidden:\n"
+        "   :maxdepth: 4\n\n"
         "   autoapi/src/index\n"
-        "   autoapi/src/utils/index\n"
-        "   autoapi/src/utils/docstring_generation/index\n"
-        "   autoapi/src/utils/generate_yml_content/index\n"
-        "   autoapi/src/utils/git_utils/index\n"
     )
 
 
@@ -1240,13 +1238,20 @@ API Reference
 -------------
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
+   :maxdepth: 1
+   :caption: Reference
 
-   autoapi/index
+   api_reference
 """
     os.makedirs(os.path.dirname(index_path), exist_ok=True)
     with open(index_path, "w", encoding="utf-8") as index_file:
         index_file.write(content)
+
+    api_reference_path = os.path.join(os.path.dirname(index_path), "api_reference.rst")
+    if not os.path.exists(api_reference_path):
+        with open(api_reference_path, "w", encoding="utf-8") as api_reference_file:
+            api_reference_file.write(_build_sample_api_reference())
 
 
 def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file):

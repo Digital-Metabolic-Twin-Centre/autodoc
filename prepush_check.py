@@ -83,6 +83,7 @@ def main() -> int:
                 "uv",
                 "run",
                 "sphinx-build",
+                "-E",
                 "-W",
                 "-b",
                 "html",

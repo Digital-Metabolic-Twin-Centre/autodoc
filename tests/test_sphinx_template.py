@@ -11,8 +11,9 @@ def test_sample_docs_files_follow_shared_template_with_autoapi():
     assert "docs/logbook/weekly_updates.rst" in files
     assert 'html_theme = "sphinx_rtd_theme"' in files["docs/conf.py"]
     assert 'autoapi_dirs = ["../autoapi_include"]' in files["docs/conf.py"]
+    assert "autoapi_add_toctree_entry = False" in files["docs/conf.py"]
     assert "api_reference" in files["docs/index.rst"]
-    assert "autoapi/src/utils/git_utils/index" in files["docs/api_reference.rst"]
+    assert "autoapi/src/index" in files["docs/api_reference.rst"]
     assert "project/overview" in files["docs/index.rst"]
     assert "cd docs" in files["docs/README.rst"]
     assert "docs/build/html/index.html" in files["docs/README.rst"]

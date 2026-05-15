@@ -15,6 +15,7 @@ def test_update_conf_adds_autoapi_and_napoleon_extensions(tmp_path):
     assert "'autoapi.extension'" in text
     assert "'sphinx.ext.napoleon'" in text
     assert "autoapi_dirs = ['../autoapi_include']" in text
+    assert "autoapi_add_toctree_entry = False" in text
 
 
 def test_update_conf_preserves_valid_python_for_multiline_extensions(tmp_path):

@@ -70,6 +70,6 @@ Build these docs locally
 
    cd docs
    python -m pip install -r requirements.txt
-   make html
+   make clean html
 
 Open ``docs/_build/html/index.html`` in your browser.
