@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.utils.code_block_extraction &mdash; Auto Doc  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Auto Doc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-value">Project value</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/objectives.html#success-criteria">Success criteria</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/plan.html">Project Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#current-implementation-status">Current implementation status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#completed-and-active-capabilities">Completed and active capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#near-term-refinement-work">Near-term refinement work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#future-development">Future development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#validation-approach">Validation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#milestones">Milestones</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/results.html">Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-approach">Evaluation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-criteria">Evaluation criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#how-success-will-be-measured">How success will be measured</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">API Reference</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#application-setup">Application setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-the-application-locally">Run the application locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-with-docker">Run with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#build-these-docs-locally">Build these docs locally</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Auto Doc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.utils.code_block_extraction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/src/utils/code_block_extraction/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.utils.code_block_extraction">
+<span id="src-utils-code-block-extraction"></span><h1>src.utils.code_block_extraction<a class="headerlink" href="#module-src.utils.code_block_extraction" title="Link to this heading"></a></h1>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor" title="src.utils.code_block_extraction.GenericCodeBlockExtractor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GenericCodeBlockExtractor</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.utils.code_block_extraction.</span></span><span class="sig-name descname"><span class="pre">GenericCodeBlockExtractor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor" title="Link to this definition"></a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor.LANGUAGE_PATTERNS">
+<span class="sig-name descname"><span class="pre">LANGUAGE_PATTERNS</span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor.LANGUAGE_PATTERNS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor.EXT_LANGUAGE_MAP">
+<span class="sig-name descname"><span class="pre">EXT_LANGUAGE_MAP</span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor.EXT_LANGUAGE_MAP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor.file_content">
+<span class="sig-name descname"><span class="pre">file_content</span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor.file_content" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor.file_name">
+<span class="sig-name descname"><span class="pre">file_name</span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor.file_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor.language">
+<span class="sig-name descname"><span class="pre">language</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'python'</span></em><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor.language" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._detect_language">
+<span class="sig-name descname"><span class="pre">_detect_language</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._detect_language" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor.code_block_extractor">
+<span class="sig-name descname"><span class="pre">code_block_extractor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor.code_block_extractor" title="Link to this definition"></a></dt>
+<dd><p>Extracts all code blocks (including nested) for the detected language.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_blocks_recursive">
+<span class="sig-name descname"><span class="pre">_extract_blocks_recursive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_blocks_recursive" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_single_block">
+<span class="sig-name descname"><span class="pre">_extract_single_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_single_block" title="Link to this definition"></a></dt>
+<dd><p>Extracts a single code block starting from start_idx.
+Returns dict with ‘block’ content and ‘end_line’ index.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_python_function_complete">
+<span class="sig-name descname"><span class="pre">_extract_python_function_complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_python_function_complete" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_python_class_complete">
+<span class="sig-name descname"><span class="pre">_extract_python_class_complete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_python_class_complete" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_matlab_function">
+<span class="sig-name descname"><span class="pre">_extract_matlab_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_matlab_function" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_matlab_class">
+<span class="sig-name descname"><span class="pre">_extract_matlab_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_matlab_class" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_curly_brace_block">
+<span class="sig-name descname"><span class="pre">_extract_curly_brace_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.utils.code_block_extraction.GenericCodeBlockExtractor._extract_curly_brace_block" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Digital Metabolic Twin Centre.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

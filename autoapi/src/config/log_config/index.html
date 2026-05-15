@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.config.log_config &mdash; Auto Doc  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Auto Doc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-value">Project value</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/objectives.html#success-criteria">Success criteria</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/plan.html">Project Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#current-implementation-status">Current implementation status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#completed-and-active-capabilities">Completed and active capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#near-term-refinement-work">Near-term refinement work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#future-development">Future development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#validation-approach">Validation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#milestones">Milestones</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/results.html">Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-approach">Evaluation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-criteria">Evaluation criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#how-success-will-be-measured">How success will be measured</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">API Reference</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#application-setup">Application setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-the-application-locally">Run the application locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-with-docker">Run with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#build-these-docs-locally">Build these docs locally</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Auto Doc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.config.log_config</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/src/config/log_config/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.config.log_config">
+<span id="src-config-log-config"></span><h1>src.config.log_config<a class="headerlink" href="#module-src.config.log_config" title="Link to this heading"></a></h1>
+<p>Centralized logging configuration.</p>
+<p>Sets up file-based logging with configurable log level and format
+(via environment variables). Suppresses noisy logs from <cite>watchfiles</cite>
+and <cite>uvicorn</cite>. Use <cite>get_logger(name)</cite> to retrieve a module-specific logger.</p>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.config.log_config.LOG_LEVEL" title="src.config.log_config.LOG_LEVEL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOG_LEVEL</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.config.log_config.LOG_FORMAT" title="src.config.log_config.LOG_FORMAT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOG_FORMAT</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.config.log_config.LOG_DIR" title="src.config.log_config.LOG_DIR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOG_DIR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.config.log_config.RUN_TIMESTAMP" title="src.config.log_config.RUN_TIMESTAMP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RUN_TIMESTAMP</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.config.log_config.RUN_LOG_DIR" title="src.config.log_config.RUN_LOG_DIR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RUN_LOG_DIR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.config.log_config.LOG_FILE" title="src.config.log_config.LOG_FILE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOG_FILE</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.config.log_config._ROOT_LOGGER" title="src.config.log_config._ROOT_LOGGER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_ROOT_LOGGER</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.config.log_config._configure_root_logger" title="src.config.log_config._configure_root_logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_configure_root_logger</span></code></a>(→ logging.Logger)</p></td>
+<td><p>Configures the root logger with a specified log level and format.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.config.log_config.bind_repo_log_dir" title="src.config.log_config.bind_repo_log_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bind_repo_log_dir</span></code></a>(→ str)</p></td>
+<td><p>Routes app logs into the active repo run folder.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.config.log_config.get_logger" title="src.config.log_config.get_logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_logger</span></code></a>(name)</p></td>
+<td><p>Retrieve a logger instance with the specified name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.config.log_config.get_run_log_dir" title="src.config.log_config.get_run_log_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_run_log_dir</span></code></a>(→ str | None)</p></td>
+<td><p>Retrieve the directory path for run logs.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="src.config.log_config.LOG_LEVEL">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">LOG_LEVEL</span></span><a class="headerlink" href="#src.config.log_config.LOG_LEVEL" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.config.log_config.LOG_FORMAT">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">LOG_FORMAT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'%(asctime)s</span> <span class="pre">-</span> <span class="pre">%(levelname)s</span> <span class="pre">-</span> <span class="pre">%(name)s</span> <span class="pre">-</span> <span class="pre">%(message)s'</span></em><a class="headerlink" href="#src.config.log_config.LOG_FORMAT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.config.log_config.LOG_DIR">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">LOG_DIR</span></span><a class="headerlink" href="#src.config.log_config.LOG_DIR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.config.log_config.RUN_TIMESTAMP">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">RUN_TIMESTAMP</span></span><a class="headerlink" href="#src.config.log_config.RUN_TIMESTAMP" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.config.log_config.RUN_LOG_DIR">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">RUN_LOG_DIR</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.config.log_config.RUN_LOG_DIR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.config.log_config.LOG_FILE">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">LOG_FILE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.config.log_config.LOG_FILE" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.config.log_config._configure_root_logger">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">_configure_root_logger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">logging.Logger</span></span></span><a class="headerlink" href="#src.config.log_config._configure_root_logger" title="Link to this definition"></a></dt>
+<dd><p>Configures the root logger with a specified log level and format.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>None</p>
+</dd>
+<dt>Returns:</dt><dd><p>logging.Logger: The configured root logger instance.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.config.log_config._ROOT_LOGGER">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">_ROOT_LOGGER</span></span><a class="headerlink" href="#src.config.log_config._ROOT_LOGGER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.config.log_config.bind_repo_log_dir">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">bind_repo_log_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_log_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.config.log_config.bind_repo_log_dir" title="Link to this definition"></a></dt>
+<dd><p>Routes app logs into the active repo run folder.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.config.log_config.get_logger">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.config.log_config.get_logger" title="Link to this definition"></a></dt>
+<dd><p>Retrieve a logger instance with the specified name.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>name (str): The name of the logger to retrieve.</p>
+</dd>
+<dt>Returns:</dt><dd><p>logging.Logger: The logger instance associated with the given name.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.config.log_config.get_run_log_dir">
+<span class="sig-prename descclassname"><span class="pre">src.config.log_config.</span></span><span class="sig-name descname"><span class="pre">get_run_log_dir</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#src.config.log_config.get_run_log_dir" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the directory path for run logs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The path to the run log directory or None if not set.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Digital Metabolic Twin Centre.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

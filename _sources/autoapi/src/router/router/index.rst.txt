@@ -1,0 +1,59 @@
+src.router.router
+=================
+
+.. py:module:: src.router.router
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.router.router.logger
+   src.router.router.router
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   src.router.router._default_docstring_suggestion_branch
+   src.router.router.root
+   src.router.router.generate_docs
+   src.router.router.suggest_python_docstrings_pr
+   src.router.router.publish_pages
+
+
+Module Contents
+---------------
+
+.. py:data:: logger
+
+.. py:data:: router
+
+.. py:function:: _default_docstring_suggestion_branch() -> str
+
+   Generate a default docstring suggestion with a timestamp.
+
+   :returns: A formatted string containing the prefix 'autodocs-docstring-suggestions-' followed by
+             the current timestamp.
+   :rtype: str
+
+
+.. py:function:: root()
+   :async:
+
+
+.. py:function:: generate_docs(req: models.repo_request.RepoRequest)
+   :async:
+
+
+.. py:function:: suggest_python_docstrings_pr(req: models.repo_request.DocstringPullRequestRequest)
+   :async:
+
+
+.. py:function:: publish_pages(req: models.repo_request.PublishPagesRequest)
+   :async:
+
+

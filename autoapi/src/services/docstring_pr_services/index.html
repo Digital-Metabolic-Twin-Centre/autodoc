@@ -1,0 +1,433 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.services.docstring_pr_services &mdash; Auto Doc  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Auto Doc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-value">Project value</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/objectives.html#success-criteria">Success criteria</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/plan.html">Project Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#current-implementation-status">Current implementation status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#completed-and-active-capabilities">Completed and active capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#near-term-refinement-work">Near-term refinement work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#future-development">Future development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#validation-approach">Validation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#milestones">Milestones</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/results.html">Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-approach">Evaluation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-criteria">Evaluation criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#how-success-will-be-measured">How success will be measured</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">API Reference</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#application-setup">Application setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-the-application-locally">Run the application locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-with-docker">Run with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#build-these-docs-locally">Build these docs locally</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Auto Doc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.services.docstring_pr_services</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/src/services/docstring_pr_services/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.services.docstring_pr_services">
+<span id="src-services-docstring-pr-services"></span><h1>src.services.docstring_pr_services<a class="headerlink" href="#module-src.services.docstring_pr_services" title="Link to this heading"></a></h1>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.logger" title="src.services.docstring_pr_services.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.DocstringNode" title="src.services.docstring_pr_services.DocstringNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DocstringNode</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.DocstringPullRequestError" title="src.services.docstring_pr_services.DocstringPullRequestError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DocstringPullRequestError</span></code></a></p></td>
+<td><p>Raised when creating a docstring suggestion pull request fails.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.DocstringInsertion" title="src.services.docstring_pr_services.DocstringInsertion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DocstringInsertion</span></code></a></p></td>
+<td><p>A class representing a code insertion point with metadata.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.PatchedPythonFile" title="src.services.docstring_pr_services.PatchedPythonFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PatchedPythonFile</span></code></a></p></td>
+<td><p>Represents a Python file with content and docstring insertions.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._format_python_docstring" title="src.services.docstring_pr_services._format_python_docstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_format_python_docstring</span></code></a>(→ List[str])</p></td>
+<td><p>Formats a Python docstring by cleaning and wrapping its content.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._node_insert_index" title="src.services.docstring_pr_services._node_insert_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_node_insert_index</span></code></a>(→ int)</p></td>
+<td><p>Insert index of the first body node in a DocstringNode.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._find_missing_python_docstrings" title="src.services.docstring_pr_services._find_missing_python_docstrings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_find_missing_python_docstrings</span></code></a>(→ List[DocstringInsertion])</p></td>
+<td><p>Identifies missing docstrings in Python functions and classes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.patch_python_docstrings" title="src.services.docstring_pr_services.patch_python_docstrings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">patch_python_docstrings</span></code></a>(→ PatchedPythonFile)</p></td>
+<td><p>Inserts generated docstrings into Python code using AST-derived insertion points.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._load_generated_suggestions" title="src.services.docstring_pr_services._load_generated_suggestions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_generated_suggestions</span></code></a>(→ Dict[str, List[dict]])</p></td>
+<td><p>Load generated docstring suggestions from a repository.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._suggestion_generator" title="src.services.docstring_pr_services._suggestion_generator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_suggestion_generator</span></code></a>(→ Callable[[DocstringInsertion], ...)</p></td>
+<td><p>Generates a suggestion function based on provided suggestions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._build_pull_request_body" title="src.services.docstring_pr_services._build_pull_request_body"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_pull_request_body</span></code></a>(→ str)</p></td>
+<td><p>Generates a pull request body summarizing docstring additions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._run_ruff_on_patched_files" title="src.services.docstring_pr_services._run_ruff_on_patched_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_run_ruff_on_patched_files</span></code></a>(→ Dict[str, PatchedPythonFile])</p></td>
+<td><p>Runs ruff formatting/fixes on patched Python files before they are committed.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._build_no_changes_response" title="src.services.docstring_pr_services._build_no_changes_response"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_no_changes_response</span></code></a>(→ dict)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.create_python_docstring_pull_request" title="src.services.docstring_pr_services.create_python_docstring_pull_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_python_docstring_pull_request</span></code></a>(→ dict)</p></td>
+<td><p>Creates a GitHub pull request with generated Python docstring suggestions.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.logger">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#src.services.docstring_pr_services.logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringNode">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">DocstringNode</span></span><a class="headerlink" href="#src.services.docstring_pr_services.DocstringNode" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringInsertion">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">DocstringInsertion</span></span><a class="headerlink" href="#src.services.docstring_pr_services.DocstringInsertion" title="Link to this definition"></a></dt>
+<dd><p>A class representing a code insertion point with metadata.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>) – The name of the insertion.</p></li>
+<li><p><strong>kind</strong> (<em>str</em>) – The type of insertion.</p></li>
+<li><p><strong>line_number</strong> (<em>int</em>) – The line number for insertion.</p></li>
+<li><p><strong>insert_index</strong> (<em>int</em>) – The index for insertion within the line.</p></li>
+<li><p><strong>indent</strong> (<em>str</em>) – The indentation level for the insertion.</p></li>
+<li><p><strong>code</strong> (<em>str</em>) – The code to be inserted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringInsertion.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.services.docstring_pr_services.DocstringInsertion.name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringInsertion.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.services.docstring_pr_services.DocstringInsertion.kind" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringInsertion.line_number">
+<span class="sig-name descname"><span class="pre">line_number</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#src.services.docstring_pr_services.DocstringInsertion.line_number" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringInsertion.insert_index">
+<span class="sig-name descname"><span class="pre">insert_index</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#src.services.docstring_pr_services.DocstringInsertion.insert_index" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringInsertion.indent">
+<span class="sig-name descname"><span class="pre">indent</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.services.docstring_pr_services.DocstringInsertion.indent" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringInsertion.code">
+<span class="sig-name descname"><span class="pre">code</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.services.docstring_pr_services.DocstringInsertion.code" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.PatchedPythonFile">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">PatchedPythonFile</span></span><a class="headerlink" href="#src.services.docstring_pr_services.PatchedPythonFile" title="Link to this definition"></a></dt>
+<dd><p>Represents a Python file with content and docstring insertions.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>content (str): The source code of the Python file.
+inserted (List[DocstringInsertion]): A list of docstring insertions.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.PatchedPythonFile.content">
+<span class="sig-name descname"><span class="pre">content</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.services.docstring_pr_services.PatchedPythonFile.content" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.PatchedPythonFile.inserted">
+<span class="sig-name descname"><span class="pre">inserted</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#src.services.docstring_pr_services.DocstringInsertion" title="src.services.docstring_pr_services.DocstringInsertion"><span class="pre">DocstringInsertion</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#src.services.docstring_pr_services.PatchedPythonFile.inserted" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.DocstringPullRequestError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">DocstringPullRequestError</span></span><a class="headerlink" href="#src.services.docstring_pr_services.DocstringPullRequestError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>Raised when creating a docstring suggestion pull request fails.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._format_python_docstring">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_format_python_docstring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docstring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">indent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._format_python_docstring" title="Link to this definition"></a></dt>
+<dd><p>Formats a Python docstring by cleaning and wrapping its content.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>docstring</strong> (<em>str</em>) – The original docstring to format.</p></li>
+<li><p><strong>indent</strong> (<em>str</em>) – The indentation to apply to each line.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of formatted docstring lines.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._node_insert_index">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_node_insert_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DocstringNode</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._node_insert_index" title="Link to this definition"></a></dt>
+<dd><p>Insert index of the first body node in a DocstringNode.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>node (DocstringNode): The node from which to extract the index.</p>
+</dd>
+<dt>Returns:</dt><dd><p>int: The index of the first body node.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._find_missing_python_docstrings">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_find_missing_python_docstrings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#src.services.docstring_pr_services.DocstringInsertion" title="src.services.docstring_pr_services.DocstringInsertion"><span class="pre">DocstringInsertion</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._find_missing_python_docstrings" title="Link to this definition"></a></dt>
+<dd><p>Identifies missing docstrings in Python functions and classes.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>content (str): The source code content to analyze.</p>
+</dd>
+<dt>Returns:</dt><dd><p>List[DocstringInsertion]: A sorted list of insertions for missing docstrings.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.patch_python_docstrings">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">patch_python_docstrings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">content</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#src.services.docstring_pr_services.DocstringInsertion" title="src.services.docstring_pr_services.DocstringInsertion"><span class="pre">DocstringInsertion</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_docstrings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.services.docstring_pr_services.PatchedPythonFile" title="src.services.docstring_pr_services.PatchedPythonFile"><span class="pre">PatchedPythonFile</span></a></span></span><a class="headerlink" href="#src.services.docstring_pr_services.patch_python_docstrings" title="Link to this definition"></a></dt>
+<dd><p>Inserts generated docstrings into Python code using AST-derived insertion points.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._load_generated_suggestions">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_load_generated_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._load_generated_suggestions" title="Link to this definition"></a></dt>
+<dd><p>Load generated docstring suggestions from a repository.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_path (str): The path to the repository.
+branch (str): The branch name to load suggestions for.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Dict[str, List[dict]]: A dictionary mapping file paths to their respective suggestions.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._suggestion_generator">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_suggestion_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suggestions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#src.services.docstring_pr_services.DocstringInsertion" title="src.services.docstring_pr_services.DocstringInsertion"><span class="pre">DocstringInsertion</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._suggestion_generator" title="Link to this definition"></a></dt>
+<dd><p>Generates a suggestion function based on provided suggestions.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>suggestions (List[dict]): A list of suggestion dictionaries containing function names
+and docstrings.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Callable[[DocstringInsertion], Optional[str]]: A function that returns a generated
+docstring or None.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._build_pull_request_body">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_build_pull_request_body</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">files_changed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#src.services.docstring_pr_services.PatchedPythonFile" title="src.services.docstring_pr_services.PatchedPythonFile"><span class="pre">PatchedPythonFile</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._build_pull_request_body" title="Link to this definition"></a></dt>
+<dd><p>Generates a pull request body summarizing docstring additions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_branch</strong> (<em>str</em>) – The name of the base branch for the pull request.</p></li>
+<li><p><strong>files_changed</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#src.services.docstring_pr_services.PatchedPythonFile" title="src.services.docstring_pr_services.PatchedPythonFile"><em>PatchedPythonFile</em></a><em>]</em>) – A dictionary of files with their corresponding</p></li>
+<li><p><strong>changes.</strong> (<em>docstring</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A formatted string summarizing the changes and the base branch.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._run_ruff_on_patched_files">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_run_ruff_on_patched_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#src.services.docstring_pr_services.PatchedPythonFile" title="src.services.docstring_pr_services.PatchedPythonFile"><span class="pre">PatchedPythonFile</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#src.services.docstring_pr_services.PatchedPythonFile" title="src.services.docstring_pr_services.PatchedPythonFile"><span class="pre">PatchedPythonFile</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._run_ruff_on_patched_files" title="Link to this definition"></a></dt>
+<dd><p>Runs ruff formatting/fixes on patched Python files before they are committed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services._build_no_changes_response">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_build_no_changes_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._build_no_changes_response" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.docstring_pr_services.create_python_docstring_pull_request">
+<span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">create_python_docstring_pull_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_docstrings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.services.docstring_pr_services.create_python_docstring_pull_request" title="Link to this definition"></a></dt>
+<dd><p>Creates a GitHub pull request with generated Python docstring suggestions.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Digital Metabolic Twin Centre.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

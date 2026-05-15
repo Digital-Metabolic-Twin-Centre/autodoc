@@ -1,0 +1,320 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.models.repo_request &mdash; Auto Doc  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Auto Doc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-value">Project value</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/objectives.html#success-criteria">Success criteria</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/plan.html">Project Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#current-implementation-status">Current implementation status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#completed-and-active-capabilities">Completed and active capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#near-term-refinement-work">Near-term refinement work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#future-development">Future development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#validation-approach">Validation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#milestones">Milestones</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/results.html">Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-approach">Evaluation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-criteria">Evaluation criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#how-success-will-be-measured">How success will be measured</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">API Reference</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#application-setup">Application setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-the-application-locally">Run the application locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-with-docker">Run with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#build-these-docs-locally">Build these docs locally</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Auto Doc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.models.repo_request</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/src/models/repo_request/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.models.repo_request">
+<span id="src-models-repo-request"></span><h1>src.models.repo_request<a class="headerlink" href="#module-src.models.repo_request" title="Link to this heading"></a></h1>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.models.repo_request.RepoRequest" title="src.models.repo_request.RepoRequest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RepoRequest</span></code></a></p></td>
+<td><p>Represents a request for repository information.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.models.repo_request.PublishPagesRequest" title="src.models.repo_request.PublishPagesRequest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PublishPagesRequest</span></code></a></p></td>
+<td><p>Represents a request to publish pages to a repository.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.models.repo_request.DocstringPullRequestRequest" title="src.models.repo_request.DocstringPullRequestRequest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DocstringPullRequestRequest</span></code></a></p></td>
+<td><p>Represents a request for a pull request to add Python docstrings.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.models.repo_request.</span></span><span class="sig-name descname"><span class="pre">RepoRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**data:</span> <span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.models.repo_request.RepoRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pydantic.BaseModel</span></code></p>
+<p>Represents a request for repository information.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>provider (str): The repository provider, either ‘github’ or ‘gitlab’.
+repo_url (str): The URL of the repository.
+token (str): Authentication token for accessing the repository.
+branch (str): The branch of the repository to access.
+target_folders (list[str], optional): List of target folders, defaults to an empty list.
+model (Optional[str], optional): Optional model name.
+reuse_doc (bool, optional): Flag to indicate if the document should be reused, defaults
+to False.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None: This class does not return a value.</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.provider">
+<span class="sig-name descname"><span class="pre">provider</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.provider" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.repo_url">
+<span class="sig-name descname"><span class="pre">repo_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.repo_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.token">
+<span class="sig-name descname"><span class="pre">token</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.token" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.branch">
+<span class="sig-name descname"><span class="pre">branch</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.branch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.target_folders">
+<span class="sig-name descname"><span class="pre">target_folders</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.target_folders" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.model">
+<span class="sig-name descname"><span class="pre">model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.reuse_doc">
+<span class="sig-name descname"><span class="pre">reuse_doc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.reuse_doc" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.docstring_threshold">
+<span class="sig-name descname"><span class="pre">docstring_threshold</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.docstring_threshold" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.RepoRequest.low_content_min_lines">
+<span class="sig-name descname"><span class="pre">low_content_min_lines</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.models.repo_request.RepoRequest.low_content_min_lines" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.models.repo_request.PublishPagesRequest">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.models.repo_request.</span></span><span class="sig-name descname"><span class="pre">PublishPagesRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**data:</span> <span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.models.repo_request.PublishPagesRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pydantic.BaseModel</span></code></p>
+<p>Represents a request to publish pages to a repository.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_url (str): The URL of the repository.
+token (str): The authentication token.
+branch (str): The branch to publish to.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.PublishPagesRequest.repo_url">
+<span class="sig-name descname"><span class="pre">repo_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.PublishPagesRequest.repo_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.PublishPagesRequest.token">
+<span class="sig-name descname"><span class="pre">token</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.PublishPagesRequest.token" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.PublishPagesRequest.branch">
+<span class="sig-name descname"><span class="pre">branch</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.PublishPagesRequest.branch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.PublishPagesRequest.low_content_min_lines">
+<span class="sig-name descname"><span class="pre">low_content_min_lines</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.models.repo_request.PublishPagesRequest.low_content_min_lines" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.models.repo_request.</span></span><span class="sig-name descname"><span class="pre">DocstringPullRequestRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**data:</span> <span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pydantic.BaseModel</span></code></p>
+<p>Represents a request for a pull request to add Python docstrings.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>provider (str): The name of the provider (default is ‘github’).
+repo_url (str): The URL of the repository.
+token (str): Authentication token for the repository.
+base_branch (str): The base branch for the pull request.
+suggestion_branch (Optional[str]): The branch for suggested changes (default is None).
+title (str): Title of the pull request (default is ‘Add suggested Python docstrings’).
+max_docstrings (int): Maximum number of docstrings to add (default is 50).</p>
+</dd>
+<dt>Returns:</dt><dd><p>None</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest.provider">
+<span class="sig-name descname"><span class="pre">provider</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'github'</span></em><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest.provider" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest.repo_url">
+<span class="sig-name descname"><span class="pre">repo_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest.repo_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest.token">
+<span class="sig-name descname"><span class="pre">token</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest.token" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest.base_branch">
+<span class="sig-name descname"><span class="pre">base_branch</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest.base_branch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest.suggestion_branch">
+<span class="sig-name descname"><span class="pre">suggestion_branch</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest.suggestion_branch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest.title">
+<span class="sig-name descname"><span class="pre">title</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Add</span> <span class="pre">suggested</span> <span class="pre">docstrings'</span></em><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest.title" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.models.repo_request.DocstringPullRequestRequest.max_docstrings">
+<span class="sig-name descname"><span class="pre">max_docstrings</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">50</span></em><a class="headerlink" href="#src.models.repo_request.DocstringPullRequestRequest.max_docstrings" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Digital Metabolic Twin Centre.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

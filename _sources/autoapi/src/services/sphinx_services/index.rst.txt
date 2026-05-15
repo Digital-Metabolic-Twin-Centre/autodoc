@@ -1,0 +1,490 @@
+src.services.sphinx_services
+============================
+
+.. py:module:: src.services.sphinx_services
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   src.services.sphinx_services.logger
+   src.services.sphinx_services.DOCS_SCAFFOLD_DIR
+   src.services.sphinx_services.DOCS_ASSET_DIR
+   src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD
+   src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS
+   src.services.sphinx_services.AUTOAPI_CONF_MARKER_START
+   src.services.sphinx_services.AUTOAPI_CONF_MARKER_END
+   src.services.sphinx_services.AUTOAPI_WARNINGS_TO_SUPPRESS
+   src.services.sphinx_services.DEFAULT_AUTOAPI_IGNORE_PATTERNS
+   src.services.sphinx_services.RISKY_AUTOAPI_PATH_PATTERNS
+   src.services.sphinx_services.LOW_CONTENT_MIN_MEANINGFUL_LINES
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   src.services.sphinx_services.PublishPagesError
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   src.services.sphinx_services._raise_publish_error
+   src.services.sphinx_services._extract_autoapi_module_names
+   src.services.sphinx_services._extract_module_name_from_autoapi_path
+   src.services.sphinx_services._to_autoapi_ignore_pattern
+   src.services.sphinx_services._classify_autoapi_file
+   src.services.sphinx_services._find_autoapi_skip_candidates
+   src.services.sphinx_services._collect_prebuild_autoapi_ignores
+   src.services.sphinx_services._module_names_to_ignore_patterns
+   src.services.sphinx_services._format_python_list
+   src.services.sphinx_services._apply_autoapi_runtime_settings
+   src.services.sphinx_services._build_sphinx_once
+   src.services.sphinx_services._write_skipped_autoapi_report
+   src.services.sphinx_services._run_sphinx_build_with_autoapi_filters
+   src.services.sphinx_services._project_name_from_repo_path
+   src.services.sphinx_services._load_sample_text
+   src.services.sphinx_services._build_sample_conf
+   src.services.sphinx_services._load_sample_binary
+   src.services.sphinx_services._build_sample_index
+   src.services.sphinx_services._build_sample_api_reference
+   src.services.sphinx_services._build_sample_overview
+   src.services.sphinx_services._build_sample_makefile
+   src.services.sphinx_services._build_sample_readme
+   src.services.sphinx_services._sample_docs_files
+   src.services.sphinx_services._sample_docs_binary_files
+   src.services.sphinx_services._remote_text_file_exists
+   src.services.sphinx_services._create_sample_sphinx_scaffold
+   src.services.sphinx_services._write_sample_sphinx_scaffold
+   src.services.sphinx_services._ensure_sphinx_project_name
+   src.services.sphinx_services._ensure_api_index
+   src.services.sphinx_services.create_sphinx_setup
+   src.services.sphinx_services.publish_github_pages
+   src.services.sphinx_services.trigger_gitlab_pipeline
+
+
+Module Contents
+---------------
+
+.. py:data:: logger
+
+.. py:data:: DOCS_SCAFFOLD_DIR
+
+.. py:data:: DOCS_ASSET_DIR
+
+.. py:data:: AUTOAPI_DOCSTRING_THRESHOLD
+   :value: 0.5
+
+
+.. py:data:: SAMPLE_DOCS_FALLBACK_TEXTS
+
+.. py:data:: AUTOAPI_CONF_MARKER_START
+   :value: '# AUTODOC AUTOAPI RUNTIME SETTINGS START'
+
+
+.. py:data:: AUTOAPI_CONF_MARKER_END
+   :value: '# AUTODOC AUTOAPI RUNTIME SETTINGS END'
+
+
+.. py:data:: AUTOAPI_WARNINGS_TO_SUPPRESS
+   :value: ['autoapi.python_import_resolution']
+
+
+.. py:data:: DEFAULT_AUTOAPI_IGNORE_PATTERNS
+   :value: ['*/migrations/*', '*/migrations.py', '*/tests/*', '*/test_*.py', '*/urls.py', '*/urls_*.py',...
+
+
+.. py:data:: RISKY_AUTOAPI_PATH_PATTERNS
+
+.. py:data:: LOW_CONTENT_MIN_MEANINGFUL_LINES
+   :value: 4
+
+
+.. py:exception:: PublishPagesError(message: str, status_code: int = 403)
+
+   Bases: :py:obj:`RuntimeError`
+
+
+   Raised when a GitHub Pages publish step fails.
+
+
+   .. py:attribute:: status_code
+      :value: 403
+
+
+
+.. py:function:: _raise_publish_error(message: str, status_code: int = 403) -> None
+
+.. py:function:: _extract_autoapi_module_names(build_output: str) -> list[str]
+
+.. py:function:: _extract_module_name_from_autoapi_path(autoapi_root: pathlib.Path, file_path: pathlib.Path) -> str
+
+   Extracts the module name from a given file path relative to the autoapi root.
+
+   :param autoapi_root: The root directory of the autoapi.
+   :type autoapi_root: Path
+   :param file_path: The file path to extract the module name from.
+   :type file_path: Path
+
+   :returns: The extracted module name as a dot-separated string.
+   :rtype: str
+
+
+.. py:function:: _to_autoapi_ignore_pattern(relative_file: str) -> str
+
+   Generates a pattern for ignoring files in AutoAPI.
+
+   :param relative_file: The relative file path to be ignored.
+   :type relative_file: str
+
+   :returns: The formatted ignore pattern string.
+   :rtype: str
+
+
+.. py:function:: _classify_autoapi_file(autoapi_root: pathlib.Path, file_path: pathlib.Path, low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES) -> tuple[bool, str]
+
+   Classifies an AutoAPI file based on various criteria.
+
+   :param autoapi_root: The root directory of AutoAPI.
+   :type autoapi_root: Path
+   :param file_path: The path of the file to classify.
+   :type file_path: Path
+
+   :returns: A tuple indicating if the file is included and a message.
+   :rtype: tuple[bool, str]
+
+
+.. py:function:: _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[pathlib.Path]
+
+   Finds Python module files in the specified directory that should be skipped by AutoAPI.
+
+   :param temp_dir: The temporary directory containing AutoAPI files.
+   :type temp_dir: str
+   :param module_name: The name of the module to search for.
+   :type module_name: str
+
+   :returns: A list of Path objects representing the found module files.
+   :rtype: list[Path]
+
+
+.. py:function:: _collect_prebuild_autoapi_ignores(temp_dir: str, low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES) -> tuple[list[str], list[dict[str, str]]]
+
+   Collects patterns and details of files to ignore in AutoAPI documentation.
+
+   :param temp_dir: The temporary directory containing AutoAPI files.
+   :type temp_dir: str
+
+   :returns: A tuple containing a list of ignore patterns and a
+             list of skipped file details.
+   :rtype: tuple[list[str], list[dict[str, str]]]
+
+
+.. py:function:: _module_names_to_ignore_patterns(temp_dir: str, module_names: list[str]) -> tuple[list[str], list[dict[str, str]]]
+
+   Generates ignore patterns and skipped file information for specified modules.
+
+       Args:
+           temp_dir (str): The temporary directory path.
+           module_names (list[str]): List of module names to process.
+
+       Returns:
+           tuple[list[str], list[dict[str, str]]]: A tuple containing a list of ignore patterns and
+           a list of skipped file details.
+
+
+
+.. py:function:: _format_python_list(values: list[str]) -> str
+
+   Formats a list of strings into a Python list representation.
+
+   :param values: A list of strings to format.
+   :type values: list[str]
+
+   :returns: A formatted string representing the list.
+   :rtype: str
+
+
+.. py:function:: _apply_autoapi_runtime_settings(conf_py_path: str, ignore_patterns: list[str]) -> None
+
+   Applies runtime settings for autoapi configuration in a specified file.
+
+   :param conf_py_path: Path to the configuration file.
+   :type conf_py_path: str
+   :param ignore_patterns: List of patterns to ignore.
+   :type ignore_patterns: list[str]
+
+   :returns: Modifies the configuration file in place.
+   :rtype: None
+
+
+.. py:function:: _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess
+
+   Builds Sphinx documentation once in the specified temporary directory.
+
+       Args:
+           temp_dir (str): The path to the temporary directory for building docs.
+
+       Returns:
+           subprocess.CompletedProcess: The result of the Sphinx build process.
+
+
+
+.. py:function:: _write_skipped_autoapi_report(skipped_files: list[dict]) -> None
+
+   Generates a report of skipped AutoAPI files and writes it to a text file.
+
+   :param skipped_files: A list of dictionaries containing details of skipped files.
+   :type skipped_files: list[dict]
+
+   :returns: This function does not return a value.
+   :rtype: None
+
+
+.. py:function:: _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str, low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES) -> subprocess.CompletedProcess
+
+   Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries.
+
+   :param temp_dir: The temporary directory for the Sphinx build.
+   :type temp_dir: str
+   :param conf_py_path: The path to the Sphinx configuration file.
+   :type conf_py_path: str
+
+   :returns: The result of the Sphinx build process.
+   :rtype: subprocess.CompletedProcess
+
+
+.. py:function:: _project_name_from_repo_path(repo_path: str) -> str
+
+   Extracts the project name from a given repository path.
+
+   :param repo_path: The file path of the repository.
+   :type repo_path: str
+
+   :returns: The formatted project name derived from the repository path.
+   :rtype: str
+
+
+.. py:function:: _load_sample_text(relative_path: str) -> str
+
+   Load sample text from a specified relative path or fallback.
+
+       Args:
+           relative_path (str): The relative path to the sample text file.
+
+       Returns:
+           str: The content of the sample text file.
+
+       Raises:
+           FileNotFoundError: If the sample text is not found in the specified path or fallback.
+
+
+
+.. py:function:: _build_sample_conf(project_name: str) -> str
+
+   Builds a sample configuration string for a project.
+
+   :param project_name: The name of the project to include in the configuration.
+   :type project_name: str
+
+   :returns: The modified configuration text with the project name and necessary additions.
+   :rtype: str
+
+
+.. py:function:: _load_sample_binary(relative_path: str) -> bytes
+
+   Load a binary sample file from a specified relative path.
+
+       Args:
+           relative_path (str): The relative path to the sample binary file.
+
+       Returns:
+           bytes: The contents of the binary file.
+
+       Raises:
+           FileNotFoundError: If the file does not exist in the specified locations.
+
+
+
+.. py:function:: _build_sample_index(project_name: str) -> str
+
+   Builds a sample index for a given project name.
+
+   :param project_name: The name of the project to include in the index.
+   :type project_name: str
+
+   :returns: The formatted index text as a string.
+   :rtype: str
+
+
+.. py:function:: _build_sample_api_reference() -> str
+
+   Builds a curated API reference page that exposes useful AutoAPI pages in the sidebar.
+
+   :returns: The API reference page content.
+   :rtype: str
+
+
+.. py:function:: _build_sample_overview(project_name: str) -> str
+
+   Generates a project overview by replacing a placeholder with the project name.
+
+   :param project_name: The name of the project to include in the overview.
+   :type project_name: str
+
+   :returns: The formatted overview text with the project name inserted.
+   :rtype: str
+
+
+.. py:function:: _build_sample_makefile() -> str
+
+   Generate a sample Makefile for Sphinx documentation.
+
+   :returns: The content of the Makefile as a string.
+   :rtype: str
+
+
+.. py:function:: _build_sample_readme() -> str
+
+   Generate a sample README for documentation.
+
+   :returns: A formatted string containing documentation notes and local preview instructions.
+   :rtype: str
+
+
+.. py:function:: _sample_docs_files(project_name: str) -> dict[str, str]
+
+   Generate sample documentation files for a given project.
+
+   :param project_name: The name of the project for which to create documentation.
+   :type project_name: str
+
+   :returns: A dictionary mapping file paths to their corresponding sample content.
+   :rtype: dict[str, str]
+
+
+.. py:function:: _sample_docs_binary_files() -> dict[str, bytes]
+
+   Generate a dictionary of sample binary files.
+
+   :returns: A dictionary mapping file paths to their binary content.
+   :rtype: dict[str, bytes]
+
+
+.. py:function:: _remote_text_file_exists(repo_path: str, branch: str, file_path: str, token: str, provider: str) -> bool
+
+   Check if a remote text file exists in a specified repository branch.
+
+       Args:
+           repo_path (str): The path to the repository.
+           branch (str): The branch name to check.
+           file_path (str): The path of the file to verify.
+           token (str): Access token for authentication.
+           provider (str): The version control provider ('github' or 'gitlab').
+
+       Returns:
+           bool: True if the file exists, False otherwise.
+
+
+
+.. py:function:: _create_sample_sphinx_scaffold(repo_path: str, branch: str, token: str, provider: str, project_name: str) -> bool
+
+   Create the sample Sphinx scaffold in the target repository branch.
+
+   :param repo_path: The path to the repository.
+   :type repo_path: str
+   :param branch: The branch where the scaffold will be created.
+   :type branch: str
+   :param token: Authentication token for the repository.
+   :type token: str
+   :param provider: The repository provider, for example GitHub or GitLab.
+   :type provider: str
+   :param project_name: The project name used in the generated scaffold.
+   :type project_name: str
+
+   :returns: True when the scaffold was created successfully, otherwise False.
+   :rtype: bool
+
+
+.. py:function:: _write_sample_sphinx_scaffold(root_dir: str, project_name: str) -> None
+
+   Creates a sample Sphinx documentation scaffold in the specified directory.
+
+       Args:
+           root_dir (str): The root directory where the scaffold will be created.
+           project_name (str): The name of the project for which the documentation is generated.
+
+       Returns:
+           None: This function does not return a value.
+
+
+
+.. py:function:: _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None
+
+   Ensures the Sphinx project name is set in the configuration file.
+
+       Args:
+           conf_py_path (str): Path to the Sphinx configuration file.
+           project_name (str): The desired project name to set.
+
+       Returns:
+           None: This function modifies the file in place if conditions are met.
+
+
+
+.. py:function:: _ensure_api_index(index_path: str, project_name: str) -> None
+
+   Ensure the existence of an API index file at the specified path.
+
+   :param index_path: The file path for the index.
+   :type index_path: str
+   :param project_name: The name of the project to include in the index.
+   :type project_name: str
+
+   :returns: This function does not return a value.
+   :rtype: None
+
+
+.. py:function:: create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file, docstring_threshold: float = AUTOAPI_DOCSTRING_THRESHOLD, low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES)
+
+   Set up Sphinx documentation for a repository based on docstring coverage.
+
+       Args:
+           provider (str): The version control provider (e.g., 'gitlab' or 'github').
+           repo_url (str): The URL of the repository.
+           token (str): Access token for the repository.
+           branch (str): The branch to set up documentation on.
+           docstring_analysis_file (str): Path to the CSV file containing docstring analysis.
+
+       Returns:
+           bool: True if setup is successful, False otherwise.
+
+
+
+.. py:function:: publish_github_pages(repo_url: str, source_branch: str, token: str, low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES) -> bool
+
+   Publishes reviewed GitHub docs output from a source branch to gh-pages.
+
+
+.. py:function:: trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None) -> bool
+
+   Triggers a GitLab pipeline for the given project and branch.
+
+   :param repo_url: The GitLab project path (e.g., 'namespace/project').
+   :type repo_url: str
+   :param branch: The branch to trigger the pipeline on.
+   :type branch: str
+   :param token: GitLab private token.
+   :type token: str
+   :param variables: Pipeline variables.
+   :type variables: dict, optional
+
+   :returns: True if the pipeline was triggered successfully, False otherwise.
+   :rtype: bool
+
+

@@ -1,0 +1,883 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.services.sphinx_services &mdash; Auto Doc  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Auto Doc
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#summary">Summary</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#scope">Scope</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-value">Project value</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/objectives.html#success-criteria">Success criteria</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/plan.html">Project Plan</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#current-implementation-status">Current implementation status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#completed-and-active-capabilities">Completed and active capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#near-term-refinement-work">Near-term refinement work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#future-development">Future development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#validation-approach">Validation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/plan.html#milestones">Milestones</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/results.html">Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-approach">Evaluation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#evaluation-criteria">Evaluation criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#how-success-will-be-measured">How success will be measured</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api_reference.html">API Reference</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#application-setup">Application setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-the-application-locally">Run the application locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-with-docker">Run with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#build-these-docs-locally">Build these docs locally</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Auto Doc</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">src.services.sphinx_services</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/src/services/sphinx_services/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.services.sphinx_services">
+<span id="src-services-sphinx-services"></span><h1>src.services.sphinx_services<a class="headerlink" href="#module-src.services.sphinx_services" title="Link to this heading"></a></h1>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.logger" title="src.services.sphinx_services.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services.DOCS_SCAFFOLD_DIR" title="src.services.sphinx_services.DOCS_SCAFFOLD_DIR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DOCS_SCAFFOLD_DIR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.DOCS_ASSET_DIR" title="src.services.sphinx_services.DOCS_ASSET_DIR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DOCS_ASSET_DIR</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD" title="src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AUTOAPI_DOCSTRING_THRESHOLD</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS" title="src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SAMPLE_DOCS_FALLBACK_TEXTS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services.AUTOAPI_CONF_MARKER_START" title="src.services.sphinx_services.AUTOAPI_CONF_MARKER_START"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_START</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.AUTOAPI_CONF_MARKER_END" title="src.services.sphinx_services.AUTOAPI_CONF_MARKER_END"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_END</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services.AUTOAPI_WARNINGS_TO_SUPPRESS" title="src.services.sphinx_services.AUTOAPI_WARNINGS_TO_SUPPRESS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AUTOAPI_WARNINGS_TO_SUPPRESS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.DEFAULT_AUTOAPI_IGNORE_PATTERNS" title="src.services.sphinx_services.DEFAULT_AUTOAPI_IGNORE_PATTERNS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_AUTOAPI_IGNORE_PATTERNS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services.RISKY_AUTOAPI_PATH_PATTERNS" title="src.services.sphinx_services.RISKY_AUTOAPI_PATH_PATTERNS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RISKY_AUTOAPI_PATH_PATTERNS</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.LOW_CONTENT_MIN_MEANINGFUL_LINES" title="src.services.sphinx_services.LOW_CONTENT_MIN_MEANINGFUL_LINES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOW_CONTENT_MIN_MEANINGFUL_LINES</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.PublishPagesError" title="src.services.sphinx_services.PublishPagesError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PublishPagesError</span></code></a></p></td>
+<td><p>Raised when a GitHub Pages publish step fails.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._raise_publish_error" title="src.services.sphinx_services._raise_publish_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_raise_publish_error</span></code></a>(→ None)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._extract_autoapi_module_names" title="src.services.sphinx_services._extract_autoapi_module_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_extract_autoapi_module_names</span></code></a>(→ list[str])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._extract_module_name_from_autoapi_path" title="src.services.sphinx_services._extract_module_name_from_autoapi_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_extract_module_name_from_autoapi_path</span></code></a>(→ str)</p></td>
+<td><p>Extracts the module name from a given file path relative to the autoapi root.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._to_autoapi_ignore_pattern" title="src.services.sphinx_services._to_autoapi_ignore_pattern"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_to_autoapi_ignore_pattern</span></code></a>(→ str)</p></td>
+<td><p>Generates a pattern for ignoring files in AutoAPI.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._classify_autoapi_file" title="src.services.sphinx_services._classify_autoapi_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_classify_autoapi_file</span></code></a>(→ tuple[bool, str])</p></td>
+<td><p>Classifies an AutoAPI file based on various criteria.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._find_autoapi_skip_candidates" title="src.services.sphinx_services._find_autoapi_skip_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_find_autoapi_skip_candidates</span></code></a>(→ list[pathlib.Path])</p></td>
+<td><p>Finds Python module files in the specified directory that should be skipped by AutoAPI.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._collect_prebuild_autoapi_ignores" title="src.services.sphinx_services._collect_prebuild_autoapi_ignores"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_collect_prebuild_autoapi_ignores</span></code></a>(→ tuple[list[str], ...)</p></td>
+<td><p>Collects patterns and details of files to ignore in AutoAPI documentation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._module_names_to_ignore_patterns" title="src.services.sphinx_services._module_names_to_ignore_patterns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_module_names_to_ignore_patterns</span></code></a>(→ tuple[list[str], ...)</p></td>
+<td><p>Generates ignore patterns and skipped file information for specified modules.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._format_python_list" title="src.services.sphinx_services._format_python_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_format_python_list</span></code></a>(→ str)</p></td>
+<td><p>Formats a list of strings into a Python list representation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._apply_autoapi_runtime_settings" title="src.services.sphinx_services._apply_autoapi_runtime_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_apply_autoapi_runtime_settings</span></code></a>(→ None)</p></td>
+<td><p>Applies runtime settings for autoapi configuration in a specified file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._build_sphinx_once" title="src.services.sphinx_services._build_sphinx_once"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_sphinx_once</span></code></a>(→ subprocess.CompletedProcess)</p></td>
+<td><p>Builds Sphinx documentation once in the specified temporary directory.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._write_skipped_autoapi_report" title="src.services.sphinx_services._write_skipped_autoapi_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_write_skipped_autoapi_report</span></code></a>(→ None)</p></td>
+<td><p>Generates a report of skipped AutoAPI files and writes it to a text file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._run_sphinx_build_with_autoapi_filters" title="src.services.sphinx_services._run_sphinx_build_with_autoapi_filters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_run_sphinx_build_with_autoapi_filters</span></code></a>(...)</p></td>
+<td><p>Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._project_name_from_repo_path" title="src.services.sphinx_services._project_name_from_repo_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_project_name_from_repo_path</span></code></a>(→ str)</p></td>
+<td><p>Extracts the project name from a given repository path.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._load_sample_text" title="src.services.sphinx_services._load_sample_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_sample_text</span></code></a>(→ str)</p></td>
+<td><p>Load sample text from a specified relative path or fallback.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._build_sample_conf" title="src.services.sphinx_services._build_sample_conf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_sample_conf</span></code></a>(→ str)</p></td>
+<td><p>Builds a sample configuration string for a project.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._load_sample_binary" title="src.services.sphinx_services._load_sample_binary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_load_sample_binary</span></code></a>(→ bytes)</p></td>
+<td><p>Load a binary sample file from a specified relative path.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._build_sample_index" title="src.services.sphinx_services._build_sample_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_sample_index</span></code></a>(→ str)</p></td>
+<td><p>Builds a sample index for a given project name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._build_sample_api_reference" title="src.services.sphinx_services._build_sample_api_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_sample_api_reference</span></code></a>(→ str)</p></td>
+<td><p>Builds a curated API reference page that exposes useful AutoAPI pages in the sidebar.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._build_sample_overview" title="src.services.sphinx_services._build_sample_overview"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_sample_overview</span></code></a>(→ str)</p></td>
+<td><p>Generates a project overview by replacing a placeholder with the project name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._build_sample_makefile" title="src.services.sphinx_services._build_sample_makefile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_sample_makefile</span></code></a>(→ str)</p></td>
+<td><p>Generate a sample Makefile for Sphinx documentation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._build_sample_readme" title="src.services.sphinx_services._build_sample_readme"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_sample_readme</span></code></a>(→ str)</p></td>
+<td><p>Generate a sample README for documentation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._sample_docs_files" title="src.services.sphinx_services._sample_docs_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_sample_docs_files</span></code></a>(→ dict[str, str])</p></td>
+<td><p>Generate sample documentation files for a given project.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._sample_docs_binary_files" title="src.services.sphinx_services._sample_docs_binary_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_sample_docs_binary_files</span></code></a>(→ dict[str, bytes])</p></td>
+<td><p>Generate a dictionary of sample binary files.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._remote_text_file_exists" title="src.services.sphinx_services._remote_text_file_exists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_remote_text_file_exists</span></code></a>(→ bool)</p></td>
+<td><p>Check if a remote text file exists in a specified repository branch.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._create_sample_sphinx_scaffold" title="src.services.sphinx_services._create_sample_sphinx_scaffold"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_create_sample_sphinx_scaffold</span></code></a>(→ bool)</p></td>
+<td><p>Create the sample Sphinx scaffold in the target repository branch.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._write_sample_sphinx_scaffold" title="src.services.sphinx_services._write_sample_sphinx_scaffold"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_write_sample_sphinx_scaffold</span></code></a>(→ None)</p></td>
+<td><p>Creates a sample Sphinx documentation scaffold in the specified directory.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services._ensure_sphinx_project_name" title="src.services.sphinx_services._ensure_sphinx_project_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_ensure_sphinx_project_name</span></code></a>(→ None)</p></td>
+<td><p>Ensures the Sphinx project name is set in the configuration file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services._ensure_api_index" title="src.services.sphinx_services._ensure_api_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_ensure_api_index</span></code></a>(→ None)</p></td>
+<td><p>Ensure the existence of an API index file at the specified path.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services.create_sphinx_setup" title="src.services.sphinx_services.create_sphinx_setup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_sphinx_setup</span></code></a>(provider, repo_url, token, branch, ...)</p></td>
+<td><p>Set up Sphinx documentation for a repository based on docstring coverage.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.sphinx_services.publish_github_pages" title="src.services.sphinx_services.publish_github_pages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">publish_github_pages</span></code></a>(→ bool)</p></td>
+<td><p>Publishes reviewed GitHub docs output from a source branch to gh-pages.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#src.services.sphinx_services.trigger_gitlab_pipeline" title="src.services.sphinx_services.trigger_gitlab_pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trigger_gitlab_pipeline</span></code></a>(→ bool)</p></td>
+<td><p>Triggers a GitLab pipeline for the given project and branch.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.logger">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#src.services.sphinx_services.logger" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.DOCS_SCAFFOLD_DIR">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">DOCS_SCAFFOLD_DIR</span></span><a class="headerlink" href="#src.services.sphinx_services.DOCS_SCAFFOLD_DIR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.DOCS_ASSET_DIR">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">DOCS_ASSET_DIR</span></span><a class="headerlink" href="#src.services.sphinx_services.DOCS_ASSET_DIR" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">AUTOAPI_DOCSTRING_THRESHOLD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></em><a class="headerlink" href="#src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">SAMPLE_DOCS_FALLBACK_TEXTS</span></span><a class="headerlink" href="#src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.AUTOAPI_CONF_MARKER_START">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">AUTOAPI_CONF_MARKER_START</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#</span> <span class="pre">AUTODOC</span> <span class="pre">AUTOAPI</span> <span class="pre">RUNTIME</span> <span class="pre">SETTINGS</span> <span class="pre">START'</span></em><a class="headerlink" href="#src.services.sphinx_services.AUTOAPI_CONF_MARKER_START" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.AUTOAPI_CONF_MARKER_END">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">AUTOAPI_CONF_MARKER_END</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#</span> <span class="pre">AUTODOC</span> <span class="pre">AUTOAPI</span> <span class="pre">RUNTIME</span> <span class="pre">SETTINGS</span> <span class="pre">END'</span></em><a class="headerlink" href="#src.services.sphinx_services.AUTOAPI_CONF_MARKER_END" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.AUTOAPI_WARNINGS_TO_SUPPRESS">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">AUTOAPI_WARNINGS_TO_SUPPRESS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['autoapi.python_import_resolution']</span></em><a class="headerlink" href="#src.services.sphinx_services.AUTOAPI_WARNINGS_TO_SUPPRESS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.DEFAULT_AUTOAPI_IGNORE_PATTERNS">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_AUTOAPI_IGNORE_PATTERNS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['*/migrations/*',</span> <span class="pre">'*/migrations.py',</span> <span class="pre">'*/tests/*',</span> <span class="pre">'*/test_*.py',</span> <span class="pre">'*/urls.py',</span> <span class="pre">'*/urls_*.py',...</span></em><a class="headerlink" href="#src.services.sphinx_services.DEFAULT_AUTOAPI_IGNORE_PATTERNS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.RISKY_AUTOAPI_PATH_PATTERNS">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">RISKY_AUTOAPI_PATH_PATTERNS</span></span><a class="headerlink" href="#src.services.sphinx_services.RISKY_AUTOAPI_PATH_PATTERNS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.services.sphinx_services.LOW_CONTENT_MIN_MEANINGFUL_LINES">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">LOW_CONTENT_MIN_MEANINGFUL_LINES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#src.services.sphinx_services.LOW_CONTENT_MIN_MEANINGFUL_LINES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="src.services.sphinx_services.PublishPagesError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">PublishPagesError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">403</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.services.sphinx_services.PublishPagesError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p>Raised when a GitHub Pages publish step fails.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.services.sphinx_services.PublishPagesError.status_code">
+<span class="sig-name descname"><span class="pre">status_code</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">403</span></em><a class="headerlink" href="#src.services.sphinx_services.PublishPagesError.status_code" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._raise_publish_error">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_raise_publish_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">status_code</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">403</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.services.sphinx_services._raise_publish_error" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._extract_autoapi_module_names">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_extract_autoapi_module_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">build_output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.sphinx_services._extract_autoapi_module_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._extract_module_name_from_autoapi_path">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_extract_module_name_from_autoapi_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoapi_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._extract_module_name_from_autoapi_path" title="Link to this definition"></a></dt>
+<dd><p>Extracts the module name from a given file path relative to the autoapi root.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>autoapi_root</strong> (<em>Path</em>) – The root directory of the autoapi.</p></li>
+<li><p><strong>file_path</strong> (<em>Path</em>) – The file path to extract the module name from.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The extracted module name as a dot-separated string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._to_autoapi_ignore_pattern">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_to_autoapi_ignore_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._to_autoapi_ignore_pattern" title="Link to this definition"></a></dt>
+<dd><p>Generates a pattern for ignoring files in AutoAPI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>relative_file</strong> (<em>str</em>) – The relative file path to be ignored.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The formatted ignore pattern string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._classify_autoapi_file">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_classify_autoapi_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">autoapi_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_content_min_meaningful_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">LOW_CONTENT_MIN_MEANINGFUL_LINES</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.sphinx_services._classify_autoapi_file" title="Link to this definition"></a></dt>
+<dd><p>Classifies an AutoAPI file based on various criteria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>autoapi_root</strong> (<em>Path</em>) – The root directory of AutoAPI.</p></li>
+<li><p><strong>file_path</strong> (<em>Path</em>) – The path of the file to classify.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple indicating if the file is included and a message.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[bool, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._find_autoapi_skip_candidates">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_find_autoapi_skip_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temp_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.sphinx_services._find_autoapi_skip_candidates" title="Link to this definition"></a></dt>
+<dd><p>Finds Python module files in the specified directory that should be skipped by AutoAPI.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temp_dir</strong> (<em>str</em>) – The temporary directory containing AutoAPI files.</p></li>
+<li><p><strong>module_name</strong> (<em>str</em>) – The name of the module to search for.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of Path objects representing the found module files.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[Path]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._collect_prebuild_autoapi_ignores">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_collect_prebuild_autoapi_ignores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temp_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_content_min_meaningful_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">LOW_CONTENT_MIN_MEANINGFUL_LINES</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.sphinx_services._collect_prebuild_autoapi_ignores" title="Link to this definition"></a></dt>
+<dd><p>Collects patterns and details of files to ignore in AutoAPI documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>temp_dir</strong> (<em>str</em>) – The temporary directory containing AutoAPI files.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing a list of ignore patterns and a
+list of skipped file details.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[str], list[dict[str, str]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._module_names_to_ignore_patterns">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_module_names_to_ignore_patterns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temp_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.sphinx_services._module_names_to_ignore_patterns" title="Link to this definition"></a></dt>
+<dd><p>Generates ignore patterns and skipped file information for specified modules.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>temp_dir (str): The temporary directory path.
+module_names (list[str]): List of module names to process.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[list[str], list[dict[str, str]]]: A tuple containing a list of ignore patterns and
+a list of skipped file details.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._format_python_list">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_format_python_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._format_python_list" title="Link to this definition"></a></dt>
+<dd><p>Formats a list of strings into a Python list representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>values</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of strings to format.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A formatted string representing the list.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._apply_autoapi_runtime_settings">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_apply_autoapi_runtime_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_py_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_patterns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.services.sphinx_services._apply_autoapi_runtime_settings" title="Link to this definition"></a></dt>
+<dd><p>Applies runtime settings for autoapi configuration in a specified file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conf_py_path</strong> (<em>str</em>) – Path to the configuration file.</p></li>
+<li><p><strong>ignore_patterns</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – List of patterns to ignore.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Modifies the configuration file in place.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._build_sphinx_once">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_build_sphinx_once</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temp_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">subprocess.CompletedProcess</span></span></span><a class="headerlink" href="#src.services.sphinx_services._build_sphinx_once" title="Link to this definition"></a></dt>
+<dd><p>Builds Sphinx documentation once in the specified temporary directory.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>temp_dir (str): The path to the temporary directory for building docs.</p>
+</dd>
+<dt>Returns:</dt><dd><p>subprocess.CompletedProcess: The result of the Sphinx build process.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._write_skipped_autoapi_report">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_write_skipped_autoapi_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">skipped_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.services.sphinx_services._write_skipped_autoapi_report" title="Link to this definition"></a></dt>
+<dd><p>Generates a report of skipped AutoAPI files and writes it to a text file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>skipped_files</strong> (<em>list</em><em>[</em><em>dict</em><em>]</em>) – A list of dictionaries containing details of skipped files.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>This function does not return a value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._run_sphinx_build_with_autoapi_filters">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_run_sphinx_build_with_autoapi_filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temp_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf_py_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_content_min_meaningful_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">LOW_CONTENT_MIN_MEANINGFUL_LINES</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">subprocess.CompletedProcess</span></span></span><a class="headerlink" href="#src.services.sphinx_services._run_sphinx_build_with_autoapi_filters" title="Link to this definition"></a></dt>
+<dd><p>Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temp_dir</strong> (<em>str</em>) – The temporary directory for the Sphinx build.</p></li>
+<li><p><strong>conf_py_path</strong> (<em>str</em>) – The path to the Sphinx configuration file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The result of the Sphinx build process.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>subprocess.CompletedProcess</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._project_name_from_repo_path">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_project_name_from_repo_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._project_name_from_repo_path" title="Link to this definition"></a></dt>
+<dd><p>Extracts the project name from a given repository path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>repo_path</strong> (<em>str</em>) – The file path of the repository.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The formatted project name derived from the repository path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._load_sample_text">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_load_sample_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._load_sample_text" title="Link to this definition"></a></dt>
+<dd><p>Load sample text from a specified relative path or fallback.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>relative_path (str): The relative path to the sample text file.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The content of the sample text file.</p>
+</dd>
+<dt>Raises:</dt><dd><p>FileNotFoundError: If the sample text is not found in the specified path or fallback.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._build_sample_conf">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_build_sample_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._build_sample_conf" title="Link to this definition"></a></dt>
+<dd><p>Builds a sample configuration string for a project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>project_name</strong> (<em>str</em>) – The name of the project to include in the configuration.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified configuration text with the project name and necessary additions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._load_sample_binary">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_load_sample_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">relative_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="headerlink" href="#src.services.sphinx_services._load_sample_binary" title="Link to this definition"></a></dt>
+<dd><p>Load a binary sample file from a specified relative path.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>relative_path (str): The relative path to the sample binary file.</p>
+</dd>
+<dt>Returns:</dt><dd><p>bytes: The contents of the binary file.</p>
+</dd>
+<dt>Raises:</dt><dd><p>FileNotFoundError: If the file does not exist in the specified locations.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._build_sample_index">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_build_sample_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._build_sample_index" title="Link to this definition"></a></dt>
+<dd><p>Builds a sample index for a given project name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>project_name</strong> (<em>str</em>) – The name of the project to include in the index.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The formatted index text as a string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._build_sample_api_reference">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_build_sample_api_reference</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._build_sample_api_reference" title="Link to this definition"></a></dt>
+<dd><p>Builds a curated API reference page that exposes useful AutoAPI pages in the sidebar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The API reference page content.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._build_sample_overview">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_build_sample_overview</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._build_sample_overview" title="Link to this definition"></a></dt>
+<dd><p>Generates a project overview by replacing a placeholder with the project name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>project_name</strong> (<em>str</em>) – The name of the project to include in the overview.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The formatted overview text with the project name inserted.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._build_sample_makefile">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_build_sample_makefile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._build_sample_makefile" title="Link to this definition"></a></dt>
+<dd><p>Generate a sample Makefile for Sphinx documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The content of the Makefile as a string.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._build_sample_readme">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_build_sample_readme</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.services.sphinx_services._build_sample_readme" title="Link to this definition"></a></dt>
+<dd><p>Generate a sample README for documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A formatted string containing documentation notes and local preview instructions.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._sample_docs_files">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_sample_docs_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.sphinx_services._sample_docs_files" title="Link to this definition"></a></dt>
+<dd><p>Generate sample documentation files for a given project.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>project_name</strong> (<em>str</em>) – The name of the project for which to create documentation.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary mapping file paths to their corresponding sample content.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._sample_docs_binary_files">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_sample_docs_binary_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bytes</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.services.sphinx_services._sample_docs_binary_files" title="Link to this definition"></a></dt>
+<dd><p>Generate a dictionary of sample binary files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary mapping file paths to their binary content.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[str, bytes]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._remote_text_file_exists">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_remote_text_file_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#src.services.sphinx_services._remote_text_file_exists" title="Link to this definition"></a></dt>
+<dd><p>Check if a remote text file exists in a specified repository branch.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_path (str): The path to the repository.
+branch (str): The branch name to check.
+file_path (str): The path of the file to verify.
+token (str): Access token for authentication.
+provider (str): The version control provider (‘github’ or ‘gitlab’).</p>
+</dd>
+<dt>Returns:</dt><dd><p>bool: True if the file exists, False otherwise.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._create_sample_sphinx_scaffold">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_create_sample_sphinx_scaffold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#src.services.sphinx_services._create_sample_sphinx_scaffold" title="Link to this definition"></a></dt>
+<dd><p>Create the sample Sphinx scaffold in the target repository branch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>repo_path</strong> (<em>str</em>) – The path to the repository.</p></li>
+<li><p><strong>branch</strong> (<em>str</em>) – The branch where the scaffold will be created.</p></li>
+<li><p><strong>token</strong> (<em>str</em>) – Authentication token for the repository.</p></li>
+<li><p><strong>provider</strong> (<em>str</em>) – The repository provider, for example GitHub or GitLab.</p></li>
+<li><p><strong>project_name</strong> (<em>str</em>) – The project name used in the generated scaffold.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True when the scaffold was created successfully, otherwise False.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._write_sample_sphinx_scaffold">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_write_sample_sphinx_scaffold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.services.sphinx_services._write_sample_sphinx_scaffold" title="Link to this definition"></a></dt>
+<dd><p>Creates a sample Sphinx documentation scaffold in the specified directory.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>root_dir (str): The root directory where the scaffold will be created.
+project_name (str): The name of the project for which the documentation is generated.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None: This function does not return a value.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._ensure_sphinx_project_name">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_ensure_sphinx_project_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_py_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.services.sphinx_services._ensure_sphinx_project_name" title="Link to this definition"></a></dt>
+<dd><p>Ensures the Sphinx project name is set in the configuration file.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>conf_py_path (str): Path to the Sphinx configuration file.
+project_name (str): The desired project name to set.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None: This function modifies the file in place if conditions are met.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services._ensure_api_index">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">_ensure_api_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.services.sphinx_services._ensure_api_index" title="Link to this definition"></a></dt>
+<dd><p>Ensure the existence of an API index file at the specified path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_path</strong> (<em>str</em>) – The file path for the index.</p></li>
+<li><p><strong>project_name</strong> (<em>str</em>) – The name of the project to include in the index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>This function does not return a value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services.create_sphinx_setup">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">create_sphinx_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">provider</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docstring_analysis_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docstring_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">AUTOAPI_DOCSTRING_THRESHOLD</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_content_min_meaningful_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">LOW_CONTENT_MIN_MEANINGFUL_LINES</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.services.sphinx_services.create_sphinx_setup" title="Link to this definition"></a></dt>
+<dd><p>Set up Sphinx documentation for a repository based on docstring coverage.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>provider (str): The version control provider (e.g., ‘gitlab’ or ‘github’).
+repo_url (str): The URL of the repository.
+token (str): Access token for the repository.
+branch (str): The branch to set up documentation on.
+docstring_analysis_file (str): Path to the CSV file containing docstring analysis.</p>
+</dd>
+<dt>Returns:</dt><dd><p>bool: True if setup is successful, False otherwise.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services.publish_github_pages">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">publish_github_pages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_content_min_meaningful_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">LOW_CONTENT_MIN_MEANINGFUL_LINES</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#src.services.sphinx_services.publish_github_pages" title="Link to this definition"></a></dt>
+<dd><p>Publishes reviewed GitHub docs output from a source branch to gh-pages.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.services.sphinx_services.trigger_gitlab_pipeline">
+<span class="sig-prename descclassname"><span class="pre">src.services.sphinx_services.</span></span><span class="sig-name descname"><span class="pre">trigger_gitlab_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#src.services.sphinx_services.trigger_gitlab_pipeline" title="Link to this definition"></a></dt>
+<dd><p>Triggers a GitLab pipeline for the given project and branch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>repo_url</strong> (<em>str</em>) – The GitLab project path (e.g., ‘namespace/project’).</p></li>
+<li><p><strong>branch</strong> (<em>str</em>) – The branch to trigger the pipeline on.</p></li>
+<li><p><strong>token</strong> (<em>str</em>) – GitLab private token.</p></li>
+<li><p><strong>variables</strong> (<em>dict</em><em>, </em><em>optional</em>) – Pipeline variables.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the pipeline was triggered successfully, False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Digital Metabolic Twin Centre.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

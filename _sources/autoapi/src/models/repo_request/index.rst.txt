@@ -1,0 +1,179 @@
+src.models.repo_request
+=======================
+
+.. py:module:: src.models.repo_request
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   src.models.repo_request.RepoRequest
+   src.models.repo_request.PublishPagesRequest
+   src.models.repo_request.DocstringPullRequestRequest
+
+
+Module Contents
+---------------
+
+.. py:class:: RepoRequest(/, **data: Any)
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+
+   Represents a request for repository information.
+
+       Args:
+           provider (str): The repository provider, either 'github' or 'gitlab'.
+           repo_url (str): The URL of the repository.
+           token (str): Authentication token for accessing the repository.
+           branch (str): The branch of the repository to access.
+           target_folders (list[str], optional): List of target folders, defaults to an empty list.
+           model (Optional[str], optional): Optional model name.
+           reuse_doc (bool, optional): Flag to indicate if the document should be reused, defaults
+           to False.
+
+       Returns:
+           None: This class does not return a value.
+
+
+
+   .. py:attribute:: provider
+      :type:  str
+
+
+   .. py:attribute:: repo_url
+      :type:  str
+
+
+   .. py:attribute:: token
+      :type:  str
+
+
+   .. py:attribute:: branch
+      :type:  str
+
+
+   .. py:attribute:: target_folders
+      :type:  list[str]
+      :value: None
+
+
+
+   .. py:attribute:: model
+      :type:  Optional[str]
+      :value: None
+
+
+
+   .. py:attribute:: reuse_doc
+      :type:  bool
+      :value: False
+
+
+
+   .. py:attribute:: docstring_threshold
+      :type:  float
+      :value: None
+
+
+
+   .. py:attribute:: low_content_min_lines
+      :type:  int
+      :value: None
+
+
+
+.. py:class:: PublishPagesRequest(/, **data: Any)
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+
+   Represents a request to publish pages to a repository.
+
+       Args:
+           repo_url (str): The URL of the repository.
+           token (str): The authentication token.
+           branch (str): The branch to publish to.
+
+       Returns:
+           None
+
+
+
+   .. py:attribute:: repo_url
+      :type:  str
+
+
+   .. py:attribute:: token
+      :type:  str
+
+
+   .. py:attribute:: branch
+      :type:  str
+
+
+   .. py:attribute:: low_content_min_lines
+      :type:  int
+      :value: None
+
+
+
+.. py:class:: DocstringPullRequestRequest(/, **data: Any)
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+
+   Represents a request for a pull request to add Python docstrings.
+
+       Args:
+           provider (str): The name of the provider (default is 'github').
+           repo_url (str): The URL of the repository.
+           token (str): Authentication token for the repository.
+           base_branch (str): The base branch for the pull request.
+           suggestion_branch (Optional[str]): The branch for suggested changes (default is None).
+           title (str): Title of the pull request (default is 'Add suggested Python docstrings').
+           max_docstrings (int): Maximum number of docstrings to add (default is 50).
+
+       Returns:
+           None
+
+
+
+   .. py:attribute:: provider
+      :type:  str
+      :value: 'github'
+
+
+
+   .. py:attribute:: repo_url
+      :type:  str
+
+
+   .. py:attribute:: token
+      :type:  str
+
+
+   .. py:attribute:: base_branch
+      :type:  str
+
+
+   .. py:attribute:: suggestion_branch
+      :type:  Optional[str]
+      :value: None
+
+
+
+   .. py:attribute:: title
+      :type:  str
+      :value: 'Add suggested docstrings'
+
+
+
+   .. py:attribute:: max_docstrings
+      :type:  int
+      :value: 50
+
+
+

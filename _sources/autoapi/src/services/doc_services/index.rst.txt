@@ -1,0 +1,91 @@
+src.services.doc_services
+=========================
+
+.. py:module:: src.services.doc_services
+
+
+Exceptions
+----------
+
+.. autoapisummary::
+
+   src.services.doc_services.RepoAnalysisError
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   src.services.doc_services._normalize_target_folders
+   src.services.doc_services._file_matches_target_folders
+   src.services.doc_services.analyse_repo
+
+
+Module Contents
+---------------
+
+.. py:exception:: RepoAnalysisError(message: str, status_code: int = 422)
+
+   Bases: :py:obj:`RuntimeError`
+
+
+   Raised when repository analysis cannot proceed or yields no usable files.
+
+
+   .. py:attribute:: status_code
+      :value: 422
+
+
+
+.. py:function:: _normalize_target_folders(target_folders)
+
+   Normalize a list of target folder paths by stripping whitespace and leading/trailing slashes.
+
+   :param target_folders: A list of folder paths to normalize.
+   :type target_folders: list
+
+   :returns: A list of normalized folder paths.
+   :rtype: list
+
+
+.. py:function:: _file_matches_target_folders(file_path, target_folders)
+
+   Check if a file path matches any of the target folders.
+
+   :param file_path: The path of the file to check.
+   :type file_path: str
+   :param target_folders: A list of target folder paths.
+   :type target_folders: list
+
+   :returns: True if the file path matches any target folder, otherwise False.
+   :rtype: bool
+
+
+.. py:function:: analyse_repo(provider, repo_url, token, branch, target_folders=None, model=None, reuse_doc=False)
+
+   Analyse a repository for source files missing docstring.
+
+   Description:
+       This function fetches the repository tree, detects the tech stack, and checks each file
+       for missing or present docstring. It returns lists of files and items
+       missing docstring and those with docstring.
+
+   :param provider: The git provider name (e.g., 'github', 'gitlab').
+   :type provider: str
+   :param repo_url: The URL of the repository.
+   :type repo_url: str
+   :param token: The authentication token for accessing the repository.
+   :type token: str
+   :param branch: The branch name to Analyse.
+   :type branch: str
+   :param target_folders: Optional repository folders to limit analysis to.
+   :type target_folders: list[str] | None
+   :param model: Optional OpenAI model override for generated docstrings.
+   :type model: str | None
+
+   :returns:     - files_missing_docstring (list): List of dicts for files/items missing docstring.
+                 - file_present_docstring (list): List of dicts for files/items with docstring.
+   :rtype: tuple
+
+
