@@ -16,7 +16,7 @@ load_dotenv()
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 
 
-def configure_openai(api_key: str = None):
+def configure_openai(api_key: str | None = None):
     """
     Configure OpenAI API with the provided API key.
 
@@ -55,34 +55,35 @@ def _clean_json_block(response_text: str) -> str:
     return response_text.strip()
 
 
-def create_openai_docstring_prompt(code: str, language: str = "python") -> str:
+def create_openai_docstring_prompt(code: str, language: str | None = "python") -> str:
     """
     Create a prompt for ChatGPT to generate a concise docstring.
 
     Args:
-        code (str): The code block to analyze.
+        code (str): The code block to Analyse.
         language (str): Programming language of the code.
 
     Returns:
         str: Formatted prompt for docstring generation.
     """
+    selected_language = language or "python"
     prompt = f"""
-Generate a concise docstring for the following {language} code.
+Generate a concise docstring for the following {selected_language} code.
 The docstring should be 4-5 lines maximum and include:
 
 1. A brief description (1-2 lines maximum)
 2. Args section with parameter types and descriptions
 3. Returns section with return type and description
 
-Follow {language} docstring conventions. Be concise and clear.
+Follow {selected_language} docstring conventions. Be concise and clear.
 
 Return the response as a JSON object with this structure:
 {{
     "docstring": "the generated docstring content"
 }}
 
-Code to analyze:
-```{language}
+Code to Analyse:
+```{selected_language}
 {code}
 ```
 
@@ -93,9 +94,9 @@ Generate only the JSON response without any additional text or markdown formatti
 
 def generate_docstring_with_openai(
     code: str,
-    language: str = "python",
-    api_key: str = None,
-    model: str = DEFAULT_OPENAI_MODEL,
+    language: str | None = "python",
+    api_key: str | None = None,
+    model: str | None = DEFAULT_OPENAI_MODEL,
 ) -> Optional[str]:
     """
     Generate a concise docstring for the given code using OpenAI ChatGPT.
@@ -111,9 +112,11 @@ def generate_docstring_with_openai(
     """
     try:
         configure_openai(api_key)
-        prompt = create_openai_docstring_prompt(code, language)
+        selected_language = language or "python"
+        selected_model = model or DEFAULT_OPENAI_MODEL
+        prompt = create_openai_docstring_prompt(code, selected_language)
         response = openai.chat.completions.create(
-            model=model,
+            model=selected_model,
             messages=[
                 {
                     "role": "system",
@@ -177,7 +180,7 @@ def generate_docstrings_for_code_blocks_openai(
     return code_blocks_data
 
 
-def format_docstring_for_language(docstring: str, language: str) -> str:
+def format_docstring_for_language(docstring: str, language: str | None) -> str:
     """
     Format the generated docstring according to language conventions.
 
@@ -192,6 +195,9 @@ def format_docstring_for_language(docstring: str, language: str) -> str:
         return docstring
 
     docstring = _strip_docstring_wrapper(docstring)
+
+    if language is None:
+        return docstring
 
     if language.lower() == "python":
         # Python triple-quote format

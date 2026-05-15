@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from config.log_config import get_logger
 from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
-from services.doc_services import RepoAnalysisError, analyze_repo
+from services.doc_services import RepoAnalysisError, analyse_repo
 from services.docstring_pr_services import (
     DocstringPullRequestError,
     create_python_docstring_pull_request,
@@ -47,8 +47,8 @@ async def generate_docs(req: RepoRequest):
             detail="Missing required parameters: repo_url, token, branch, or provider.",
         )
     try:
-        # 1. ANALYZE REPO
-        docstring_analysis_file, docstring_analysis = analyze_repo(
+        # 1. Analyse REPO
+        docstring_analysis_file, docstring_analysis = analyse_repo(
             req.provider,
             req.repo_url,
             req.token,

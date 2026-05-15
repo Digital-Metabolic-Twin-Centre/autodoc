@@ -18,7 +18,7 @@ Objectives
 Success criteria
 ----------------
 
-- The service can successfully analyze a target GitHub or GitLab repository and
+- The service can successfully Analyse a target GitHub or GitLab repository and
   identify documentation coverage for supported source files.
 - The system produces useful docstring suggestions that are clear, relevant, and
   suitable for developer review before adoption.

@@ -17,7 +17,7 @@ def _suggestion_key(
     function_name: str,
     block_type: str,
     line_number: int,
-    language: str,
+    language: str | None,
 ):
     return (file_path, function_name, block_type, line_number, language)
 
@@ -26,16 +26,16 @@ def _suggestion_fuzzy_key(
     file_path: str,
     function_name: str,
     block_type: str,
-    language: str,
+    language: str | None,
 ):
     return (file_path, function_name, block_type, language)
 
 
-def analyze_docstring_in_blocks(
+def analyse_docstring_in_blocks(
     code_blocks: list,
     file_name: str = "unknown",
     file_path: str = "unknown",
-    language: str = None,
+    language: str | None = None,
     suggested_file: str | None = None,
     model: str | None = None,
     existing_suggestions: dict | None = None,
@@ -46,7 +46,7 @@ def analyze_docstring_in_blocks(
 
     Args:
         code_blocks (list): List of code blocks extracted from a file
-        file_name (str): Name of the file being analyzed
+        file_name (str): Name of the file being analysed
         language (str): Programming language of the code blocks
 
     Returns:
@@ -63,8 +63,8 @@ def analyze_docstring_in_blocks(
     }
     existing_suggestions = existing_suggestions or {"exact": {}, "fuzzy": {}}
 
-    def analyze_python_block(clean_code: str) -> dict:
-        """Analyze Python code block for docstring"""
+    def analyse_python_block(clean_code: str) -> dict:
+        """Analyse Python code block for docstring"""
         analysis = {
             "function_name": "unknown",
             "block_type": "unknown",
@@ -101,12 +101,12 @@ def analyze_docstring_in_blocks(
                     break
         except SyntaxError:
             # Fallback to regex
-            return analyze_with_regex(clean_code, "python")
+            return analyse_with_regex(clean_code, "python")
 
         return analysis
 
-    def analyze_with_regex(clean_code: str, language: str) -> dict:
-        """Analyze code block using regex patterns for different languages"""
+    def analyse_with_regex(clean_code: str, language: str | None) -> dict:
+        """Analyse code block using regex patterns for different languages"""
         analysis = {
             "function_name": "unknown",
             "block_type": "unknown",
@@ -179,7 +179,7 @@ def analyze_docstring_in_blocks(
 
         return analysis
 
-    # Analyze each code block
+    # Analyse each code block
     for i, block in enumerate(code_blocks, 1):
         # Extract the actual code (remove header/footer comments)
         lines = block.split("\n")
@@ -199,11 +199,11 @@ def analyze_docstring_in_blocks(
         clean_code = "\n".join(code_lines)
         # language = detect_language(clean_code, file_name)
 
-        # Analyze based on detected language
+        # Analyse based on detected language
         if language == "python":
-            block_analysis = analyze_python_block(clean_code)
+            block_analysis = analyse_python_block(clean_code)
         else:
-            block_analysis = analyze_with_regex(clean_code, language)
+            block_analysis = analyse_with_regex(clean_code, language)
 
         block_analysis["block_number"] = i
         block_analysis["language"] = language
@@ -273,7 +273,7 @@ def analyze_docstring_in_blocks(
     return results
 
 
-def analyze_docstring_in_module(content: str, language: str = None) -> Optional[str]:
+def analyse_docstring_in_module(content: str, language: str | None = None) -> Optional[str]:
     """
     Extract module-level docstring from file content.
 

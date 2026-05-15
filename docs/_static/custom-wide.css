@@ -209,6 +209,7 @@ footer {
 
 .toctree-l1:hover>a {
     font-weight: 500;
+    font-style: bold;
     background-color: gray;
     color: white;
 }

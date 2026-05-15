@@ -36,7 +36,7 @@ Auto Doc
    <section class="feature-band">
      <article class="feature-card">
        <p class="feature-kicker">Generate</p>
-       <h2>Analyze a target branch</h2>
+       <h2>Analyse a target branch</h2>
        <p>Scan source files, measure documentation coverage, and prepare a working docs scaffold tied to the repository.</p>
      </article>
      <article class="feature-card">

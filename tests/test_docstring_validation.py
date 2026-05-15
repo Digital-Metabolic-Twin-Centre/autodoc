@@ -1,18 +1,18 @@
 from utils.docstring_validation import (
-    analyze_docstring_in_blocks,
-    analyze_docstring_in_module,
+    analyse_docstring_in_blocks,
+    analyse_docstring_in_module,
 )
 
 
-def test_analyze_docstring_in_module_returns_python_module_docstring():
+def test_analyse_docstring_in_module_returns_python_module_docstring():
     content = '"""Module summary."""\n\n\ndef run():\n    return True\n'
 
-    result = analyze_docstring_in_module(content, "python")
+    result = analyse_docstring_in_module(content, "python")
 
     assert result == "Module summary."
 
 
-def test_analyze_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch):
+def test_analyse_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch):
     monkeypatch.setattr(
         "utils.docstring_validation.generate_docstring_with_openai",
         lambda code, language, model=None: None,
@@ -22,7 +22,7 @@ def test_analyze_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch
         "# --- Code Block starts at line 1 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 2 ---"
     ]
 
-    result = analyze_docstring_in_blocks(
+    result = analyse_docstring_in_blocks(
         blocks,
         file_name="worker.py",
         file_path="worker.py",
@@ -34,14 +34,14 @@ def test_analyze_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch
     assert result["docstring_analysis"][0]["missing_docstring"] is True
 
 
-def test_analyze_docstring_in_blocks_detects_existing_python_docstrings():
+def test_analyse_docstring_in_blocks_detects_existing_python_docstrings():
     blocks = [
         "# --- Code Block starts at line 1 ---\n"
         'def run_task():\n    """Run the task."""\n    return True\n'
         "# --- Code Block ends at line 3 ---"
     ]
 
-    result = analyze_docstring_in_blocks(
+    result = analyse_docstring_in_blocks(
         blocks,
         file_name="worker.py",
         file_path="worker.py",
@@ -52,7 +52,7 @@ def test_analyze_docstring_in_blocks_detects_existing_python_docstrings():
     assert result["docstring_analysis"][0]["docstring_content"] == "Run the task."
 
 
-def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(monkeypatch, tmp_path):
+def test_analyse_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(monkeypatch, tmp_path):
     captured = {}
 
     monkeypatch.setattr(
@@ -66,7 +66,7 @@ def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(monk
         "# --- Code Block starts at line 1 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 2 ---"
     ]
 
-    analyze_docstring_in_blocks(
+    analyse_docstring_in_blocks(
         blocks,
         file_name="worker.py",
         file_path="worker.py",
@@ -81,7 +81,7 @@ def test_analyze_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(monk
     assert "Run the task." in content
 
 
-def test_analyze_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(monkeypatch):
+def test_analyse_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(monkeypatch):
     def fail_if_called(code, language, model=None):
         raise AssertionError("OpenAI should not be called when a fuzzy cached suggestion exists")
 
@@ -94,7 +94,7 @@ def test_analyze_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(
         "# --- Code Block starts at line 25 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 26 ---"
     ]
 
-    result = analyze_docstring_in_blocks(
+    result = analyse_docstring_in_blocks(
         blocks,
         file_name="worker.py",
         file_path="worker.py",
@@ -110,7 +110,7 @@ def test_analyze_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(
     assert result["docstring_analysis"][0]["generated_docstring"] == "Run the task."
 
 
-def test_analyze_docstring_in_blocks_logs_cache_reuse(monkeypatch, caplog):
+def test_analyse_docstring_in_blocks_logs_cache_reuse(monkeypatch, caplog):
     monkeypatch.setattr(
         "utils.docstring_validation.generate_docstring_with_openai",
         lambda code, language, model=None: (_ for _ in ()).throw(
@@ -122,7 +122,7 @@ def test_analyze_docstring_in_blocks_logs_cache_reuse(monkeypatch, caplog):
         "# --- Code Block starts at line 1 ---\ndef run_task():\n    return True\n# --- Code Block ends at line 2 ---"
     ]
 
-    analyze_docstring_in_blocks(
+    analyse_docstring_in_blocks(
         blocks,
         file_name="worker.py",
         file_path="worker.py",

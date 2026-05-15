@@ -101,7 +101,7 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         '   <section class="feature-band">\n'
         '     <article class="feature-card">\n'
         '       <p class="feature-kicker">Generate</p>\n'
-        "       <h2>Analyze a target branch</h2>\n"
+        "       <h2>Analyse a target branch</h2>\n"
         "       <p>Scan source files, measure documentation coverage, and "
         "prepare a working docs scaffold tied to the repository.</p>\n"
         "     </article>\n"
@@ -882,7 +882,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
 
     # Handle empty dataframe
     if df.empty:
-        logger.warning("No files to analyze. Docstring analysis file is empty.")
+        logger.warning("No files to Analyse. Docstring analysis file is empty.")
         return False
 
     for file_path, group in df.groupby("file_path"):

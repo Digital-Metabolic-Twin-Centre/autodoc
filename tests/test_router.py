@@ -32,7 +32,7 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
     captured = {}
 
     monkeypatch.setattr(
-        "router.router.analyze_repo",
+        "router.router.analyse_repo",
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             captured.update({"model": model, "reuse_doc": reuse_doc}) or "analysis.csv",
             [{"file_name": "a.py"}],
@@ -66,7 +66,7 @@ def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch)
             status_code=404,
         )
 
-    monkeypatch.setattr("router.router.analyze_repo", fail_analysis)
+    monkeypatch.setattr("router.router.analyse_repo", fail_analysis)
 
     response = client.post(
         "/generate",
@@ -85,12 +85,12 @@ def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch)
 def test_generate_endpoint_uses_provided_model(monkeypatch):
     captured = {}
 
-    def fake_analyze_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
+    def fake_analyse_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
         captured["model"] = model
         captured["reuse_doc"] = reuse_doc
         return "analysis.csv", [{"file_name": "a.py"}]
 
-    monkeypatch.setattr("router.router.analyze_repo", fake_analyze_repo)
+    monkeypatch.setattr("router.router.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
         "router.router.create_sphinx_setup",
         lambda provider, repo_url, token, branch, analysis_file: True,
@@ -115,11 +115,11 @@ def test_generate_endpoint_uses_provided_model(monkeypatch):
 def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
     captured = {}
 
-    def fake_analyze_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
+    def fake_analyse_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
         captured["reuse_doc"] = reuse_doc
         return "analysis.csv", [{"file_name": "a.py"}]
 
-    monkeypatch.setattr("router.router.analyze_repo", fake_analyze_repo)
+    monkeypatch.setattr("router.router.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
         "router.router.create_sphinx_setup",
         lambda provider, repo_url, token, branch, analysis_file: True,

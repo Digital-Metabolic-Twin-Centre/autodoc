@@ -10,7 +10,7 @@ import requests
 from config.config import GITHUB_API_URL, GITLAB_API_URL
 from config.log_config import get_logger
 from utils.code_block_extraction import GenericCodeBlockExtractor
-from utils.docstring_validation import analyze_docstring_in_blocks
+from utils.docstring_validation import analyse_docstring_in_blocks
 
 logger = get_logger(__name__)
 
@@ -325,7 +325,7 @@ def validate_docstring(
 
     extractor = GenericCodeBlockExtractor(content, file_name)
     code_blocks = extractor.code_block_extractor()
-    analysis = analyze_docstring_in_blocks(
+    analysis = analyse_docstring_in_blocks(
         code_blocks,
         file_name=file_name,
         file_path=file_path,

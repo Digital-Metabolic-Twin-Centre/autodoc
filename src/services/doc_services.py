@@ -11,8 +11,8 @@ from utils.docstring_generation import (
     generate_docstring_with_openai,
 )
 from utils.docstring_validation import (
-    analyze_docstring_in_blocks,
-    analyze_docstring_in_module,
+    analyse_docstring_in_blocks,
+    analyse_docstring_in_module,
 )
 from utils.git_utils import (
     RepositoryAccessError,
@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 
 __all__ = [
     "RepoAnalysisError",
-    "analyze_repo",
+    "analyse_repo",
     "_normalize_target_folders",
     "_file_matches_target_folders",
 ]
@@ -143,7 +143,7 @@ def _write_suggested_docstring_report(suggested_file: str, suggestions: list[dic
             file_handle.write(f"{'-' * 100}\n")
 
 
-def analyze_repo(
+def analyse_repo(
     provider,
     repo_url,
     token,
@@ -153,7 +153,7 @@ def analyze_repo(
     reuse_doc=False,
 ):
     """
-    Analyze a repository for source files missing docstring.
+    Analyse a repository for source files missing docstring.
 
     Description:
         This function fetches the repository tree, detects the tech stack, and checks each file
@@ -164,7 +164,7 @@ def analyze_repo(
         provider (str): The git provider name (e.g., 'github', 'gitlab').
         repo_url (str): The URL of the repository.
         token (str): The authentication token for accessing the repository.
-        branch (str): The branch name to analyze.
+        branch (str): The branch name to Analyse.
         target_folders (list[str] | None): Optional repository folders to limit analysis to.
         model (str | None): Optional OpenAI model override for generated docstrings.
 
@@ -262,13 +262,13 @@ def analyze_repo(
             unreadable_supported_files += 1
             continue
 
-        # Create a code blocks in the file to analyze
+        # Create a code blocks in the file to Analyse
         extractor = GenericCodeBlockExtractor(content, file_name)
         code_blocks = extractor.code_block_extractor()
         # If no code blocks found, check for module-level docstring
         if not code_blocks:
             logger.warning(f"No code blocks found in {file_name}. Checking for module-level docstring...")
-            module_docstring = analyze_docstring_in_module(content, language)
+            module_docstring = analyse_docstring_in_module(content, language)
             if module_docstring:
                 block_analysis = {
                     "file_name": file_name,
@@ -364,7 +364,7 @@ def analyze_repo(
             continue
 
         logger.info(f"Analyzing {file_name} with {len(code_blocks)} code blocks.")
-        block_analysis = analyze_docstring_in_blocks(
+        block_analysis = analyse_docstring_in_blocks(
             code_blocks,
             file_name=file_name,
             file_path=file_path,

@@ -67,7 +67,7 @@ logs/
 What these files mean:
 
 - `app.log`: runtime logs for that repo run
-- `block_analysis.csv`: flattened coverage report for analyzed code blocks
+- `block_analysis.csv`: flattened coverage report for analysed code blocks
 - `suggested_docstring.txt`: human-readable generated or reused suggestions
 - `suggested_docstrings.json`: structured suggestion cache used by reuse and PR creation
 - `skipped_autoapi_files.txt`: files excluded from the publish build because they were risky or failed AutoAPI
