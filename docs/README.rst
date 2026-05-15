@@ -1,10 +1,70 @@
 Documentation Notes
 ===================
 
-These pages are written in reStructuredText (`.rst`) and built by Sphinx.
+This project includes two related setups:
 
-Local preview
--------------
+- running the Auto Doc API service
+- building these Sphinx documentation pages locally
+
+Application setup
+-----------------
+
+Requirements:
+
+- Python 3.11 or newer
+- ``uv``
+- an OpenAI API key
+- a GitHub or GitLab access token for the target repository
+- Docker, if you want to run the service in a container
+
+Create a virtual environment and install dependencies:
+
+.. code-block:: bash
+
+   uv venv
+   source .venv/bin/activate
+   uv sync --group dev --no-install-project
+
+Create a ``.env`` file in the project root:
+
+.. code-block:: text
+
+   OPENAI_API_KEY=your-openai-api-key
+
+   # Optional, only needed if Auto Doc should trigger GitLab pipelines.
+   CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
+
+Run the application locally
+---------------------------
+
+Start the FastAPI service with auto-reload:
+
+.. code-block:: bash
+
+   uv run uvicorn main:app --app-dir src --reload
+
+The service runs at ``http://localhost:8000``.
+Interactive API docs are available at ``http://localhost:8000/docs``.
+
+You can also run the app directly:
+
+.. code-block:: bash
+
+   uv run python src/main.py
+
+Run with Docker
+---------------
+
+Build and start the containerised service:
+
+.. code-block:: bash
+
+   docker compose up --build
+
+The compose file exposes port ``8000`` and mounts the local ``logs/`` directory into the container.
+
+Build these docs locally
+------------------------
 
 .. code-block:: bash
 

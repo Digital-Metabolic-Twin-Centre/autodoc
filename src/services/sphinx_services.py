@@ -68,7 +68,6 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         'html_theme = "sphinx_rtd_theme"\n'
         'html_static_path = ["_static"]\n'
         'html_css_files = ["custom-wide.css"]\n'
-        'html_logo = "_static/img/logo.png"\n'
         'html_favicon = "_static/img/favicon.ico"\n'
     ),
     "index.rst": (
