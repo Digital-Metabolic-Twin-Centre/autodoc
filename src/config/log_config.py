@@ -20,6 +20,16 @@ LOG_FILE = None
 
 
 def _configure_root_logger() -> logging.Logger:
+    """
+    Configures the root logger with a specified log level and format.
+
+        Args:
+            None
+
+        Returns:
+            logging.Logger: The configured root logger instance.
+
+    """
     root_logger = logging.getLogger()
     root_logger.setLevel(LOG_LEVEL)
     if not root_logger.handlers:
@@ -63,8 +73,25 @@ logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 
 
 def get_logger(name: str):
+    """
+    Retrieve a logger instance with the specified name.
+
+        Args:
+            name (str): The name of the logger to retrieve.
+
+        Returns:
+            logging.Logger: The logger instance associated with the given name.
+
+    """
     return logging.getLogger(name)
 
 
 def get_run_log_dir() -> str | None:
+    """
+    Retrieve the directory path for run logs.
+
+    Returns:
+        str | None: The path to the run log directory or None if not set.
+
+    """
     return RUN_LOG_DIR

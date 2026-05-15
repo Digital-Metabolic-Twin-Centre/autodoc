@@ -446,7 +446,10 @@ def _raise_publish_error(message: str) -> None:
 def _extract_autoapi_module_names(build_output: str) -> list[str]:
     module_names = re.findall(r"module '([^']+)'", build_output or "")
     module_names.extend(
-        match.replace("/", ".") for match in re.findall(r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or "")
+        match.replace("/", ".")
+        for match in re.findall(
+            r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or ""
+        )
     )
     unique_module_names = []
     seen = set()
@@ -459,6 +462,17 @@ def _extract_autoapi_module_names(build_output: str) -> list[str]:
 
 
 def _extract_module_name_from_autoapi_path(autoapi_root: Path, file_path: Path) -> str:
+    """
+    Extracts the module name from a given file path relative to the autoapi root.
+
+    Args:
+        autoapi_root (Path): The root directory of the autoapi.
+        file_path (Path): The file path to extract the module name from.
+
+    Returns:
+        str: The extracted module name as a dot-separated string.
+
+    """
     relative_file = file_path.relative_to(autoapi_root).as_posix()
     if relative_file.endswith("/__init__.py"):
         return relative_file[: -len("/__init__.py")].replace("/", ".")
@@ -468,10 +482,31 @@ def _extract_module_name_from_autoapi_path(autoapi_root: Path, file_path: Path) 
 
 
 def _to_autoapi_ignore_pattern(relative_file: str) -> str:
+    """
+    Generates a pattern for ignoring files in AutoAPI.
+
+    Args:
+        relative_file (str): The relative file path to be ignored.
+
+    Returns:
+        str: The formatted ignore pattern string.
+
+    """
     return f"*/{relative_file.lstrip('/')}"
 
 
 def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, str]:
+    """
+    Classifies an AutoAPI file based on various criteria.
+
+    Args:
+        autoapi_root (Path): The root directory of AutoAPI.
+        file_path (Path): The path of the file to classify.
+
+    Returns:
+        tuple[bool, str]: A tuple indicating if the file is included and a message.
+
+    """
     relative_file = file_path.relative_to(autoapi_root).as_posix()
     for pattern in RISKY_AUTOAPI_PATH_PATTERNS:
         if pattern.search(relative_file):
@@ -483,14 +518,20 @@ def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, s
     except SyntaxError:
         return False, "syntax-error"
 
-    if any(isinstance(node, ImportFrom) and any(alias.name == "*" for alias in node.names) for node in parsed.body):
+    if any(
+        isinstance(node, ImportFrom) and any(alias.name == "*" for alias in node.names)
+        for node in parsed.body
+    ):
         return False, "import-star"
 
     meaningful_lines = [line for line in file_text.splitlines() if line.strip()]
     if len(meaningful_lines) < LOW_CONTENT_MIN_MEANINGFUL_LINES:
         return False, "low-content"
 
-    has_public_shape = any(isinstance(node, (FunctionDef, AsyncFunctionDef, ClassDef)) for node in parsed.body)
+    has_public_shape = any(
+        isinstance(node, (FunctionDef, AsyncFunctionDef, ClassDef))
+        for node in parsed.body
+    )
     if not has_public_shape:
         return False, "non-meaningful-module"
 
@@ -498,6 +539,17 @@ def _classify_autoapi_file(autoapi_root: Path, file_path: Path) -> tuple[bool, s
 
 
 def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]:
+    """
+    Finds Python module files in the specified directory that should be skipped by AutoAPI.
+
+    Args:
+        temp_dir (str): The temporary directory containing AutoAPI files.
+        module_name (str): The name of the module to search for.
+
+    Returns:
+        list[Path]: A list of Path objects representing the found module files.
+
+    """
     autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
     if not autoapi_root.exists():
         return []
@@ -506,7 +558,9 @@ def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]
         autoapi_root / f"{normalized_module_path}.py",
         autoapi_root / normalized_module_path / "__init__.py",
     ]
-    existing_path_candidates = [candidate for candidate in path_candidates if candidate.exists()]
+    existing_path_candidates = [
+        candidate for candidate in path_candidates if candidate.exists()
+    ]
     if existing_path_candidates:
         return existing_path_candidates
     module_leaf = module_name.split(".")[-1]
@@ -517,7 +571,20 @@ def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]
     return matches
 
 
-def _collect_prebuild_autoapi_ignores(temp_dir: str) -> tuple[list[str], list[dict[str, str]]]:
+def _collect_prebuild_autoapi_ignores(
+    temp_dir: str,
+) -> tuple[list[str], list[dict[str, str]]]:
+    """
+    Collects patterns and details of files to ignore in AutoAPI documentation.
+
+    Args:
+        temp_dir (str): The temporary directory containing AutoAPI files.
+
+    Returns:
+        tuple[list[str], list[dict[str, str]]]: A tuple containing a list of ignore patterns and a
+        list of skipped file details.
+
+    """
     autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
     if not autoapi_root.exists():
         return [], []
@@ -541,7 +608,21 @@ def _collect_prebuild_autoapi_ignores(temp_dir: str) -> tuple[list[str], list[di
     return ignore_patterns, skipped_files
 
 
-def _module_names_to_ignore_patterns(temp_dir: str, module_names: list[str]) -> tuple[list[str], list[dict[str, str]]]:
+def _module_names_to_ignore_patterns(
+    temp_dir: str, module_names: list[str]
+) -> tuple[list[str], list[dict[str, str]]]:
+    """
+    Generates ignore patterns and skipped file information for specified modules.
+
+        Args:
+            temp_dir (str): The temporary directory path.
+            module_names (list[str]): List of module names to process.
+
+        Returns:
+            tuple[list[str], list[dict[str, str]]]: A tuple containing a list of ignore patterns and
+            a list of skipped file details.
+
+    """
     autoapi_root = Path(temp_dir) / AUTOAPI_DIRECTORY
     if not autoapi_root.exists():
         return [], []
@@ -563,10 +644,33 @@ def _module_names_to_ignore_patterns(temp_dir: str, module_names: list[str]) -> 
 
 
 def _format_python_list(values: list[str]) -> str:
+    """
+    Formats a list of strings into a Python list representation.
+
+    Args:
+        values (list[str]): A list of strings to format.
+
+    Returns:
+        str: A formatted string representing the list.
+
+    """
     return "[\n" + "".join(f"    {value!r},\n" for value in values) + "]"
 
 
-def _apply_autoapi_runtime_settings(conf_py_path: str, ignore_patterns: list[str]) -> None:
+def _apply_autoapi_runtime_settings(
+    conf_py_path: str, ignore_patterns: list[str]
+) -> None:
+    """
+    Applies runtime settings for autoapi configuration in a specified file.
+
+    Args:
+        conf_py_path (str): Path to the configuration file.
+        ignore_patterns (list[str]): List of patterns to ignore.
+
+    Returns:
+        None: Modifies the configuration file in place.
+
+    """
     conf_path = Path(conf_py_path)
     if not conf_path.exists():
         return
@@ -591,6 +695,16 @@ def _apply_autoapi_runtime_settings(conf_py_path: str, ignore_patterns: list[str
 
 
 def _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess:
+    """
+    Builds Sphinx documentation once in the specified temporary directory.
+
+        Args:
+            temp_dir (str): The path to the temporary directory for building docs.
+
+        Returns:
+            subprocess.CompletedProcess: The result of the Sphinx build process.
+
+    """
     return subprocess.run(
         [sys.executable, "-m", "sphinx", "-b", "html", DOCS_SRC, BUILD_DIR],
         cwd=temp_dir,
@@ -601,6 +715,16 @@ def _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess:
 
 
 def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
+    """
+    Generates a report of skipped AutoAPI files and writes it to a text file.
+
+    Args:
+        skipped_files (list[dict]): A list of dictionaries containing details of skipped files.
+
+    Returns:
+        None: This function does not return a value.
+
+    """
     if not skipped_files:
         return
     run_log_dir = get_run_log_dir()
@@ -616,8 +740,18 @@ def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
             report_file.write(f"  reason: {item['reason']}\n\n")
 
 
-def _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str) -> subprocess.CompletedProcess:
-    prebuild_ignore_patterns, prebuild_skipped = _collect_prebuild_autoapi_ignores(temp_dir)
+def _run_sphinx_build_with_autoapi_filters(
+    temp_dir: str, conf_py_path: str
+) -> subprocess.CompletedProcess:
+    """
+    Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries on failure.\n\n
+    Args:\n        temp_dir (str): The temporary directory for the Sphinx build.\n
+    conf_py_path (str): The path to the Sphinx configuration file.\n\n    Returns:\n
+    subprocess.CompletedProcess: The result of the Sphinx build process.
+    """
+    prebuild_ignore_patterns, prebuild_skipped = _collect_prebuild_autoapi_ignores(
+        temp_dir
+    )
     active_ignore_patterns = list(prebuild_ignore_patterns)
     skipped_files = list(prebuild_skipped)
 
@@ -632,10 +766,18 @@ def _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str) -> 
         _write_skipped_autoapi_report(skipped_files)
         return build_result
 
-    build_output = "\n".join(part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part)
+    build_output = "\n".join(
+        part
+        for part in [build_result.stderr.strip(), build_result.stdout.strip()]
+        if part
+    )
     failed_modules = _extract_autoapi_module_names(build_output)
-    fallback_ignore_patterns, fallback_skipped = _module_names_to_ignore_patterns(temp_dir, failed_modules)
-    new_fallback_ignores = sorted(set(fallback_ignore_patterns) - set(active_ignore_patterns))
+    fallback_ignore_patterns, fallback_skipped = _module_names_to_ignore_patterns(
+        temp_dir, failed_modules
+    )
+    new_fallback_ignores = sorted(
+        set(fallback_ignore_patterns) - set(active_ignore_patterns)
+    )
     if not new_fallback_ignores:
         _write_skipped_autoapi_report(skipped_files)
         return build_result
@@ -643,7 +785,8 @@ def _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str) -> 
     skipped_files.extend(
         item
         for item in fallback_skipped
-        if _to_autoapi_ignore_pattern(item["file"].replace(f"{AUTOAPI_DIRECTORY}/", "")) in new_fallback_ignores
+        if _to_autoapi_ignore_pattern(item["file"].replace(f"{AUTOAPI_DIRECTORY}/", ""))
+        in new_fallback_ignores
     )
     active_ignore_patterns.extend(new_fallback_ignores)
     logger.warning(
@@ -657,12 +800,35 @@ def _run_sphinx_build_with_autoapi_filters(temp_dir: str, conf_py_path: str) -> 
 
 
 def _project_name_from_repo_path(repo_path: str) -> str:
+    """
+    Extracts the project name from a given repository path.
+
+    Args:
+        repo_path (str): The file path of the repository.
+
+    Returns:
+        str: The formatted project name derived from the repository path.
+
+    """
     repo_name = repo_path.rstrip("/").split("/")[-1]
     name = repo_name.replace("-", " ").replace("_", " ").strip()
     return name.title() if name else PROJECT_NAME
 
 
 def _load_sample_text(relative_path: str) -> str:
+    """
+    Load sample text from a specified relative path or fallback.
+
+        Args:
+            relative_path (str): The relative path to the sample text file.
+
+        Returns:
+            str: The content of the sample text file.
+
+        Raises:
+            FileNotFoundError: If the sample text is not found in the specified path or fallback.
+
+    """
     sample_path = DOCS_SCAFFOLD_DIR / relative_path
     if sample_path.exists():
         return sample_path.read_text(encoding="utf-8")
@@ -671,10 +837,22 @@ def _load_sample_text(relative_path: str) -> str:
     if fallback_text is not None:
         return fallback_text
 
-    raise FileNotFoundError(f"Missing sample template for {relative_path}: {sample_path}")
+    raise FileNotFoundError(
+        f"Missing sample template for {relative_path}: {sample_path}"
+    )
 
 
 def _build_sample_conf(project_name: str) -> str:
+    """
+    Builds a sample configuration string for a project.
+
+    Args:
+        project_name (str): The name of the project to include in the configuration.
+
+    Returns:
+        str: The modified configuration text with the project name and necessary additions.
+
+    """
     conf_text = _load_sample_text("conf.py")
     conf_text = re.sub(
         r'project\s*=\s*"[^"]+"',
@@ -682,7 +860,10 @@ def _build_sample_conf(project_name: str) -> str:
         conf_text,
         count=1,
     )
-    if '"autoapi.extension"' not in conf_text and "'autoapi.extension'" not in conf_text:
+    if (
+        '"autoapi.extension"' not in conf_text
+        and "'autoapi.extension'" not in conf_text
+    ):
         conf_text = conf_text.replace(
             '"sphinx.ext.napoleon",',
             '"sphinx.ext.napoleon",\n    "autoapi.extension",',
@@ -694,11 +875,28 @@ def _build_sample_conf(project_name: str) -> str:
         "autoapi_generate_api_docs = True",
     ]
     if not all(addition in conf_text for addition in additions):
-        conf_text += "\n\n" + "\n".join(addition for addition in additions if addition not in conf_text) + "\n"
+        conf_text += (
+            "\n\n"
+            + "\n".join(addition for addition in additions if addition not in conf_text)
+            + "\n"
+        )
     return conf_text
 
 
 def _load_sample_binary(relative_path: str) -> bytes:
+    """
+    Load a binary sample file from a specified relative path.
+
+        Args:
+            relative_path (str): The relative path to the sample binary file.
+
+        Returns:
+            bytes: The contents of the binary file.
+
+        Raises:
+            FileNotFoundError: If the file does not exist in the specified locations.
+
+    """
     sample_path = DOCS_SCAFFOLD_DIR / relative_path
     if sample_path.exists():
         return sample_path.read_bytes()
@@ -707,10 +905,22 @@ def _load_sample_binary(relative_path: str) -> bytes:
     if asset_path.exists():
         return asset_path.read_bytes()
 
-    raise FileNotFoundError(f"Missing sample binary asset for {relative_path}: {sample_path}")
+    raise FileNotFoundError(
+        f"Missing sample binary asset for {relative_path}: {sample_path}"
+    )
 
 
 def _build_sample_index(project_name: str) -> str:
+    """
+    Builds a sample index for a given project name.
+
+    Args:
+        project_name (str): The name of the project to include in the index.
+
+    Returns:
+        str: The formatted index text as a string.
+
+    """
     index_text = _load_sample_text("index.rst")
     lines = index_text.splitlines()
     if len(lines) >= 2:
@@ -723,11 +933,28 @@ def _build_sample_index(project_name: str) -> str:
 
 
 def _build_sample_overview(project_name: str) -> str:
+    """
+    Generates a project overview by replacing a placeholder with the project name.
+
+    Args:
+        project_name (str): The name of the project to include in the overview.
+
+    Returns:
+        str: The formatted overview text with the project name inserted.
+
+    """
     overview_text = _load_sample_text("project/overview.rst")
     return overview_text.replace("<replace>", project_name, 1)
 
 
 def _build_sample_makefile() -> str:
+    """
+    Generate a sample Makefile for Sphinx documentation.
+
+    Returns:
+        str: The content of the Makefile as a string.
+
+    """
     return (
         "SPHINXBUILD   = sphinx-build\n"
         "SOURCEDIR     = source\n"
@@ -743,6 +970,13 @@ def _build_sample_makefile() -> str:
 
 
 def _build_sample_readme() -> str:
+    """
+    Generate a sample README for documentation.
+
+    Returns:
+        str: A formatted string containing documentation notes and local preview instructions.
+
+    """
     return (
         "Documentation Notes\n"
         "===================\n\n"
@@ -758,24 +992,49 @@ def _build_sample_readme() -> str:
 
 
 def _sample_docs_files(project_name: str) -> dict[str, str]:
+    """
+    Generate sample documentation files for a given project.
+
+    Args:
+        project_name (str): The name of the project for which to create documentation.
+
+    Returns:
+        dict[str, str]: A dictionary mapping file paths to their corresponding sample content.
+
+    """
     return {
         "docs/Makefile": _build_sample_makefile(),
         CONF_PY: _build_sample_conf(project_name),
         f"{DOCS_SRC}/index.rst": _build_sample_index(project_name),
         f"{DOCS_SRC}/README.rst": _build_sample_readme(),
         f"{DOCS_SRC}/project/overview.rst": _build_sample_overview(project_name),
-        f"{DOCS_SRC}/project/objectives.rst": _load_sample_text("project/objectives.rst"),
+        f"{DOCS_SRC}/project/objectives.rst": _load_sample_text(
+            "project/objectives.rst"
+        ),
         f"{DOCS_SRC}/project/plan.rst": _load_sample_text("project/plan.rst"),
         f"{DOCS_SRC}/project/results.rst": _load_sample_text("project/results.rst"),
-        f"{DOCS_SRC}/logbook/weekly_updates.rst": _load_sample_text("logbook/weekly_updates.rst"),
-        f"{DOCS_SRC}/_static/custom-wide.css": _load_sample_text("_static/custom-wide.css"),
+        f"{DOCS_SRC}/logbook/weekly_updates.rst": _load_sample_text(
+            "logbook/weekly_updates.rst"
+        ),
+        f"{DOCS_SRC}/_static/custom-wide.css": _load_sample_text(
+            "_static/custom-wide.css"
+        ),
     }
 
 
 def _sample_docs_binary_files() -> dict[str, bytes]:
+    """
+    Generate a dictionary of sample binary files.
+
+    Returns:
+        dict[str, bytes]: A dictionary mapping file paths to their binary content.
+
+    """
     return {
         f"{DOCS_SRC}/_static/img/logo.png": _load_sample_binary("_static/img/logo.png"),
-        f"{DOCS_SRC}/_static/img/favicon.ico": _load_sample_binary("_static/img/favicon.ico"),
+        f"{DOCS_SRC}/_static/img/favicon.ico": _load_sample_binary(
+            "_static/img/favicon.ico"
+        ),
     }
 
 
@@ -786,6 +1045,20 @@ def _remote_text_file_exists(
     token: str,
     provider: str,
 ) -> bool:
+    """
+    Check if a remote text file exists in a specified repository branch.
+
+        Args:
+            repo_path (str): The path to the repository.
+            branch (str): The branch name to check.
+            file_path (str): The path of the file to verify.
+            token (str): Access token for authentication.
+            provider (str): The version control provider ('github' or 'gitlab').
+
+        Returns:
+            bool: True if the file exists, False otherwise.
+
+    """
     normalized_provider = provider.lower()
     if normalized_provider == "github":
         return (
@@ -805,7 +1078,9 @@ def _remote_text_file_exists(
     file_path_encoded = quote_plus(file_path)
     return (
         requests.get(
-            (f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"),
+            (
+                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"
+            ),
             headers={"PRIVATE-TOKEN": token},
             params={"ref": branch},
             timeout=10,
@@ -821,6 +1096,14 @@ def _create_sample_sphinx_scaffold(
     provider: str,
     project_name: str,
 ) -> bool:
+    """
+    Creates a sample Sphinx scaffold in a specified repository branch.\n\n    Args:\n
+    repo_path (str): The path to the repository.\n        branch (str): The branch name where the
+    scaffold will be created.\n        token (str): Authentication token for the repository.\n
+    provider (str): The repository provider (e.g., GitHub).\n        project_name (str): The name of
+    the project for which the scaffold is created.\n\n    Returns:\n        bool: True if the
+    scaffold was created successfully, False otherwise.\n
+    """
     for file_path, content in _sample_docs_files(project_name).items():
         if _remote_text_file_exists(repo_path, branch, file_path, token, provider):
             continue
@@ -839,6 +1122,17 @@ def _create_sample_sphinx_scaffold(
 
 
 def _write_sample_sphinx_scaffold(root_dir: str, project_name: str) -> None:
+    """
+    Creates a sample Sphinx documentation scaffold in the specified directory.
+
+        Args:
+            root_dir (str): The root directory where the scaffold will be created.
+            project_name (str): The name of the project for which the documentation is generated.
+
+        Returns:
+            None: This function does not return a value.
+
+    """
     for file_path, content in _sample_docs_files(project_name).items():
         destination = Path(root_dir) / file_path
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -850,6 +1144,17 @@ def _write_sample_sphinx_scaffold(root_dir: str, project_name: str) -> None:
 
 
 def _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None:
+    """
+    Ensures the Sphinx project name is set in the configuration file.
+
+        Args:
+            conf_py_path (str): Path to the Sphinx configuration file.
+            project_name (str): The desired project name to set.
+
+        Returns:
+            None: This function modifies the file in place if conditions are met.
+
+    """
     if not os.path.exists(conf_py_path):
         return
 
@@ -868,6 +1173,17 @@ def _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None:
 
 
 def _ensure_api_index(index_path: str, project_name: str) -> None:
+    """
+    Ensure the existence of an API index file at the specified path.
+
+    Args:
+        index_path (str): The file path for the index.
+        project_name (str): The name of the project to include in the index.
+
+    Returns:
+        None: This function does not return a value.
+
+    """
     default_markers = (
         "Add your content using ``reStructuredText`` syntax.",
         "Welcome to Project_Name's documentation!",
@@ -901,6 +1217,20 @@ API Reference
 
 def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_file):
     # Extract repo path from URL
+    """
+    Set up Sphinx documentation for a repository based on docstring coverage.
+
+        Args:
+            provider (str): The version control provider (e.g., 'gitlab' or 'github').
+            repo_url (str): The URL of the repository.
+            token (str): Access token for the repository.
+            branch (str): The branch to set up documentation on.
+            docstring_analysis_file (str): Path to the CSV file containing docstring analysis.
+
+        Returns:
+            bool: True if setup is successful, False otherwise.
+
+    """
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
     project_name = _project_name_from_repo_path(repo_path)
@@ -952,22 +1282,30 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
         return False
 
     # CREATE DIRECTORY AND ADD FILES WITH ADEQUATE DOCSTRING COVERAGE
-    dir = create_directory_and_add_files(repo_path, AUTOAPI_DIRECTORY, files_to_document, branch, token, provider)
+    dir = create_directory_and_add_files(
+        repo_path, AUTOAPI_DIRECTORY, files_to_document, branch, token, provider
+    )
     if not dir:
         logger.error("Directory creation failed.")
         return False
 
-    scaffold_created = _create_sample_sphinx_scaffold(repo_path, branch, token, provider, project_name)
+    scaffold_created = _create_sample_sphinx_scaffold(
+        repo_path, branch, token, provider, project_name
+    )
     if not scaffold_created:
         logger.error("Sample Sphinx scaffold creation failed.")
         return False
 
     # CREATE A FILE TO UPDATE CONF.PY FILE FOR SPHINX AUTOAPI
-    conf_file_path = os.path.join(os.path.dirname(__file__), "..", "utils", "update_conf_content.py")
+    conf_file_path = os.path.join(
+        os.path.dirname(__file__), "..", "utils", "update_conf_content.py"
+    )
     conf_file_path = os.path.abspath(conf_file_path)
     with open(conf_file_path, "r") as f:
         conf_content = f.read()
-    config_file_created = create_a_file(repo_path, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider)
+    config_file_created = create_a_file(
+        repo_path, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider
+    )
     if not config_file_created:
         logger.error(f"{CONFIGURATION_UPDATE_FILE} file creation failed.")
         return False
@@ -975,7 +1313,9 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     if provider == "gitlab":
         # CREATE A .gitlab-ci.yml FILE
         gitlab_ci_content = generate_gitlab_ci_file()
-        yml_file_created = create_a_file(repo_path, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider)
+        yml_file_created = create_a_file(
+            repo_path, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider
+        )
         if not yml_file_created:
             logger.error(f"{GITLAB_YML_FILE} file creation failed.")
             return False
@@ -1034,14 +1374,18 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
     repo_path = extract_repo_path(repo_url, "github")
     project_name = _project_name_from_repo_path(repo_path)
 
-    pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
+    pages_branch_ready = ensure_github_branch(
+        repo_path, source_branch, GITHUB_PAGES_BRANCH, token
+    )
     if not pages_branch_ready:
         _raise_publish_error(
             "GitHub Pages branch setup failed. Check that the source branch exists and "
             "the token can read and write repository contents."
         )
 
-    pages_configured = configure_github_pages(repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH)
+    pages_configured = configure_github_pages(
+        repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH
+    )
     if not pages_configured:
         _raise_publish_error(
             "GitHub Pages configuration failed. GitHub usually returns this when the "
@@ -1051,7 +1395,9 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         )
 
     with tempfile.TemporaryDirectory(prefix="autodoc-pages-") as temp_dir:
-        snapshot_downloaded = download_github_branch_snapshot(repo_path, source_branch, token, temp_dir)
+        snapshot_downloaded = download_github_branch_snapshot(
+            repo_path, source_branch, token, temp_dir
+        )
         if not snapshot_downloaded:
             _raise_publish_error(
                 "Downloading the reviewed GitHub branch failed. Check that the branch "
@@ -1079,7 +1425,9 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             )
             if update_conf_result.returncode != 0:
                 logger.error("Updating conf.py failed: %s", update_conf_result.stderr)
-                _raise_publish_error(f"Updating Sphinx conf.py failed: {update_conf_result.stderr.strip()}")
+                _raise_publish_error(
+                    f"Updating Sphinx conf.py failed: {update_conf_result.stderr.strip()}"
+                )
 
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
@@ -1087,7 +1435,9 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
         build_result = _run_sphinx_build_with_autoapi_filters(temp_dir, conf_py_path)
         if build_result.returncode != 0:
             build_output = "\n".join(
-                part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
+                part
+                for part in [build_result.stderr.strip(), build_result.stdout.strip()]
+                if part
             )
             logger.error("Sphinx build failed: %s", build_output)
             _raise_publish_error(f"Sphinx build failed: {build_output}")
@@ -1109,11 +1459,15 @@ def publish_github_pages(repo_url: str, source_branch: str, token: str) -> bool:
             )
 
     request_github_pages_build(repo_path, token)
-    logger.info("Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH)
+    logger.info(
+        "Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH
+    )
     return True
 
 
-def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None) -> bool:
+def trigger_gitlab_pipeline(
+    repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None
+) -> bool:
     """
     Triggers a GitLab pipeline for the given project and branch.
 
@@ -1127,7 +1481,9 @@ def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: d
         bool: True if the pipeline was triggered successfully, False otherwise.
     """
     project_path_encoded = quote_plus(repo_url)
-    api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/trigger/pipeline"
+    api_url = (
+        f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/trigger/pipeline"
+    )
     headers = {"PRIVATE-TOKEN": token}
     trigger_token = os.getenv("CI_TRIGGER_PIPELINE_TOKEN")
 
@@ -1138,7 +1494,9 @@ def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: d
             data[f"variables[{key}]"] = value
 
     if not trigger_token:
-        logger.warning("CI_TRIGGER_PIPELINE_TOKEN environment variable not set. Cannot trigger pipeline.")
+        logger.warning(
+            "CI_TRIGGER_PIPELINE_TOKEN environment variable not set. Cannot trigger pipeline."
+        )
         return False
 
     try:
@@ -1147,7 +1505,9 @@ def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: d
             logger.info(f"Pipeline triggered for {repo_url} on branch {branch}.")
             return True
         else:
-            logger.error(f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})")
+            logger.error(
+                f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})"
+            )
             return False
     except Exception as e:
         logger.error(f"Exception while triggering pipeline: {e}")
