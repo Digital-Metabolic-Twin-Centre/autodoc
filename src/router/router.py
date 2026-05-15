@@ -51,7 +51,8 @@ async def root():
 @router.post("/generate")
 async def generate_docs(req: RepoRequest):
     logger.info(
-        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s, reuse_doc=%s, docstring_threshold=%s, low_content_min_lines=%s",
+        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, "
+        "model=%s, reuse_doc=%s, docstring_threshold=%s, low_content_min_lines=%s",
         req.provider,
         req.repo_url,
         req.branch,

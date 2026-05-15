@@ -8,7 +8,6 @@ def test_sample_docs_files_follow_shared_template_with_autoapi():
     assert "docs/index.rst" in files
     assert "docs/api_reference.rst" in files
     assert "docs/project/overview.rst" in files
-    assert "docs/logbook/weekly_updates.rst" in files
     assert 'html_theme = "sphinx_rtd_theme"' in files["docs/conf.py"]
     assert 'autoapi_dirs = ["../autoapi_include"]' in files["docs/conf.py"]
     assert "autoapi_add_toctree_entry = False" in files["docs/conf.py"]

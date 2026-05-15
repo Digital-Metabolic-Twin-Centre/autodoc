@@ -180,16 +180,6 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         "- Key findings: <replace>\n"
         "- Lessons learned: <replace>\n"
     ),
-    "logbook/weekly_updates.rst": (
-        "Weekly Updates\n"
-        "==============\n\n"
-        "Week of <YYYY-MM-DD>\n"
-        "--------------------\n\n"
-        "- Goals:\n"
-        "- Work done:\n"
-        "- Problems faced:\n"
-        "- Next steps:\n"
-    ),
     "_static/custom-wide.css": (
         ":root {\n"
         "    --autodoc-ink: #1f2933;\n"
@@ -760,10 +750,16 @@ def _run_sphinx_build_with_autoapi_filters(
     low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
 ) -> subprocess.CompletedProcess:
     """
-    Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries on failure.\n\n
-    Args:\n        temp_dir (str): The temporary directory for the Sphinx build.\n
-    conf_py_path (str): The path to the Sphinx configuration file.\n\n    Returns:\n
-    subprocess.CompletedProcess: The result of the Sphinx build process.
+    Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries.
+
+    Args:
+        temp_dir (str): The temporary directory for the Sphinx build.
+        conf_py_path (str): The path to the Sphinx configuration file.
+        low_content_min_meaningful_lines (int): Minimum non-blank lines required
+            before a mirrored Python file is treated as meaningful content.
+
+    Returns:
+        subprocess.CompletedProcess: The result of the Sphinx build process.
     """
     prebuild_ignore_patterns, prebuild_skipped = _collect_prebuild_autoapi_ignores(
         temp_dir,
@@ -1058,9 +1054,6 @@ def _sample_docs_files(project_name: str) -> dict[str, str]:
         ),
         f"{DOCS_SRC}/project/plan.rst": _load_sample_text("project/plan.rst"),
         f"{DOCS_SRC}/project/results.rst": _load_sample_text("project/results.rst"),
-        f"{DOCS_SRC}/logbook/weekly_updates.rst": _load_sample_text(
-            "logbook/weekly_updates.rst"
-        ),
         f"{DOCS_SRC}/_static/custom-wide.css": _load_sample_text(
             "_static/custom-wide.css"
         ),
@@ -1142,12 +1135,17 @@ def _create_sample_sphinx_scaffold(
     project_name: str,
 ) -> bool:
     """
-    Creates a sample Sphinx scaffold in a specified repository branch.\n\n    Args:\n
-    repo_path (str): The path to the repository.\n        branch (str): The branch name where the
-    scaffold will be created.\n        token (str): Authentication token for the repository.\n
-    provider (str): The repository provider (e.g., GitHub).\n        project_name (str): The name of
-    the project for which the scaffold is created.\n\n    Returns:\n        bool: True if the
-    scaffold was created successfully, False otherwise.\n
+    Create the sample Sphinx scaffold in the target repository branch.
+
+    Args:
+        repo_path (str): The path to the repository.
+        branch (str): The branch where the scaffold will be created.
+        token (str): Authentication token for the repository.
+        provider (str): The repository provider, for example GitHub or GitLab.
+        project_name (str): The project name used in the generated scaffold.
+
+    Returns:
+        bool: True when the scaffold was created successfully, otherwise False.
     """
     for file_path, content in _sample_docs_files(project_name).items():
         if _remote_text_file_exists(repo_path, branch, file_path, token, provider):
