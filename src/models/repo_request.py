@@ -25,5 +25,5 @@ class DocstringPullRequestRequest(BaseModel):
     token: str
     base_branch: str
     suggestion_branch: Optional[str] = None
-    title: str = "Add suggested Python docstrings"
+    title: str = "Add suggested docstrings"
     max_docstrings: int = 50
