@@ -7,6 +7,7 @@ from services.docstring_pr_services import (
     _load_generated_suggestions,
     _run_ruff_on_patched_files,
     _suggestion_generator,
+    create_python_docstring_pull_request,
     patch_python_docstrings,
 )
 
@@ -218,3 +219,114 @@ def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
     )
 
     assert cleaned["src/example.py"].content == "def run():\n    return True\n"
+
+
+def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to_patch(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "services.docstring_pr_services._load_generated_suggestions",
+        lambda repo_path, branch: {
+            "src/example.py": [
+                {
+                    "function_name": "documented",
+                    "block_type": "function",
+                    "generated_docstring": "Already documented.",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_repo_tree",
+        lambda repo_path, token, branch, provider: [
+            {"type": "file", "path": "src/example.py"}
+        ],
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_content_from_github",
+        lambda repo_path, branch, file_path, token: (
+            'def documented():\n    """Already documented."""\n    return True\n'
+        ),
+    )
+
+    result = create_python_docstring_pull_request(
+        "github",
+        "example/project",
+        "secret",
+        "main",
+        "autodocs/suggestions",
+        "Add suggested docstrings",
+    )
+
+    assert result["status"] == "no_changes"
+    assert result["files_changed"] == 0
+
+
+def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_current(
+    monkeypatch,
+):
+    source = "def add(left, right):\n    return left + right\n"
+    patched_source = (
+        'def add(left, right):\n'
+        '    """Add two values."""\n'
+        "    return left + right\n"
+    )
+
+    monkeypatch.setattr(
+        "services.docstring_pr_services._load_generated_suggestions",
+        lambda repo_path, branch: {
+            "src/example.py": [
+                {
+                    "function_name": "add",
+                    "block_type": "function",
+                    "generated_docstring": "Add two values.",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_repo_tree",
+        lambda repo_path, token, branch, provider: [
+            {"type": "file", "path": "src/example.py"}
+        ],
+    )
+
+    def fake_fetch_content(repo_path, branch, file_path, token):
+        if branch == "main":
+            return source
+        if branch == "autodocs/suggestions":
+            return patched_source
+        return None
+
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_content_from_github",
+        fake_fetch_content,
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.ensure_github_branch",
+        lambda repo_path, base_branch, suggestion_branch, token: True,
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.commit_files_to_github_branch",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("commit_files_to_github_branch should not be called")
+        ),
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.create_github_pull_request",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("create_github_pull_request should not be called")
+        ),
+    )
+
+    result = create_python_docstring_pull_request(
+        "github",
+        "example/project",
+        "secret",
+        "main",
+        "autodocs/suggestions",
+        "Add suggested docstrings",
+    )
+
+    assert result["status"] == "no_changes"
+    assert result["files_changed"] == 0
