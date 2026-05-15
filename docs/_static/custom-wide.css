@@ -22,6 +22,27 @@
     background: #0f766e;
 }
 
+.wy-side-nav-search {
+    padding-top: 1rem;
+}
+
+.wy-side-nav-search > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+}
+
+.wy-side-nav-search > a img.logo,
+.wy-side-nav-search .wy-dropdown > a img.logo {
+    max-height: 72px;
+    width: auto;
+    padding: 0.55rem 0.8rem;
+    border-radius: 16px;
+    background: rgba(255, 253, 248, 0.96);
+    box-shadow: 0 10px 24px rgba(16, 42, 67, 0.18);
+}
+
 .wy-menu-vertical a {
     color: #d9f3ee;
 }

@@ -52,6 +52,7 @@ from utils.git_utils import (
 
 logger = get_logger(__name__)
 DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
+DOCS_ASSET_DIR = Path(__file__).resolve().parents[2] / "docs" / "_static" / "img"
 SAMPLE_DOCS_FALLBACK_TEXTS = {
     "conf.py": (
         "from datetime import datetime\n\n"
@@ -67,6 +68,8 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         'html_theme = "sphinx_rtd_theme"\n'
         'html_static_path = ["_static"]\n'
         'html_css_files = ["custom-wide.css"]\n'
+        'html_logo = "_static/img/logo.png"\n'
+        'html_favicon = "_static/img/favicon.ico"\n'
     ),
     "index.rst": (
         "Auto Doc\n"
@@ -696,6 +699,18 @@ def _build_sample_conf(project_name: str) -> str:
     return conf_text
 
 
+def _load_sample_binary(relative_path: str) -> bytes:
+    sample_path = DOCS_SCAFFOLD_DIR / relative_path
+    if sample_path.exists():
+        return sample_path.read_bytes()
+
+    asset_path = DOCS_ASSET_DIR / Path(relative_path).name
+    if asset_path.exists():
+        return asset_path.read_bytes()
+
+    raise FileNotFoundError(f"Missing sample binary asset for {relative_path}: {sample_path}")
+
+
 def _build_sample_index(project_name: str) -> str:
     index_text = _load_sample_text("index.rst")
     lines = index_text.splitlines()
@@ -758,6 +773,13 @@ def _sample_docs_files(project_name: str) -> dict[str, str]:
     }
 
 
+def _sample_docs_binary_files() -> dict[str, bytes]:
+    return {
+        f"{DOCS_SRC}/_static/img/logo.png": _load_sample_binary("_static/img/logo.png"),
+        f"{DOCS_SRC}/_static/img/favicon.ico": _load_sample_binary("_static/img/favicon.ico"),
+    }
+
+
 def _remote_text_file_exists(
     repo_path: str,
     branch: str,
@@ -807,6 +829,13 @@ def _create_sample_sphinx_scaffold(
         if not created:
             logger.error("Failed to create sample scaffold file %s.", file_path)
             return False
+    for file_path, content in _sample_docs_binary_files().items():
+        if _remote_text_file_exists(repo_path, branch, file_path, token, provider):
+            continue
+        created = create_a_file(repo_path, branch, file_path, content, token, provider)
+        if not created:
+            logger.error("Failed to create sample scaffold asset %s.", file_path)
+            return False
     return True
 
 
@@ -815,6 +844,10 @@ def _write_sample_sphinx_scaffold(root_dir: str, project_name: str) -> None:
         destination = Path(root_dir) / file_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(content, encoding="utf-8")
+    for file_path, content in _sample_docs_binary_files().items():
+        destination = Path(root_dir) / file_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
 
 
 def _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None:

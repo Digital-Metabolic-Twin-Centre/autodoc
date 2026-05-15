@@ -572,6 +572,13 @@ def create_directory_and_add_files(
 
 
 def create_a_file(repo_url, branch, file_path, content, token, provider):
+    if isinstance(content, bytes):
+        content_bytes = content
+        content_text = None
+    else:
+        content_bytes = content.encode()
+        content_text = content
+
     if provider == "github":
         # GitHub: Create or update a file using the REST API
         api_url = f"{GITHUB_API_URL}/repos/{repo_url}/contents/{file_path}"
@@ -584,7 +591,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
             sha = None
         data = {
             "message": f"Create or update {file_path}",
-            "content": base64.b64encode(content.encode()).decode(),
+            "content": base64.b64encode(content_bytes).decode(),
             "branch": branch,
         }
         if sha:
@@ -609,7 +616,15 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         else:
             method = requests.post
             commit_message = f"Create {file_path}"
-        data = {"branch": branch, "content": content, "commit_message": commit_message}
+        if content_text is None:
+            data = {
+                "branch": branch,
+                "content": base64.b64encode(content_bytes).decode(),
+                "commit_message": commit_message,
+                "encoding": "base64",
+            }
+        else:
+            data = {"branch": branch, "content": content_text, "commit_message": commit_message}
         resp = method(api_url, headers=headers, json=data)
         if resp.status_code not in (201, 200):
             logger.error(f"GitLab create/update file error: {resp.text}")
