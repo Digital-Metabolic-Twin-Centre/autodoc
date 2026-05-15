@@ -53,6 +53,7 @@ from utils.git_utils import (
 logger = get_logger(__name__)
 DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
 DOCS_ASSET_DIR = Path(__file__).resolve().parents[2] / "docs" / "_static" / "img"
+AUTOAPI_DOCSTRING_THRESHOLD = 0.50
 SAMPLE_DOCS_FALLBACK_TEXTS = {
     "conf.py": (
         "from datetime import datetime\n\n"
@@ -1275,7 +1276,6 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     project_name = _project_name_from_repo_path(repo_path)
 
     # FETCH FILES WITH COMPLETE OR HIGH DOCSTRING COVERAGE
-    DOCSTRING_THRESHOLD = 0.75  # 75% threshold for including files
     files_with_all_docstrings = []
     files_with_high_coverage = []
 
@@ -1293,7 +1293,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
 
         if coverage == 1.0:
             files_with_all_docstrings.append(file_path)
-        elif coverage >= DOCSTRING_THRESHOLD:
+        elif coverage >= AUTOAPI_DOCSTRING_THRESHOLD:
             files_with_high_coverage.append(file_path)
 
     # Combine files with 100% and high coverage
@@ -1306,7 +1306,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     )
     logger.info(
         "Files with ≥%.0f%% docstrings (%s): %s",
-        DOCSTRING_THRESHOLD * 100,
+        AUTOAPI_DOCSTRING_THRESHOLD * 100,
         len(files_with_high_coverage),
         files_with_high_coverage,
     )
@@ -1316,7 +1316,7 @@ def create_sphinx_setup(provider, repo_url, token, branch, docstring_analysis_fi
     if not files_to_document:
         logger.warning(
             "No files with ≥%.0f%% docstring coverage found. Skipping Sphinx setup.",
-            DOCSTRING_THRESHOLD * 100,
+            AUTOAPI_DOCSTRING_THRESHOLD * 100,
         )
         return False
 

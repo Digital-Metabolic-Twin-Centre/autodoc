@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from main import app
 from services.doc_services import RepoAnalysisError
 from services.sphinx_services import (
+    AUTOAPI_DOCSTRING_THRESHOLD,
     PublishPagesError,
     _apply_autoapi_runtime_settings,
     _classify_autoapi_file,
@@ -16,6 +17,7 @@ from services.sphinx_services import (
     _project_name_from_repo_path,
     _run_sphinx_build_with_autoapi_filters,
     _to_autoapi_ignore_pattern,
+    create_sphinx_setup,
 )
 
 client = TestClient(app)
@@ -157,6 +159,55 @@ def test_publish_pages_returns_specific_publish_error(monkeypatch):
 
     assert response.status_code == 403
     assert response.json()["detail"] == "GitHub Pages configuration failed."
+
+
+def test_create_sphinx_setup_includes_files_at_docstring_threshold(tmp_path, monkeypatch):
+    analysis_path = tmp_path / "analysis.csv"
+    analysis_path.write_text(
+        "file_path,missing_docstring\n"
+        "src/models/repo_request.py,False\n"
+        "src/models/repo_request.py,True\n"
+        "src/router/router.py,False\n"
+        "src/router/router.py,False\n",
+        encoding="utf-8",
+    )
+
+    captured = {}
+
+    monkeypatch.setattr(
+        "services.sphinx_services.extract_repo_path",
+        lambda repo_url, provider="github": "example/project",
+    )
+    monkeypatch.setattr(
+        "services.sphinx_services.create_directory_and_add_files",
+        lambda repo_path, dir_path, file_paths, branch, token, provider: captured.setdefault(
+            "file_paths", list(file_paths)
+        )
+        or True,
+    )
+    monkeypatch.setattr(
+        "services.sphinx_services._create_sample_sphinx_scaffold",
+        lambda repo_path, branch, token, provider, project_name: True,
+    )
+    monkeypatch.setattr(
+        "services.sphinx_services.create_a_file",
+        lambda repo_path, branch, file_path, content, token, provider: True,
+    )
+
+    result = create_sphinx_setup(
+        "github",
+        "https://github.com/example/project",
+        "secret",
+        "main",
+        str(analysis_path),
+    )
+
+    assert result is True
+    assert AUTOAPI_DOCSTRING_THRESHOLD == 0.50
+    assert captured["file_paths"] == [
+        "src/router/router.py",
+        "src/models/repo_request.py",
+    ]
 
 
 def test_project_name_from_repo_path_humanizes_repo_name():
