@@ -403,9 +403,11 @@ def _build_no_changes_response(
         "provider": "github",
         "base_branch": base_branch,
         "suggestion_branch": suggestion_branch,
+        "pull_request_url": None,
         "files_changed": 0,
         "docstrings_added": 0,
         "changed_files": [],
+        "message": reason,
         "detail": reason,
     }
 

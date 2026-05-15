@@ -180,16 +180,6 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         "- Key findings: <replace>\n"
         "- Lessons learned: <replace>\n"
     ),
-    "logbook/weekly_updates.rst": (
-        "Weekly Updates\n"
-        "==============\n\n"
-        "Week of <YYYY-MM-DD>\n"
-        "--------------------\n\n"
-        "- Goals:\n"
-        "- Work done:\n"
-        "- Problems faced:\n"
-        "- Next steps:\n"
-    ),
     "_static/custom-wide.css": (
         ":root {\n"
         "    --autodoc-ink: #1f2933;\n"
@@ -765,6 +755,8 @@ def _run_sphinx_build_with_autoapi_filters(
     Args:
         temp_dir (str): The temporary directory for the Sphinx build.
         conf_py_path (str): The path to the Sphinx configuration file.
+        low_content_min_meaningful_lines (int): Minimum non-blank lines required
+            before a mirrored Python file is treated as meaningful content.
 
     Returns:
         subprocess.CompletedProcess: The result of the Sphinx build process.
@@ -1062,9 +1054,6 @@ def _sample_docs_files(project_name: str) -> dict[str, str]:
         ),
         f"{DOCS_SRC}/project/plan.rst": _load_sample_text("project/plan.rst"),
         f"{DOCS_SRC}/project/results.rst": _load_sample_text("project/results.rst"),
-        f"{DOCS_SRC}/logbook/weekly_updates.rst": _load_sample_text(
-            "logbook/weekly_updates.rst"
-        ),
         f"{DOCS_SRC}/_static/custom-wide.css": _load_sample_text(
             "_static/custom-wide.css"
         ),
