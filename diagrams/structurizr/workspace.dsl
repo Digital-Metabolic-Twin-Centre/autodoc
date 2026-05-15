@@ -102,26 +102,37 @@ workspace "Auto Doc Architecture" "Structurizr DSL model for the Auto Doc projec
                 shape person
                 background #0f172a
                 color #ffffff
+                fontSize 28
+
+               
             }
 
             element "Software System" {
                 background #1d4ed8
                 color #ffffff
+                fontSize 28
+
             }
 
             element "Container" {
                 background #0ea5e9
                 color #ffffff
+                fontSize 28
+
             }
 
             element "Component" {
                 background #e2e8f0
                 color #0f172a
+                fontSize 28
             }
+
 
             element "External" {
                 background #334155
                 color #ffffff
+                fontSize 28
+
                 border Solid
             }
 
@@ -129,44 +140,60 @@ workspace "Auto Doc Architecture" "Structurizr DSL model for the Auto Doc projec
                 shape RoundedBox
                 background #0369a1
                 color #ffffff
+                fontSize 28
+
             }
 
             element "Service" {
                 background #bae6fd
                 color #0f172a
+                fontSize 28
             }
+
+
 
             element "Utility" {
                 background #cbd5e1
                 color #0f172a
+                fontSize 28
             }
+
 
             element "Storage" {
                 shape Cylinder
                 background #f8fafc
                 color #0f172a
+                fontSize 28
             }
+
 
             element "Docs" {
                 shape Folder
                 background #dbeafe
                 color #0f172a
+                fontSize 28
             }
+
 
             element "Testing" {
                 shape Hexagon
                 background #d1fae5
                 color #064e3b
+                fontSize 28
             }
+
 
             element "CI" {
                 shape Pipe
                 background #1e293b
                 color #ffffff
+                fontSize 28
+
             }
 
             relationship "Relationship" {
                 color #334155
+                fontSize 28
                 thickness 2
             }
         }

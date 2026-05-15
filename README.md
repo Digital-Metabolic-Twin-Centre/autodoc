@@ -25,6 +25,10 @@ The current workflow is branch-first:
 - Writes a skipped-files report when AutoAPI files are excluded during publish fallback.
 - Can publish built HTML to `gh-pages` without requiring a GitHub Actions workflow.
 
+## System Context
+
+![Auto Doc System Context](diagrams/SystemContext-001.png)
+
 ## Project Layout
 
 ```text
