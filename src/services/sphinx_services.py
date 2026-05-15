@@ -1321,8 +1321,13 @@ def create_sphinx_setup(
         elif coverage >= docstring_threshold:
             files_with_high_coverage.append(file_path)
 
-    # Combine files with 100% and high coverage
-    files_to_document = files_with_all_docstrings + files_with_high_coverage
+    analyzed_python_files = sorted(
+        {
+            str(file_path)
+            for file_path in df["file_path"].dropna().tolist()
+            if str(file_path).endswith((".py", ".pyw"))
+        }
+    )
 
     logger.info(
         "Files with 100%% docstrings (%s): %s",
@@ -1335,19 +1340,23 @@ def create_sphinx_setup(
         len(files_with_high_coverage),
         files_with_high_coverage,
     )
-    logger.info(f"Total files to document: {len(files_to_document)}")
+    logger.info("Total analyzed Python files to mirror into AutoAPI: %s", len(analyzed_python_files))
 
-    # Skip directory creation if no files meet criteria
-    if not files_to_document:
+    # Skip directory creation if there are no analyzed Python files to mirror.
+    if not analyzed_python_files:
         logger.warning(
-            "No files with ≥%.0f%% docstring coverage found. Skipping Sphinx setup.",
-            docstring_threshold * 100,
+            "No analyzed Python files were found to mirror into AutoAPI. Skipping Sphinx setup."
         )
         return False
 
-    # CREATE DIRECTORY AND ADD FILES WITH ADEQUATE DOCSTRING COVERAGE
+    # CREATE DIRECTORY AND ADD ALL ANALYZED PYTHON FILES FOR API DOCUMENTATION
     dir = create_directory_and_add_files(
-        repo_path, AUTOAPI_DIRECTORY, files_to_document, branch, token, provider
+        repo_path,
+        AUTOAPI_DIRECTORY,
+        analyzed_python_files,
+        branch,
+        token,
+        provider,
     )
     if not dir:
         logger.error("Directory creation failed.")

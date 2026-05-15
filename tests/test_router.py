@@ -320,12 +320,14 @@ def test_publish_pages_uses_default_low_content_min_lines(monkeypatch):
     assert captured["low_content_min_lines"] == 4
 
 
-def test_create_sphinx_setup_includes_files_at_docstring_threshold(tmp_path, monkeypatch):
+def test_create_sphinx_setup_mirrors_all_analyzed_python_files(tmp_path, monkeypatch):
     analysis_path = tmp_path / "analysis.csv"
     analysis_path.write_text(
         "file_path,missing_docstring\n"
         "src/models/repo_request.py,False\n"
         "src/models/repo_request.py,True\n"
+        "src/services/doc_services.py,True\n"
+        "src/services/doc_services.py,True\n"
         "src/router/router.py,False\n"
         "src/router/router.py,False\n",
         encoding="utf-8",
@@ -365,8 +367,9 @@ def test_create_sphinx_setup_includes_files_at_docstring_threshold(tmp_path, mon
     assert result is True
     assert AUTOAPI_DOCSTRING_THRESHOLD == 0.50
     assert captured["file_paths"] == [
-        "src/router/router.py",
         "src/models/repo_request.py",
+        "src/router/router.py",
+        "src/services/doc_services.py",
     ]
 
 
