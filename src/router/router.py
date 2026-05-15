@@ -3,13 +3,21 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, status
 
 from config.log_config import get_logger
-from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
+from models.repo_request import (
+    DocstringPullRequestRequest,
+    PublishPagesRequest,
+    RepoRequest,
+)
 from services.doc_services import RepoAnalysisError, analyse_repo
 from services.docstring_pr_services import (
     DocstringPullRequestError,
     create_python_docstring_pull_request,
 )
-from services.sphinx_services import PublishPagesError, create_sphinx_setup, publish_github_pages
+from services.sphinx_services import (
+    PublishPagesError,
+    create_sphinx_setup,
+    publish_github_pages,
+)
 from utils.docstring_generation import DEFAULT_OPENAI_MODEL
 from utils.git_utils import extract_repo_path
 from utils.output_paths import bind_repo_run_log_dir
@@ -20,6 +28,14 @@ router = APIRouter()
 
 
 def _default_docstring_suggestion_branch() -> str:
+    """
+    Generate a default docstring suggestion with a timestamp.
+
+    Returns:
+        str: A formatted string containing the prefix 'autodocs-docstring-suggestions-' followed by
+        the current timestamp.
+
+    """
     timestamp = datetime.now().strftime("%Y%m%d-%H%M")
     return f"autodocs-docstring-suggestions-{timestamp}"
 
@@ -27,7 +43,9 @@ def _default_docstring_suggestion_branch() -> str:
 @router.get("/")
 async def root():
     logger.info("Root endpoint accessed.")
-    return {"message": "Welcome to the Markdown Generator API. Visit /docs for API documentation."}
+    return {
+        "message": "Welcome to the Markdown Generator API. Visit /docs for API documentation."
+    }
 
 
 @router.post("/generate")
@@ -87,7 +105,9 @@ async def generate_docs(req: RepoRequest):
         raise HTTPException(status_code=rae.status_code, detail=str(rae))
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve)
+        )
     except PermissionError as pe:
         logger.error(f"PermissionError: {pe}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
@@ -128,14 +148,15 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
             req.max_docstrings,
         )
     except DocstringPullRequestError as dpe:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe)
+        )
     except Exception as e:
         logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred: " + str(e),
         )
-
 
 
 @router.post("/publish-pages")
@@ -179,4 +200,3 @@ async def publish_pages(req: PublishPagesRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred: " + str(e),
         )
-

@@ -27,6 +27,22 @@ DocstringNode = Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef]
 
 @dataclass
 class DocstringInsertion:
+    """
+    A class representing a code insertion point with metadata.
+
+    Args:
+        name (str): The name of the insertion.
+        kind (str): The type of insertion.
+        line_number (int): The line number for insertion.
+        insert_index (int): The index for insertion within the line.
+        indent (str): The indentation level for the insertion.
+        code (str): The code to be inserted.
+
+    Returns:
+        None
+
+    """
+
     name: str
     kind: str
     line_number: int
@@ -37,6 +53,18 @@ class DocstringInsertion:
 
 @dataclass
 class PatchedPythonFile:
+    """
+    Represents a Python file with content and docstring insertions.
+
+        Args:
+            content (str): The source code of the Python file.
+            inserted (List[DocstringInsertion]): A list of docstring insertions.
+
+        Returns:
+            None
+
+    """
+
     content: str
     inserted: List[DocstringInsertion]
 
@@ -46,6 +74,17 @@ class DocstringPullRequestError(RuntimeError):
 
 
 def _format_python_docstring(docstring: str, indent: str) -> List[str]:
+    """
+    Formats a Python docstring by cleaning and wrapping its content.
+
+    Args:
+        docstring (str): The original docstring to format.
+        indent (str): The indentation to apply to each line.
+
+    Returns:
+        List[str]: A list of formatted docstring lines.
+
+    """
     cleaned = docstring.strip()
     if cleaned.startswith(('"""', "'''")) and cleaned.endswith(('"""', "'''")):
         cleaned = cleaned[3:-3].strip()
@@ -58,7 +97,12 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
             cleaned_lines.append("")
             continue
         leading_spaces = stripped[: len(stripped) - len(stripped.lstrip())]
-        cleaned_lines.extend(textwrap.wrap(stripped, width=content_width, subsequent_indent=leading_spaces) or [""])
+        cleaned_lines.extend(
+            textwrap.wrap(
+                stripped, width=content_width, subsequent_indent=leading_spaces
+            )
+            or [""]
+        )
 
     if not cleaned_lines:
         cleaned_lines = ["TODO: Add documentation."]
@@ -75,11 +119,31 @@ def _format_python_docstring(docstring: str, indent: str) -> List[str]:
 
 
 def _node_insert_index(node: DocstringNode) -> int:
+    """
+    Insert index of the first body node in a DocstringNode.
+
+        Args:
+            node (DocstringNode): The node from which to extract the index.
+
+        Returns:
+            int: The index of the first body node.
+
+    """
     first_body_node = node.body[0]
     return first_body_node.lineno - 1
 
 
 def _find_missing_python_docstrings(content: str) -> List[DocstringInsertion]:
+    """
+    Identifies missing docstrings in Python functions and classes.
+
+        Args:
+            content (str): The source code content to analyze.
+
+        Returns:
+            List[DocstringInsertion]: A sorted list of insertions for missing docstrings.
+
+    """
     tree = ast.parse(content)
     insertions: List[DocstringInsertion] = []
 
@@ -107,7 +171,9 @@ def _find_missing_python_docstrings(content: str) -> List[DocstringInsertion]:
             )
         )
 
-    return sorted(insertions, key=lambda insertion: insertion.insert_index, reverse=True)
+    return sorted(
+        insertions, key=lambda insertion: insertion.insert_index, reverse=True
+    )
 
 
 def patch_python_docstrings(
@@ -145,10 +211,23 @@ def patch_python_docstrings(
     if not inserted:
         return PatchedPythonFile(content=content, inserted=[])
 
-    return PatchedPythonFile(content="\n".join(lines) + "\n", inserted=list(reversed(inserted)))
+    return PatchedPythonFile(
+        content="\n".join(lines) + "\n", inserted=list(reversed(inserted))
+    )
 
 
 def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[dict]]:
+    """
+    Load generated docstring suggestions from a repository.
+
+        Args:
+            repo_path (str): The path to the repository.
+            branch (str): The branch name to load suggestions for.
+
+        Returns:
+            Dict[str, List[dict]]: A dictionary mapping file paths to their respective suggestions.
+
+    """
     latest_run_dir = find_latest_repo_run_dir(repo_path, "github")
     suggestions_path = None
     if latest_run_dir:
@@ -157,7 +236,8 @@ def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[d
             (
                 os.path.join(repo_run_root, entry)
                 for entry in os.listdir(repo_run_root)
-                if entry.startswith("app_") and os.path.isdir(os.path.join(repo_run_root, entry))
+                if entry.startswith("app_")
+                and os.path.isdir(os.path.join(repo_run_root, entry))
             ),
             reverse=True,
         )
@@ -167,7 +247,9 @@ def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[d
                 suggestions_path = candidate
                 break
     if suggestions_path is None:
-        suggestions_path = build_repo_output_file(repo_path, "github", "suggested_docstrings.json")
+        suggestions_path = build_repo_output_file(
+            repo_path, "github", "suggested_docstrings.json"
+        )
     if not os.path.exists(suggestions_path):
         raise DocstringPullRequestError(
             "No generated docstring suggestions found. Run /generate for this repo and branch first."
@@ -192,10 +274,34 @@ def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[d
     return suggestions_by_file
 
 
-def _suggestion_generator(suggestions: List[dict]) -> Callable[[DocstringInsertion], Optional[str]]:
+def _suggestion_generator(
+    suggestions: List[dict],
+) -> Callable[[DocstringInsertion], Optional[str]]:
+    """
+    Generates a suggestion function based on provided suggestions.
+
+        Args:
+            suggestions (List[dict]): A list of suggestion dictionaries containing function names
+            and docstrings.
+
+        Returns:
+            Callable[[DocstringInsertion], Optional[str]]: A function that returns a generated
+            docstring or None.
+
+    """
     used_indexes = set()
 
     def generate(insertion: DocstringInsertion) -> Optional[str]:
+        """
+        Generates a docstring based on the provided insertion criteria.
+
+            Args:
+                insertion (DocstringInsertion): The criteria for generating the docstring.
+
+            Returns:
+                Optional[str]: The generated docstring if found, otherwise None.
+
+        """
         for index, suggestion in enumerate(suggestions):
             if index in used_indexes:
                 continue
@@ -210,10 +316,25 @@ def _suggestion_generator(suggestions: List[dict]) -> Callable[[DocstringInserti
     return generate
 
 
-def _build_pull_request_body(base_branch: str, files_changed: Dict[str, PatchedPythonFile]) -> str:
+def _build_pull_request_body(
+    base_branch: str, files_changed: Dict[str, PatchedPythonFile]
+) -> str:
+    """
+    Generates a pull request body summarizing docstring additions.
+
+    Args:
+        base_branch (str): The name of the base branch for the pull request.
+        files_changed (Dict[str, PatchedPythonFile]): A dictionary of files with their corresponding
+        docstring changes.
+
+    Returns:
+        str: A formatted string summarizing the changes and the base branch.
+
+    """
     docstring_count = sum(len(patched.inserted) for patched in files_changed.values())
     file_lines = "\n".join(
-        f"- `{file_path}`: {len(patched.inserted)} docstring(s)" for file_path, patched in files_changed.items()
+        f"- `{file_path}`: {len(patched.inserted)} docstring(s)"
+        for file_path, patched in files_changed.items()
     )
     return (
         "## Summary\n\n"
@@ -225,7 +346,9 @@ def _build_pull_request_body(base_branch: str, files_changed: Dict[str, PatchedP
     )
 
 
-def _run_ruff_on_patched_files(files: Dict[str, PatchedPythonFile]) -> Dict[str, PatchedPythonFile]:
+def _run_ruff_on_patched_files(
+    files: Dict[str, PatchedPythonFile],
+) -> Dict[str, PatchedPythonFile]:
     """
     Runs ruff formatting/fixes on patched Python files before they are committed.
     """
@@ -255,7 +378,9 @@ def _run_ruff_on_patched_files(files: Dict[str, PatchedPythonFile]) -> Dict[str,
                 timeout=120,
             )
             if result.returncode != 0:
-                logger.warning("Ruff cleanup failed: %s", result.stderr.strip() or result.stdout)
+                logger.warning(
+                    "Ruff cleanup failed: %s", result.stderr.strip() or result.stdout
+                )
                 return files
 
         cleaned_files = {}
@@ -281,12 +406,16 @@ def create_python_docstring_pull_request(
     Creates a GitHub pull request with generated Python docstring suggestions.
     """
     if provider.lower() != "github":
-        raise DocstringPullRequestError("Python docstring pull requests currently support GitHub only.")
+        raise DocstringPullRequestError(
+            "Python docstring pull requests currently support GitHub only."
+        )
 
     repo_path = extract_repo_path(repo_url, "github")
     suggestions_by_file = _load_generated_suggestions(repo_path, base_branch)
     if not suggestions_by_file:
-        raise DocstringPullRequestError("No generated Python docstring suggestions were found. Run /generate first.")
+        raise DocstringPullRequestError(
+            "No generated Python docstring suggestions were found. Run /generate first."
+        )
 
     files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
     python_files = [
@@ -326,9 +455,13 @@ def create_python_docstring_pull_request(
 
     patched_files = _run_ruff_on_patched_files(patched_files)
 
-    branch_ready = ensure_github_branch(repo_path, base_branch, suggestion_branch, token)
+    branch_ready = ensure_github_branch(
+        repo_path, base_branch, suggestion_branch, token
+    )
     if not branch_ready:
-        raise DocstringPullRequestError("Could not create or access the suggestion branch.")
+        raise DocstringPullRequestError(
+            "Could not create or access the suggestion branch."
+        )
 
     committed = commit_files_to_github_branch(
         repo_path,
@@ -338,7 +471,9 @@ def create_python_docstring_pull_request(
         "Add generated Python docstring suggestions",
     )
     if not committed:
-        raise DocstringPullRequestError("Could not commit docstring suggestions to the suggestion branch.")
+        raise DocstringPullRequestError(
+            "Could not commit docstring suggestions to the suggestion branch."
+        )
 
     try:
         pr_url = create_github_pull_request(
@@ -361,6 +496,8 @@ def create_python_docstring_pull_request(
         "suggestion_branch": suggestion_branch,
         "pull_request_url": pr_url,
         "files_changed": len(patched_files),
-        "docstrings_added": sum(len(patched.inserted) for patched in patched_files.values()),
+        "docstrings_added": sum(
+            len(patched.inserted) for patched in patched_files.values()
+        ),
         "changed_files": sorted(patched_files.keys()),
     }
