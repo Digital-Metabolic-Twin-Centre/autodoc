@@ -41,7 +41,7 @@ def analyze_docstring_in_blocks(
     existing_suggestions: dict | None = None,
 ) -> dict:
     """
-    Analyzes code blocks to find docstring and identify missing ones.
+    Analyses code blocks to find docstring and identify missing ones.
     Supports multiple programming languages including Python, JavaScript/TypeScript and MATLAB.
 
     Args:

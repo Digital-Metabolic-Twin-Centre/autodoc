@@ -1,12 +1,12 @@
 # Auto Doc
 
-Auto Doc is a FastAPI service that analyzes a GitHub or GitLab repository, generates
+Auto Doc is a FastAPI service that analyses a GitHub or GitLab repository, generates
 docstring suggestions with OpenAI, scaffolds a Sphinx documentation site, and publishes
 reviewed HTML to GitHub Pages.
 
 The current workflow is branch-first:
 
-- `/generate` analyzes a target branch and writes documentation scaffold files directly to that branch
+- `/generate` analyses a target branch and writes documentation scaffold files directly to that branch
 - `/publish-pages` builds the reviewed Sphinx site from that branch and publishes the HTML to `gh-pages`
 - `/suggest-python-docstrings-pr` opens a separate GitHub pull request with Python docstring insertions
 
@@ -146,7 +146,7 @@ Returns a simple welcome message.
 
 ### `POST /generate`
 
-Analyzes a repository branch and writes documentation scaffold files to that same branch.
+analyses a repository branch and writes documentation scaffold files to that same branch.
 
 ```json
 {

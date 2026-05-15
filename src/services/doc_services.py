@@ -451,7 +451,7 @@ def analyze_repo(
         if supported_files_found == 0:
             raise RepoAnalysisError(
                 "Repository was reachable, but no supported source files were found. "
-                "Auto Doc currently analyzes .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
+                "Auto Doc currently analyses .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
                 status_code=404,
             )
         if normalized_target_folders and supported_files_in_scope == 0:

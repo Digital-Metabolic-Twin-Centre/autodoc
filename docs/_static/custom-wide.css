@@ -28,7 +28,7 @@
 
 .wy-menu-vertical a:hover,
 .wy-menu-vertical a:focus,
-.wy-menu-vertical li.current > a {
+.wy-menu-vertical li.current>a {
     background: rgba(190, 198, 205, 0.22);
     color: #000000;
 }
@@ -204,6 +204,13 @@ footer {
     padding-top: 1rem;
     border-top: 1px solid rgba(15, 118, 110, 0.12);
     color: var(--autodoc-muted);
+}
+
+
+.toctree-l1:hover>a {
+    font-weight: 500;
+    background-color: gray;
+    color: white;
 }
 
 @media screen and (max-width: 768px) {

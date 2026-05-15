@@ -160,7 +160,7 @@
           "tags" : "Element,Component,Model",
           "technology" : "Pydantic"
         }, {
-          "description" : "Analyzes repositories and extracts code blocks.",
+          "description" : "analyses repositories and extracts code blocks.",
           "documentation" : { },
           "id" : "12",
           "name" : "Doc Analysis Service",
@@ -180,7 +180,7 @@
             "sourceId" : "12",
             "tags" : "Relationship"
           }, {
-            "description" : "Analyzes documentation coverage",
+            "description" : "analyses documentation coverage",
             "destinationId" : "17",
             "id" : "34",
             "sourceId" : "12",
@@ -480,7 +480,7 @@
         "tags" : "Element,Container,Testing",
         "technology" : "Pytest"
       } ],
-      "description" : "FastAPI service that analyzes remote repositories, generates docstring suggestions, scaffolds Sphinx documentation, and publishes reviewed HTML.",
+      "description" : "FastAPI service that analyses remote repositories, generates docstring suggestions, scaffolds Sphinx documentation, and publishes reviewed HTML.",
       "documentation" : { },
       "id" : "8",
       "name" : "Auto Doc",

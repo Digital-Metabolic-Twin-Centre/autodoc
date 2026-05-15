@@ -12,13 +12,13 @@ workspace "Auto Doc Architecture" "Structurizr DSL model for the Auto Doc projec
         gitlabCi = softwareSystem "GitLab CI/CD" "Runs GitLab pipeline jobs for generated documentation workflows." "External,CI"
         repoCi = softwareSystem "GitHub Actions" "Builds, tests, lint-checks, and publishes documentation for this Auto Doc repository." "External,CI"
 
-        autodoc = softwareSystem "Auto Doc" "FastAPI service that analyzes remote repositories, generates docstring suggestions, scaffolds Sphinx documentation, and publishes reviewed HTML." {
+        autodoc = softwareSystem "Auto Doc" "FastAPI service that analyses remote repositories, generates docstring suggestions, scaffolds Sphinx documentation, and publishes reviewed HTML." {
 
             api = container "FastAPI API Service" "Application entry point exposing endpoints." "Python 3.11, FastAPI, Uvicorn" "API" {
 
                 router = component "API Router" "Defines HTTP endpoints and dispatches requests." "FastAPI APIRouter" "Routing"
                 models = component "Request Models" "Validates request payloads." "Pydantic" "Model"
-                analysis = component "Doc Analysis Service" "Analyzes repositories and extracts code blocks." "doc_services.py" "Service"
+                analysis = component "Doc Analysis Service" "analyses repositories and extracts code blocks." "doc_services.py" "Service"
                 sphinx = component "Sphinx Service" "Creates docs scaffolding and publishes reviewed HTML to GitHub Pages." "sphinx_services.py" "Service"
                 pr = component "Docstring PR Service" "Creates GitHub pull requests containing Python docstring suggestions." "docstring_pr_services.py" "Service"
                 git = component "Git Utilities" "Handles GitHub/GitLab API operations." "git_utils.py" "Utility"
@@ -47,7 +47,7 @@ workspace "Auto Doc Architecture" "Structurizr DSL model for the Auto Doc projec
 
         autodoc.api.analysis -> autodoc.api.git "Fetches repository data"
         autodoc.api.analysis -> autodoc.api.extractor "Extracts code blocks"
-        autodoc.api.analysis -> autodoc.api.validation "Analyzes documentation coverage"
+        autodoc.api.analysis -> autodoc.api.validation "analyses documentation coverage"
         autodoc.api.analysis -> autodoc.api.output "Writes analysis results"
 
         autodoc.api.validation -> autodoc.api.generation "Requests docstrings"
