@@ -42,8 +42,14 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
     )
     monkeypatch.setattr(
         "router.router.create_sphinx_setup",
-        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold: (
-            captured.update({"docstring_threshold": docstring_threshold}) or True
+        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
+            captured.update(
+                {
+                    "docstring_threshold": docstring_threshold,
+                    "low_content_min_lines": low_content_min_lines,
+                }
+            )
+            or True
         ),
     )
 
@@ -62,6 +68,7 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
     assert captured["model"] == "gpt-4o-mini"
     assert captured["reuse_doc"] is False
     assert captured["docstring_threshold"] == 0.50
+    assert captured["low_content_min_lines"] == 4
 
 
 def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch):
@@ -98,7 +105,7 @@ def test_generate_endpoint_uses_provided_model(monkeypatch):
     monkeypatch.setattr("router.router.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
         "router.router.create_sphinx_setup",
-        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold: True,
+        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: True,
     )
 
     response = client.post(
@@ -127,8 +134,14 @@ def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
     monkeypatch.setattr("router.router.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
         "router.router.create_sphinx_setup",
-        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold: (
-            captured.update({"docstring_threshold": docstring_threshold}) or True
+        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
+            captured.update(
+                {
+                    "docstring_threshold": docstring_threshold,
+                    "low_content_min_lines": low_content_min_lines,
+                }
+            )
+            or True
         ),
     )
 
@@ -146,6 +159,7 @@ def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
     assert response.status_code == 200
     assert captured["reuse_doc"] is True
     assert captured["docstring_threshold"] == 0.50
+    assert captured["low_content_min_lines"] == 4
 
 
 def test_generate_endpoint_uses_provided_docstring_threshold(monkeypatch):
@@ -160,8 +174,14 @@ def test_generate_endpoint_uses_provided_docstring_threshold(monkeypatch):
     )
     monkeypatch.setattr(
         "router.router.create_sphinx_setup",
-        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold: (
-            captured.update({"docstring_threshold": docstring_threshold}) or True
+        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
+            captured.update(
+                {
+                    "docstring_threshold": docstring_threshold,
+                    "low_content_min_lines": low_content_min_lines,
+                }
+            )
+            or True
         ),
     )
 
@@ -178,6 +198,47 @@ def test_generate_endpoint_uses_provided_docstring_threshold(monkeypatch):
 
     assert response.status_code == 200
     assert captured["docstring_threshold"] == 0.75
+    assert captured["low_content_min_lines"] == 4
+
+
+def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
+    captured = {}
+
+    monkeypatch.setattr(
+        "router.router.analyse_repo",
+        lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
+            "analysis.csv",
+            [{"file_name": "a.py"}],
+        ),
+    )
+    monkeypatch.setattr(
+        "router.router.create_sphinx_setup",
+        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
+            captured.update(
+                {
+                    "docstring_threshold": docstring_threshold,
+                    "low_content_min_lines": low_content_min_lines,
+                }
+            )
+            or True
+        ),
+    )
+
+    response = client.post(
+        "/generate",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "docstring_threshold": 0.3,
+            "low_content_min_lines": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["docstring_threshold"] == 0.3
+    assert captured["low_content_min_lines"] == 2
 
 
 def test_generate_endpoint_rejects_invalid_docstring_threshold():

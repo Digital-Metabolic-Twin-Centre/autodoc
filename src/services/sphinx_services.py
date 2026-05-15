@@ -1274,6 +1274,7 @@ def create_sphinx_setup(
     branch,
     docstring_analysis_file,
     docstring_threshold: float = AUTOAPI_DOCSTRING_THRESHOLD,
+    low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
 ):
     # Extract repo path from URL
     """
@@ -1293,6 +1294,11 @@ def create_sphinx_setup(
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
     project_name = _project_name_from_repo_path(repo_path)
+    logger.info(
+        "Creating Sphinx setup with docstring_threshold=%.2f and low_content_min_meaningful_lines=%s",
+        docstring_threshold,
+        low_content_min_meaningful_lines,
+    )
 
     # FETCH FILES WITH COMPLETE OR HIGH DOCSTRING COVERAGE
     files_with_all_docstrings = []

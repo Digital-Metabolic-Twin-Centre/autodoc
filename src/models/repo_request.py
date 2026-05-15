@@ -30,6 +30,7 @@ class RepoRequest(BaseModel):
     model: Optional[str] = None
     reuse_doc: bool = False
     docstring_threshold: float = Field(default=0.50, ge=0.0, le=1.0)
+    low_content_min_lines: int = Field(default=4, ge=0)
 
 
 class PublishPagesRequest(BaseModel):

@@ -51,13 +51,14 @@ async def root():
 @router.post("/generate")
 async def generate_docs(req: RepoRequest):
     logger.info(
-        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s, reuse_doc=%s, docstring_threshold=%s",
+        "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, model=%s, reuse_doc=%s, docstring_threshold=%s, low_content_min_lines=%s",
         req.provider,
         req.repo_url,
         req.branch,
         req.model or DEFAULT_OPENAI_MODEL,
         req.reuse_doc,
         req.docstring_threshold,
+        req.low_content_min_lines,
     )
     if not req.repo_url or not req.token or not req.branch or not req.provider:
         logger.warning("Missing required parameters in request.")
@@ -87,6 +88,7 @@ async def generate_docs(req: RepoRequest):
             req.branch,
             docstring_analysis_file,
             req.docstring_threshold,
+            req.low_content_min_lines,
         )
         if not sphinx_setup_created:
             logger.error("Sphinx setup creation failed.")
