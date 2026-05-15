@@ -99,6 +99,45 @@ async def generate_docs(req: RepoRequest):
         )
 
 
+@router.post("/suggest-python-docstrings-pr")
+async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
+    suggestion_branch = req.suggestion_branch or _default_docstring_suggestion_branch()
+    bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
+    logger.info(
+        "/suggest-python-docstrings-pr endpoint called with provider=%s, repo_url=%s, "
+        "base_branch=%s, suggestion_branch=%s",
+        req.provider,
+        req.repo_url,
+        req.base_branch,
+        suggestion_branch,
+    )
+    if not req.repo_url or not req.token or not req.base_branch:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required parameters: repo_url, token, or base_branch.",
+        )
+
+    try:
+        return create_python_docstring_pull_request(
+            req.provider,
+            req.repo_url,
+            req.token,
+            req.base_branch,
+            suggestion_branch,
+            req.title,
+            req.max_docstrings,
+        )
+    except DocstringPullRequestError as dpe:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe))
+    except Exception as e:
+        logger.error(f"Unhandled Exception: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred: " + str(e),
+        )
+
+
+
 @router.post("/publish-pages")
 async def publish_pages(req: PublishPagesRequest):
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
@@ -141,40 +180,3 @@ async def publish_pages(req: PublishPagesRequest):
             detail="An unexpected error occurred: " + str(e),
         )
 
-
-@router.post("/suggest-python-docstrings-pr")
-async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
-    suggestion_branch = req.suggestion_branch or _default_docstring_suggestion_branch()
-    bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
-    logger.info(
-        "/suggest-python-docstrings-pr endpoint called with provider=%s, repo_url=%s, "
-        "base_branch=%s, suggestion_branch=%s",
-        req.provider,
-        req.repo_url,
-        req.base_branch,
-        suggestion_branch,
-    )
-    if not req.repo_url or not req.token or not req.base_branch:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing required parameters: repo_url, token, or base_branch.",
-        )
-
-    try:
-        return create_python_docstring_pull_request(
-            req.provider,
-            req.repo_url,
-            req.token,
-            req.base_branch,
-            suggestion_branch,
-            req.title,
-            req.max_docstrings,
-        )
-    except DocstringPullRequestError as dpe:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe))
-    except Exception as e:
-        logger.error(f"Unhandled Exception: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred: " + str(e),
-        )
