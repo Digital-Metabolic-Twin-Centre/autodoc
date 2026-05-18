@@ -16,6 +16,16 @@ def _append_extension(extensions: str, extension: str) -> str:
 
 
 def _format_extension_block(extensions: list[str]) -> str:
+    """
+    Formats a list of extensions into a string representation.
+
+    Args:
+        extensions (list[str]): A list of extension names as strings.
+
+    Returns:
+        str: A formatted string representing the list of extensions.
+
+    """
     lines = ["extensions = ["]
     for extension in extensions:
         lines.append(f"    {extension!r},")
@@ -24,6 +34,17 @@ def _format_extension_block(extensions: list[str]) -> str:
 
 
 def _replace_extensions_block(text: str) -> str:
+    """
+    Replace the 'extensions' assignment in a Python script with a merged list of required
+    extensions.
+
+    Args:
+        text (str): The input Python script as a string.
+
+    Returns:
+        str: The modified script with updated 'extensions' assignment.
+
+    """
     module = ast.parse(text)
     for node in module.body:
         if isinstance(node, ast.Assign):
@@ -44,10 +65,25 @@ def _replace_extensions_block(text: str) -> str:
                     end = node.end_lineno
                     updated = lines[:start] + [replacement + "\n"] + lines[end:]
                     return "".join(updated)
-    return text.rstrip() + "\n\n" + _format_extension_block(list(REQUIRED_EXTENSIONS)) + "\n"
+    return (
+        text.rstrip()
+        + "\n\n"
+        + _format_extension_block(list(REQUIRED_EXTENSIONS))
+        + "\n"
+    )
 
 
 def update_conf(conf_py: str) -> None:
+    """
+    Update the configuration file by modifying its content if necessary.
+
+    Args:
+        conf_py (str): The path to the configuration file.
+
+    Returns:
+        None: This function does not return a value.
+
+    """
     conf_path = pathlib.Path(conf_py)
     if not conf_path.exists():
         return
