@@ -10,11 +10,8 @@ SQLITE_PATH = os.getenv("ADMIN_SQLITE_PATH", str(DATA_DIR / "admin.db"))
 DATABASE_URL = f"sqlite:///{SQLITE_PATH}"
 
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-print(f"Admin username: {ADMIN_USERNAME}")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
-print(f"Admin password: {'*' * len(ADMIN_PASSWORD)}")
 ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")
-print(f"Admin secret key: {'*' * len(ADMIN_SECRET_KEY)}")
 ADMIN_CSRF_COOKIE = "autodoc_csrf"
 ADMIN_SESSION_COOKIE = "autodoc_admin_session"
 ADMIN_SESSION_MAX_AGE = int(os.getenv("ADMIN_SESSION_MAX_AGE", str(60 * 60 * 12)))
