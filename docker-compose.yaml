@@ -8,6 +8,8 @@ services:
       - "8000:8000"
     volumes:
       - ./logs:/app/logs
+    env_file:
+      - .env
     environment:
       - ENV=development
     restart: unless-stopped
