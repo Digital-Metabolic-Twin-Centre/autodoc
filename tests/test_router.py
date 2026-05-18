@@ -1,4 +1,6 @@
-from fastapi.testclient import TestClient
+from asyncio import run
+
+import httpx
 
 from main import app
 from services.doc_services import RepoAnalysisError
@@ -20,28 +22,35 @@ from services.sphinx_services import (
     create_sphinx_setup,
 )
 
-client = TestClient(app)
+
+def request(method, url, **kwargs):
+    async def _request():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            return await client.request(method, url, **kwargs)
+
+    return run(_request())
 
 
-def test_root_endpoint_returns_welcome_message():
-    response = client.get("/")
+def test_root_endpoint_redirects_to_admin():
+    response = request("GET", "/")
 
-    assert response.status_code == 200
-    assert "Visit /docs" in response.json()["message"]
+    assert response.status_code == 307
+    assert response.headers["location"] == "/admin"
 
 
 def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
     captured = {}
 
     monkeypatch.setattr(
-        "router.router.analyse_repo",
+        "services.workflow_service.analyse_repo",
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             captured.update({"model": model, "reuse_doc": reuse_doc}) or "analysis.csv",
             [{"file_name": "a.py"}],
         ),
     )
     monkeypatch.setattr(
-        "router.router.create_sphinx_setup",
+        "services.workflow_service.create_sphinx_setup",
         lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
             captured.update(
                 {
@@ -53,7 +62,8 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
         ),
     )
 
-    response = client.post(
+    response = request(
+        "POST",
         "/generate",
         json={
             "provider": "github",
@@ -78,9 +88,10 @@ def test_generate_endpoint_returns_not_found_when_analysis_is_empty(monkeypatch)
             status_code=404,
         )
 
-    monkeypatch.setattr("router.router.analyse_repo", fail_analysis)
+    monkeypatch.setattr("services.workflow_service.analyse_repo", fail_analysis)
 
-    response = client.post(
+    response = request(
+        "POST",
         "/generate",
         json={
             "provider": "github",
@@ -102,13 +113,14 @@ def test_generate_endpoint_uses_provided_model(monkeypatch):
         captured["reuse_doc"] = reuse_doc
         return "analysis.csv", [{"file_name": "a.py"}]
 
-    monkeypatch.setattr("router.router.analyse_repo", fake_analyse_repo)
+    monkeypatch.setattr("services.workflow_service.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
-        "router.router.create_sphinx_setup",
+        "services.workflow_service.create_sphinx_setup",
         lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: True,
     )
 
-    response = client.post(
+    response = request(
+        "POST",
         "/generate",
         json={
             "provider": "github",
@@ -131,9 +143,9 @@ def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
         captured["reuse_doc"] = reuse_doc
         return "analysis.csv", [{"file_name": "a.py"}]
 
-    monkeypatch.setattr("router.router.analyse_repo", fake_analyse_repo)
+    monkeypatch.setattr("services.workflow_service.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
-        "router.router.create_sphinx_setup",
+        "services.workflow_service.create_sphinx_setup",
         lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
             captured.update(
                 {
@@ -145,7 +157,7 @@ def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
         ),
     )
 
-    response = client.post(
+    response = request("POST", 
         "/generate",
         json={
             "provider": "github",
@@ -166,14 +178,14 @@ def test_generate_endpoint_uses_provided_docstring_threshold(monkeypatch):
     captured = {}
 
     monkeypatch.setattr(
-        "router.router.analyse_repo",
+        "services.workflow_service.analyse_repo",
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             "analysis.csv",
             [{"file_name": "a.py"}],
         ),
     )
     monkeypatch.setattr(
-        "router.router.create_sphinx_setup",
+        "services.workflow_service.create_sphinx_setup",
         lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
             captured.update(
                 {
@@ -185,7 +197,7 @@ def test_generate_endpoint_uses_provided_docstring_threshold(monkeypatch):
         ),
     )
 
-    response = client.post(
+    response = request("POST", 
         "/generate",
         json={
             "provider": "github",
@@ -205,14 +217,14 @@ def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
     captured = {}
 
     monkeypatch.setattr(
-        "router.router.analyse_repo",
+        "services.workflow_service.analyse_repo",
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             "analysis.csv",
             [{"file_name": "a.py"}],
         ),
     )
     monkeypatch.setattr(
-        "router.router.create_sphinx_setup",
+        "services.workflow_service.create_sphinx_setup",
         lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: (
             captured.update(
                 {
@@ -224,7 +236,7 @@ def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
         ),
     )
 
-    response = client.post(
+    response = request("POST", 
         "/generate",
         json={
             "provider": "github",
@@ -242,7 +254,7 @@ def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
 
 
 def test_generate_endpoint_rejects_invalid_docstring_threshold():
-    response = client.post(
+    response = request("POST", 
         "/generate",
         json={
             "provider": "github",
@@ -260,9 +272,9 @@ def test_publish_pages_returns_specific_publish_error(monkeypatch):
     def fail_publish(repo_url, branch, token, low_content_min_lines):
         raise PublishPagesError("GitHub Pages configuration failed.")
 
-    monkeypatch.setattr("router.router.publish_github_pages", fail_publish)
+    monkeypatch.setattr("services.workflow_service.publish_github_pages", fail_publish)
 
-    response = client.post(
+    response = request("POST", 
         "/publish-pages",
         json={
             "repo_url": "example/project",
@@ -282,9 +294,9 @@ def test_publish_pages_uses_provided_low_content_min_lines(monkeypatch):
         captured["low_content_min_lines"] = low_content_min_lines
         return True
 
-    monkeypatch.setattr("router.router.publish_github_pages", fake_publish)
+    monkeypatch.setattr("services.workflow_service.publish_github_pages", fake_publish)
 
-    response = client.post(
+    response = request("POST", 
         "/publish-pages",
         json={
             "repo_url": "example/project",
@@ -305,9 +317,9 @@ def test_publish_pages_uses_default_low_content_min_lines(monkeypatch):
         captured["low_content_min_lines"] = low_content_min_lines
         return True
 
-    monkeypatch.setattr("router.router.publish_github_pages", fake_publish)
+    monkeypatch.setattr("services.workflow_service.publish_github_pages", fake_publish)
 
-    response = client.post(
+    response = request("POST", 
         "/publish-pages",
         json={
             "repo_url": "example/project",
@@ -654,7 +666,7 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
         }
 
     monkeypatch.setattr(
-        "router.router.create_python_docstring_pull_request",
+        "services.workflow_service.create_python_docstring_pull_request",
         fake_create_pr,
     )
     monkeypatch.setattr(
@@ -662,7 +674,7 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
         lambda: "autodocs-docstring-suggestions-20260424-1430",
     )
 
-    response = client.post(
+    response = request("POST", 
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",
@@ -688,11 +700,11 @@ def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatc
         }
 
     monkeypatch.setattr(
-        "router.router.create_python_docstring_pull_request",
+        "services.workflow_service.create_python_docstring_pull_request",
         fake_create_pr,
     )
 
-    response = client.post(
+    response = request("POST", 
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",
@@ -709,7 +721,7 @@ def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatc
 
 def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkeypatch):
     monkeypatch.setattr(
-        "router.router.create_python_docstring_pull_request",
+        "services.workflow_service.create_python_docstring_pull_request",
         lambda provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings: {
             "status": "no_changes",
             "provider": "github",
@@ -724,7 +736,7 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
         },
     )
 
-    response = client.post(
+    response = request("POST", 
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",
@@ -743,7 +755,7 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
 
 
 def test_suggest_python_docstrings_pr_requires_base_branch():
-    response = client.post(
+    response = request("POST", 
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",

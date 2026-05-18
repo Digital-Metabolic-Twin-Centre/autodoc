@@ -1,8 +1,11 @@
 import os
 import re
 import shutil
+from datetime import datetime
 
-from config.log_config import LOG_DIR, RUN_TIMESTAMP, bind_repo_log_dir
+from config.log_config import LOG_DIR, bind_repo_log_dir
+
+_ACTIVE_RUN_DIRS: dict[tuple[str, str], str] = {}
 
 
 def _repo_base_dir(repo_path: str, provider: str) -> str:
@@ -27,9 +30,12 @@ def build_repo_output_dir(repo_path: str, provider: str) -> str:
     """
     Returns the repo-scoped output directory for the current run.
     """
-    output_dir = os.path.join(
-        _repo_base_dir(repo_path, provider), f"app_{RUN_TIMESTAMP}"
-    )
+    repo_key = (str(provider or "unknown").lower(), str(repo_path or "unknown").strip("/"))
+    output_dir = _ACTIVE_RUN_DIRS.get(repo_key)
+    if not output_dir:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = os.path.join(_repo_base_dir(repo_path, provider), f"app_{timestamp}")
+        _ACTIVE_RUN_DIRS[repo_key] = output_dir
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
@@ -62,7 +68,11 @@ def bind_repo_run_log_dir(repo_path: str, provider: str) -> str:
         str: The bound repository run log directory path.
 
     """
-    return bind_repo_log_dir(build_repo_output_dir(repo_path, provider))
+    repo_key = (str(provider or "unknown").lower(), str(repo_path or "unknown").strip("/"))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = os.path.join(_repo_base_dir(repo_path, provider), f"app_{timestamp}")
+    _ACTIVE_RUN_DIRS[repo_key] = output_dir
+    return bind_repo_log_dir(output_dir)
 
 
 def clear_repo_output_history(repo_path: str, provider: str) -> None:
@@ -78,6 +88,8 @@ def clear_repo_output_history(repo_path: str, provider: str) -> None:
 
     """
     repo_dir = _repo_base_dir(repo_path, provider)
+    repo_key = (str(provider or "unknown").lower(), str(repo_path or "unknown").strip("/"))
+    _ACTIVE_RUN_DIRS.pop(repo_key, None)
     if os.path.isdir(repo_dir):
         shutil.rmtree(repo_dir)
 

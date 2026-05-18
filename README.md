@@ -111,6 +111,12 @@ Create a `.env` file in the project root:
 
 ```env
 OPENAI_API_KEY=your-openai-api-key
+ADMIN_PASSWORD=choose-a-strong-password
+ADMIN_SECRET_KEY=choose-a-long-random-secret
+
+# Optional admin overrides
+# ADMIN_USERNAME=admin
+# ADMIN_SQLITE_PATH=/app/data/admin.db
 
 # Optional, only needed if Auto Doc should trigger GitLab pipelines.
 CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
@@ -124,6 +130,8 @@ uv run uvicorn main:app --app-dir src --reload
 
 The service runs at `http://localhost:8000`.
 Interactive API docs are available at `http://localhost:8000/docs`.
+The root URL `http://localhost:8000/` now redirects to the internal admin dashboard.
+The admin dashboard is also available directly at `http://localhost:8000/admin` and uses HTTP Basic auth from `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
 
 You can also run it directly:
 
@@ -138,6 +146,26 @@ docker compose up --build
 ```
 
 The compose file exposes port `8000` and mounts the local `logs/` directory into the container.
+
+## Internal Admin Dashboard
+
+The service now includes a lightweight internal dashboard built with FastAPI, HTMX, Jinja templates, TailwindCSS, and SQLite.
+
+What it supports:
+
+- Saved repository configurations for GitHub and GitLab
+- Encrypted access token storage using `ADMIN_SECRET_KEY`
+- Generate, publish, and docstring PR workflows triggered from the UI
+- Live run status polling with HTMX
+- Persistent run history, summary metrics, log snippets, and artifact downloads
+- Repository-level quick reuse of saved operational defaults
+
+Operational notes:
+
+- Tokens are never shown again in raw form after creation
+- Admin pages require HTTP Basic auth
+- State-changing admin forms use CSRF tokens
+- SQLite data defaults to `data/admin.db` and can be overridden with `ADMIN_SQLITE_PATH`
 
 ## API
 

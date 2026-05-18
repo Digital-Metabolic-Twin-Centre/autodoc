@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import RedirectResponse
 
 from config.log_config import get_logger
 from models.repo_request import (
@@ -8,19 +9,15 @@ from models.repo_request import (
     PublishPagesRequest,
     RepoRequest,
 )
-from services.doc_services import RepoAnalysisError, analyse_repo
-from services.docstring_pr_services import (
+from services.workflow_service import (
     DocstringPullRequestError,
-    create_python_docstring_pull_request,
-)
-from services.sphinx_services import (
     PublishPagesError,
-    create_sphinx_setup,
-    publish_github_pages,
+    RepoAnalysisError,
+    execute_docstring_pr_request,
+    execute_generate_request,
+    execute_publish_request,
 )
 from utils.docstring_generation import DEFAULT_OPENAI_MODEL
-from utils.git_utils import extract_repo_path
-from utils.output_paths import bind_repo_run_log_dir
 
 logger = get_logger(__name__)
 
@@ -43,9 +40,7 @@ def _default_docstring_suggestion_branch() -> str:
 @router.get("/")
 async def root():
     logger.info("Root endpoint accessed.")
-    return {
-        "message": "Welcome to the Markdown Generator API. Visit /docs for API documentation."
-    }
+    return RedirectResponse(url="/admin", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 
 @router.post("/generate")
@@ -68,45 +63,7 @@ async def generate_docs(req: RepoRequest):
             detail="Missing required parameters: repo_url, token, branch, or provider.",
         )
     try:
-        # 1. Analyse REPO
-        docstring_analysis_file, docstring_analysis = analyse_repo(
-            req.provider,
-            req.repo_url,
-            req.token,
-            req.branch,
-            req.target_folders,
-            req.model or DEFAULT_OPENAI_MODEL,
-            req.reuse_doc,
-        )
-        logger.info("Docstring analysis completed successfully.")
-        print(docstring_analysis_file)
-
-        # 2. CREATE SPHINX SETUP
-        sphinx_setup_created = create_sphinx_setup(
-            req.provider,
-            req.repo_url,
-            req.token,
-            req.branch,
-            docstring_analysis_file,
-            req.docstring_threshold,
-            req.low_content_min_lines,
-        )
-        if not sphinx_setup_created:
-            logger.error("Sphinx setup creation failed.")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "Sphinx setup creation failed. Token may lack "
-                    f"'write_repository' scope, or branch '{req.branch}' is "
-                    "protected. Check token permissions and GitLab branch settings."
-                ),
-            )
-
-        return {
-            "status": "success",
-            "sphinx_setup_created": sphinx_setup_created,
-            "Docstring_analysis": docstring_analysis,
-        }
+        return execute_generate_request(req).response
     except HTTPException:
         raise
     except RepoAnalysisError as rae:
@@ -131,7 +88,6 @@ async def generate_docs(req: RepoRequest):
 @router.post("/suggest-python-docstrings-pr")
 async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
     suggestion_branch = req.suggestion_branch or _default_docstring_suggestion_branch()
-    bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
     logger.info(
         "/suggest-python-docstrings-pr endpoint called with provider=%s, repo_url=%s, "
         "base_branch=%s, suggestion_branch=%s",
@@ -147,15 +103,9 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
         )
 
     try:
-        return create_python_docstring_pull_request(
-            req.provider,
-            req.repo_url,
-            req.token,
-            req.base_branch,
-            suggestion_branch,
-            req.title,
-            req.max_docstrings,
-        )
+        return execute_docstring_pr_request(
+            req.model_copy(update={"suggestion_branch": suggestion_branch})
+        ).response
     except DocstringPullRequestError as dpe:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe)
@@ -170,7 +120,6 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
 
 @router.post("/publish-pages")
 async def publish_pages(req: PublishPagesRequest):
-    bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
     logger.info(
         "/publish-pages endpoint called with repo_url=%s, branch=%s, low_content_min_lines=%s",
         req.repo_url,
@@ -184,31 +133,13 @@ async def publish_pages(req: PublishPagesRequest):
         )
 
     try:
-        published = publish_github_pages(
-            req.repo_url,
-            req.branch,
-            req.token,
-            req.low_content_min_lines,
-        )
-        if not published:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "GitHub Pages publish failed. Make sure the selected branch contains "
-                    "the docs sources created during review, Sphinx build dependencies "
-                    "are installed for the app, and the token can write repository "
-                    "contents and manage GitHub Pages."
-                ),
-            )
-        return {
-            "status": "success",
-            "published_branch": "gh-pages",
-            "source_branch": req.branch,
-        }
+        return execute_publish_request(req).response
     except HTTPException:
         raise
     except PublishPagesError as pe:
         raise HTTPException(status_code=pe.status_code, detail=str(pe))
+    except PermissionError as pe:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
     except Exception as e:
         logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(
