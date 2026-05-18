@@ -22,6 +22,17 @@ Module Contents
 
 .. py:function:: _repo_base_dir(repo_path: str, provider: str) -> str
 
+   Constructs a base directory path for a repository.
+
+       Args:
+           repo_path (str): The path of the repository.
+           provider (str): The provider name for the repository.
+
+       Returns:
+           str: The normalized base directory path for the repository.
+
+
+
 .. py:function:: build_repo_output_dir(repo_path: str, provider: str) -> str
 
    Returns the repo-scoped output directory for the current run.
@@ -29,9 +40,54 @@ Module Contents
 
 .. py:function:: build_repo_output_file(repo_path: str, provider: str, filename: str) -> str
 
+   Constructs the full path for a repository output file.
+
+       Args:
+           repo_path (str): The path to the repository.
+           provider (str): The provider name associated with the repository.
+           filename (str): The name of the output file.
+
+       Returns:
+           str: The full path to the output file.
+
+
+
 .. py:function:: bind_repo_run_log_dir(repo_path: str, provider: str) -> str
+
+   Bind the repository run log directory based on the given repository path and provider.
+
+   :param repo_path: The path to the repository.
+   :type repo_path: str
+   :param provider: The name of the provider.
+   :type provider: str
+
+   :returns: The bound repository run log directory path.
+   :rtype: str
+
 
 .. py:function:: clear_repo_output_history(repo_path: str, provider: str) -> None
 
+   Clears the output history of a specified repository.
+
+       Args:
+           repo_path (str): The path to the repository.
+           provider (str): The provider of the repository.
+
+       Returns:
+           None: This function does not return a value.
+
+
+
 .. py:function:: find_latest_repo_run_dir(repo_path: str, provider: str) -> str | None
+
+   Retrieve the latest run directory for a specified repository.
+
+       Args:
+           repo_path (str): The path to the repository.
+           provider (str): The provider of the repository.
+
+       Returns:
+           str | None: The latest run directory path or None if not found.
+
+
 

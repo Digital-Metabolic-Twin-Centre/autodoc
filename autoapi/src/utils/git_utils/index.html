@@ -139,13 +139,13 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.git_utils._github_headers" title="src.utils.git_utils._github_headers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_github_headers</span></code></a>(→ Dict[str, str])</p></td>
-<td><p></p></td>
+<td><p>Generate headers for GitHub API requests.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.git_utils._parse_response_message" title="src.utils.git_utils._parse_response_message"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_parse_response_message</span></code></a>(→ str)</p></td>
-<td><p></p></td>
+<td><p>Parse the response message from an HTTP response.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.git_utils._raise_github_repository_access_error" title="src.utils.git_utils._raise_github_repository_access_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_raise_github_repository_access_error</span></code></a>(→ None)</p></td>
-<td><p></p></td>
+<td><p>Raises a RepositoryAccessError based on the GitHub API response for a repository access attempt.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.git_utils.extract_repo_path" title="src.utils.git_utils.extract_repo_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_repo_path</span></code></a>(→ str)</p></td>
 <td><p>Extracts the repository path from a full URL.</p></td>
@@ -175,7 +175,7 @@
 <td><p>Creates a new directory in the remote repository and adds multiple files</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.git_utils.create_a_file" title="src.utils.git_utils.create_a_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_a_file</span></code></a>(repo_url, branch, file_path, content, ...)</p></td>
-<td><p></p></td>
+<td><p>Create or update a file in a specified repository on GitHub or GitLab.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.git_utils.ensure_github_branch" title="src.utils.git_utils.ensure_github_branch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensure_github_branch</span></code></a>(→ bool)</p></td>
 <td><p>Ensures a GitHub branch exists by creating it from another branch when needed.</p></td>
@@ -244,17 +244,53 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.git_utils._github_headers">
 <span class="sig-prename descclassname"><span class="pre">src.utils.git_utils.</span></span><span class="sig-name descname"><span class="pre">_github_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'application/vnd.github+json'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#src.utils.git_utils._github_headers" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Generate headers for GitHub API requests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>token</strong> (<em>str</em>) – The authentication token for GitHub API.</p></li>
+<li><p><strong>accept</strong> (<em>str</em>) – The media type to accept (default is ‘application/vnd.github+json’).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the necessary headers for the request.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.git_utils._parse_response_message">
 <span class="sig-prename descclassname"><span class="pre">src.utils.git_utils.</span></span><span class="sig-name descname"><span class="pre">_parse_response_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.git_utils._parse_response_message" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Parse the response message from an HTTP response.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>response (Response): The HTTP response object to parse.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The parsed message or ‘Unknown error’ if not found.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.git_utils._raise_github_repository_access_error">
 <span class="sig-prename descclassname"><span class="pre">src.utils.git_utils.</span></span><span class="sig-name descname"><span class="pre">_raise_github_repository_access_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.utils.git_utils._raise_github_repository_access_error" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Raises a RepositoryAccessError based on the GitHub API response for a repository access attempt.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>response: The API response object from GitHub.
+repo_path (str): The path of the GitHub repository.
+branch (str): The branch name to check.
+path (str, optional): The specific path in the repository.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None: Raises an error if access is denied or repository is not found.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.git_utils.extract_repo_path">
@@ -443,7 +479,21 @@ to it in a single commit.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.git_utils.create_a_file">
 <span class="sig-prename descclassname"><span class="pre">src.utils.git_utils.</span></span><span class="sig-name descname"><span class="pre">create_a_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">branch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.utils.git_utils.create_a_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Create or update a file in a specified repository on GitHub or GitLab.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_url (str): The repository URL.
+branch (str): The branch name.
+file_path (str): The path of the file to create/update.
+content (str or bytes): The content to write to the file.
+token (str): The access token for authentication.
+provider (str): The service provider (‘github’ or ‘gitlab’).</p>
+</dd>
+<dt>Returns:</dt><dd><p>bool: True if the operation was successful, False otherwise.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.git_utils.ensure_github_branch">

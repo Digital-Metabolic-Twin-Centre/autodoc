@@ -121,7 +121,27 @@ Module Contents
 
 .. py:function:: _raise_publish_error(message: str, status_code: int = 403) -> None
 
+   Logs an error message and raises a PublishPagesError.
+
+       Args:
+           message (str): The error message to log and raise.
+           status_code (int, optional): The HTTP status code, defaults to 403.
+
+       Returns:
+           None: This function does not return a value.
+
+
+
 .. py:function:: _extract_autoapi_module_names(build_output: str) -> list[str]
+
+   Extracts unique module names from the given build output string.
+
+   :param build_output: The output string from the build process.
+   :type build_output: str
+
+   :returns: A list of unique module names extracted from the build output.
+   :rtype: list[str]
+
 
 .. py:function:: _extract_module_name_from_autoapi_path(autoapi_root: pathlib.Path, file_path: pathlib.Path) -> str
 
@@ -254,6 +274,9 @@ Module Contents
    :type temp_dir: str
    :param conf_py_path: The path to the Sphinx configuration file.
    :type conf_py_path: str
+   :param low_content_min_meaningful_lines: Minimum non-blank lines required
+                                            before a mirrored Python file is treated as meaningful content.
+   :type low_content_min_meaningful_lines: int
 
    :returns: The result of the Sphinx build process.
    :rtype: subprocess.CompletedProcess

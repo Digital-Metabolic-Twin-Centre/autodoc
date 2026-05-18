@@ -135,13 +135,13 @@
 <td><p>Compatibility helper retained for existing tests and callers.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.update_conf_content._format_extension_block" title="src.utils.update_conf_content._format_extension_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_format_extension_block</span></code></a>(→ str)</p></td>
-<td><p></p></td>
+<td><p>Formats a list of extensions into a string representation.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.update_conf_content._replace_extensions_block" title="src.utils.update_conf_content._replace_extensions_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_replace_extensions_block</span></code></a>(→ str)</p></td>
-<td><p></p></td>
+<td><p>Replace the 'extensions' assignment in a Python script with a merged list of required</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.update_conf_content.update_conf" title="src.utils.update_conf_content.update_conf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_conf</span></code></a>(→ None)</p></td>
-<td><p></p></td>
+<td><p>Update the configuration file by modifying its content if necessary.</p></td>
 </tr>
 </tbody>
 </table>
@@ -172,17 +172,54 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.update_conf_content._format_extension_block">
 <span class="sig-prename descclassname"><span class="pre">src.utils.update_conf_content.</span></span><span class="sig-name descname"><span class="pre">_format_extension_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">extensions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.update_conf_content._format_extension_block" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Formats a list of extensions into a string representation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>extensions</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of extension names as strings.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A formatted string representing the list of extensions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.update_conf_content._replace_extensions_block">
 <span class="sig-prename descclassname"><span class="pre">src.utils.update_conf_content.</span></span><span class="sig-name descname"><span class="pre">_replace_extensions_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.update_conf_content._replace_extensions_block" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Replace the ‘extensions’ assignment in a Python script with a merged list of required
+extensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – The input Python script as a string.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified script with updated ‘extensions’ assignment.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.update_conf_content.update_conf">
 <span class="sig-prename descclassname"><span class="pre">src.utils.update_conf_content.</span></span><span class="sig-name descname"><span class="pre">update_conf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_py</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.utils.update_conf_content.update_conf" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Update the configuration file by modifying its content if necessary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conf_py</strong> (<em>str</em>) – The path to the configuration file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>This function does not return a value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 </section>

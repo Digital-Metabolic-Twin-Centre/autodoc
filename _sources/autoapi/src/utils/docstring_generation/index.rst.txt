@@ -115,3 +115,12 @@ Module Contents
 
 .. py:function:: _strip_docstring_wrapper(docstring: str) -> str
 
+   Remove surrounding quotes from a docstring.
+
+   :param docstring: The docstring to clean.
+   :type docstring: str
+
+   :returns: The cleaned docstring without surrounding quotes.
+   :rtype: str
+
+

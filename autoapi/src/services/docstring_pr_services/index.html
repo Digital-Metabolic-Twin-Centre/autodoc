@@ -176,7 +176,7 @@
 <td><p>Runs ruff formatting/fixes on patched Python files before they are committed.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.services.docstring_pr_services._build_no_changes_response" title="src.services.docstring_pr_services._build_no_changes_response"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_build_no_changes_response</span></code></a>(→ dict)</p></td>
-<td><p></p></td>
+<td><p>Constructs a response indicating no changes between branches.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.services.docstring_pr_services.create_python_docstring_pull_request" title="src.services.docstring_pr_services.create_python_docstring_pull_request"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_python_docstring_pull_request</span></code></a>(→ dict)</p></td>
 <td><p>Creates a GitHub pull request with generated Python docstring suggestions.</p></td>
@@ -394,7 +394,18 @@ docstring or None.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="src.services.docstring_pr_services._build_no_changes_response">
 <span class="sig-prename descclassname"><span class="pre">src.services.docstring_pr_services.</span></span><span class="sig-name descname"><span class="pre">_build_no_changes_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestion_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="headerlink" href="#src.services.docstring_pr_services._build_no_changes_response" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Constructs a response indicating no changes between branches.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>base_branch (str): The name of the base branch.
+suggestion_branch (str): The name of the suggestion branch.
+reason (str): The reason for no changes.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: A dictionary containing the response details.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.services.docstring_pr_services.create_python_docstring_pull_request">

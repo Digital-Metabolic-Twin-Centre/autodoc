@@ -116,22 +116,22 @@
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.output_paths._repo_base_dir" title="src.utils.output_paths._repo_base_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_repo_base_dir</span></code></a>(→ str)</p></td>
-<td><p></p></td>
+<td><p>Constructs a base directory path for a repository.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.output_paths.build_repo_output_dir" title="src.utils.output_paths.build_repo_output_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_repo_output_dir</span></code></a>(→ str)</p></td>
 <td><p>Returns the repo-scoped output directory for the current run.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.output_paths.build_repo_output_file" title="src.utils.output_paths.build_repo_output_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_repo_output_file</span></code></a>(→ str)</p></td>
-<td><p></p></td>
+<td><p>Constructs the full path for a repository output file.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.output_paths.bind_repo_run_log_dir" title="src.utils.output_paths.bind_repo_run_log_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bind_repo_run_log_dir</span></code></a>(→ str)</p></td>
-<td><p></p></td>
+<td><p>Bind the repository run log directory based on the given repository path and provider.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.output_paths.clear_repo_output_history" title="src.utils.output_paths.clear_repo_output_history"><code class="xref py py-obj docutils literal notranslate"><span class="pre">clear_repo_output_history</span></code></a>(→ None)</p></td>
-<td><p></p></td>
+<td><p>Clears the output history of a specified repository.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#src.utils.output_paths.find_latest_repo_run_dir" title="src.utils.output_paths.find_latest_repo_run_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_latest_repo_run_dir</span></code></a>(→ str | None)</p></td>
-<td><p></p></td>
+<td><p>Retrieve the latest run directory for a specified repository.</p></td>
 </tr>
 </tbody>
 </table>
@@ -141,7 +141,17 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.output_paths._repo_base_dir">
 <span class="sig-prename descclassname"><span class="pre">src.utils.output_paths.</span></span><span class="sig-name descname"><span class="pre">_repo_base_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.output_paths._repo_base_dir" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Constructs a base directory path for a repository.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_path (str): The path of the repository.
+provider (str): The provider name for the repository.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The normalized base directory path for the repository.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.output_paths.build_repo_output_dir">
@@ -152,22 +162,68 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.output_paths.build_repo_output_file">
 <span class="sig-prename descclassname"><span class="pre">src.utils.output_paths.</span></span><span class="sig-name descname"><span class="pre">build_repo_output_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.output_paths.build_repo_output_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Constructs the full path for a repository output file.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_path (str): The path to the repository.
+provider (str): The provider name associated with the repository.
+filename (str): The name of the output file.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str: The full path to the output file.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.output_paths.bind_repo_run_log_dir">
 <span class="sig-prename descclassname"><span class="pre">src.utils.output_paths.</span></span><span class="sig-name descname"><span class="pre">bind_repo_run_log_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.output_paths.bind_repo_run_log_dir" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Bind the repository run log directory based on the given repository path and provider.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>repo_path</strong> (<em>str</em>) – The path to the repository.</p></li>
+<li><p><strong>provider</strong> (<em>str</em>) – The name of the provider.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The bound repository run log directory path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.output_paths.clear_repo_output_history">
 <span class="sig-prename descclassname"><span class="pre">src.utils.output_paths.</span></span><span class="sig-name descname"><span class="pre">clear_repo_output_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#src.utils.output_paths.clear_repo_output_history" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Clears the output history of a specified repository.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_path (str): The path to the repository.
+provider (str): The provider of the repository.</p>
+</dd>
+<dt>Returns:</dt><dd><p>None: This function does not return a value.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.output_paths.find_latest_repo_run_dir">
 <span class="sig-prename descclassname"><span class="pre">src.utils.output_paths.</span></span><span class="sig-name descname"><span class="pre">find_latest_repo_run_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#src.utils.output_paths.find_latest_repo_run_dir" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Retrieve the latest run directory for a specified repository.</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Args:</dt><dd><p>repo_path (str): The path to the repository.
+provider (str): The provider of the repository.</p>
+</dd>
+<dt>Returns:</dt><dd><p>str | None: The latest run directory path or None if not found.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
 
 </section>
 </section>

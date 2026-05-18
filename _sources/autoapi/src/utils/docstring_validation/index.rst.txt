@@ -30,7 +30,36 @@ Module Contents
 
 .. py:function:: _suggestion_key(file_path: str, function_name: str, block_type: str, line_number: int, language: str | None)
 
+   Generate a unique suggestion key based on provided parameters.
+
+       Args:
+           file_path (str): The path to the file.
+           function_name (str): The name of the function.
+           block_type (str): The type of code block.
+           line_number (int): The line number in the file.
+           language (str | None): The programming language, or None if unspecified.
+
+       Returns:
+           tuple: A tuple containing the suggestion key components.
+
+
+
 .. py:function:: _suggestion_fuzzy_key(file_path: str, function_name: str, block_type: str, language: str | None)
+
+   Generate a tuple containing file path, function name, block type, and language.
+
+   :param file_path: The path to the file.
+   :type file_path: str
+   :param function_name: The name of the function.
+   :type function_name: str
+   :param block_type: The type of block.
+   :type block_type: str
+   :param language: The programming language, or None if unspecified.
+   :type language: str | None
+
+   :returns: A tuple with the provided parameters.
+   :rtype: tuple
+
 
 .. py:function:: analyse_docstring_in_blocks(code_blocks: list, file_name: str = 'unknown', file_path: str = 'unknown', language: str | None = None, suggested_file: str | None = None, model: str | None = None, existing_suggestions: dict | None = None) -> dict
 

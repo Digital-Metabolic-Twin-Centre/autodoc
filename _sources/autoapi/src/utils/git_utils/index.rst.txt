@@ -84,9 +84,43 @@ Module Contents
 
 .. py:function:: _github_headers(token: str, accept: str = 'application/vnd.github+json') -> Dict[str, str]
 
+   Generate headers for GitHub API requests.
+
+   :param token: The authentication token for GitHub API.
+   :type token: str
+   :param accept: The media type to accept (default is 'application/vnd.github+json').
+   :type accept: str
+
+   :returns: A dictionary containing the necessary headers for the request.
+   :rtype: Dict[str, str]
+
+
 .. py:function:: _parse_response_message(response) -> str
 
+   Parse the response message from an HTTP response.
+
+       Args:
+           response (Response): The HTTP response object to parse.
+
+       Returns:
+           str: The parsed message or 'Unknown error' if not found.
+
+
+
 .. py:function:: _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = '') -> None
+
+   Raises a RepositoryAccessError based on the GitHub API response for a repository access attempt.
+
+       Args:
+           response: The API response object from GitHub.
+           repo_path (str): The path of the GitHub repository.
+           branch (str): The branch name to check.
+           path (str, optional): The specific path in the repository.
+
+       Returns:
+           None: Raises an error if access is denied or repository is not found.
+
+
 
 .. py:function:: extract_repo_path(repo_url: str, provider: str = 'github') -> str
 
@@ -227,6 +261,21 @@ Module Contents
 
 
 .. py:function:: create_a_file(repo_url, branch, file_path, content, token, provider)
+
+   Create or update a file in a specified repository on GitHub or GitLab.
+
+       Args:
+           repo_url (str): The repository URL.
+           branch (str): The branch name.
+           file_path (str): The path of the file to create/update.
+           content (str or bytes): The content to write to the file.
+           token (str): The access token for authentication.
+           provider (str): The service provider ('github' or 'gitlab').
+
+       Returns:
+           bool: True if the operation was successful, False otherwise.
+
+
 
 .. py:function:: ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, token: str) -> bool
 

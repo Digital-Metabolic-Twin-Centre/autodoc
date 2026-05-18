@@ -217,6 +217,18 @@ Module Contents
 
 .. py:function:: _build_no_changes_response(base_branch: str, suggestion_branch: str, reason: str) -> dict
 
+   Constructs a response indicating no changes between branches.
+
+       Args:
+           base_branch (str): The name of the base branch.
+           suggestion_branch (str): The name of the suggestion branch.
+           reason (str): The reason for no changes.
+
+       Returns:
+           dict: A dictionary containing the response details.
+
+
+
 .. py:function:: create_python_docstring_pull_request(provider: str, repo_url: str, token: str, base_branch: str, suggestion_branch: str, title: str, max_docstrings: int = 50) -> dict
 
    Creates a GitHub pull request with generated Python docstring suggestions.

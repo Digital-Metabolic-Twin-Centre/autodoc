@@ -47,7 +47,35 @@ Module Contents
 
 .. py:function:: _format_extension_block(extensions: list[str]) -> str
 
+   Formats a list of extensions into a string representation.
+
+   :param extensions: A list of extension names as strings.
+   :type extensions: list[str]
+
+   :returns: A formatted string representing the list of extensions.
+   :rtype: str
+
+
 .. py:function:: _replace_extensions_block(text: str) -> str
 
+   Replace the 'extensions' assignment in a Python script with a merged list of required
+   extensions.
+
+   :param text: The input Python script as a string.
+   :type text: str
+
+   :returns: The modified script with updated 'extensions' assignment.
+   :rtype: str
+
+
 .. py:function:: update_conf(conf_py: str) -> None
+
+   Update the configuration file by modifying its content if necessary.
+
+   :param conf_py: The path to the configuration file.
+   :type conf_py: str
+
+   :returns: This function does not return a value.
+   :rtype: None
+
 
