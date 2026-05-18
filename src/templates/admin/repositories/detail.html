@@ -1,0 +1,141 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ repository.name }} | Auto Doc Admin{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-[0.18em] text-teal-600 dark:text-teal-300">{{ repository.provider|upper }}</p>
+        <h2 class="mt-2 text-2xl font-semibold">{{ repository.name }}</h2>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ repository.repo_url }}</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="/admin/repositories/{{ repository.id }}/edit" class="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700">Edit config</a>
+        <a href="/admin/runs?repository_id={{ repository.id }}" class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">View runs</a>
+      </div>
+    </div>
+    <dl class="mt-5 grid gap-4 md:grid-cols-4">
+      <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <dt class="text-sm text-slate-500 dark:text-slate-400">Default branch</dt>
+        <dd class="mt-2 font-medium">{{ repository.default_branch }}</dd>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <dt class="text-sm text-slate-500 dark:text-slate-400">Model</dt>
+        <dd class="mt-2 font-medium">{{ repository.preferred_model }}</dd>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <dt class="text-sm text-slate-500 dark:text-slate-400">Reuse suggestions</dt>
+        <dd class="mt-2 font-medium">{{ 'Enabled' if repository.reuse_doc else 'Disabled' }}</dd>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <dt class="text-sm text-slate-500 dark:text-slate-400">Token stored</dt>
+        <dd class="mt-2 font-medium">••••{{ repository.token_last4 }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-3">
+    <form method="post" action="/admin/repositories/{{ repository.id }}/generate" class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <h3 class="text-lg font-semibold">Generate docs</h3>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Trigger the existing `/generate` workflow from saved configuration.</p>
+      <div class="mt-5 space-y-4">
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Branch</span>
+          <input name="branch" value="{{ repository.default_branch }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Target folders</span>
+          <textarea name="target_folders" rows="3" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800">{{ repository.target_folders|join(', ') }}</textarea>
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Model</span>
+          <input name="preferred_model" value="{{ repository.preferred_model }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <label class="block text-sm">
+            <span class="mb-2 block font-medium">Threshold</span>
+            <input type="number" step="0.05" min="0" max="1" name="docstring_threshold" value="{{ repository.docstring_threshold }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+          </label>
+          <label class="block text-sm">
+            <span class="mb-2 block font-medium">Low content lines</span>
+            <input type="number" min="0" name="low_content_min_lines" value="{{ repository.low_content_min_lines }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+          </label>
+        </div>
+        <label class="flex items-center gap-3 text-sm">
+          <input type="checkbox" name="reuse_doc" value="true" {% if repository.reuse_doc %}checked{% endif %} class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600 dark:border-slate-700" />
+          <span>Reuse cached suggestions</span>
+        </label>
+      </div>
+      <button class="mt-5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">Start generate run</button>
+    </form>
+
+    <form method="post" action="/admin/repositories/{{ repository.id }}/publish" class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <h3 class="text-lg font-semibold">Publish workflow</h3>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Trigger `/publish-pages` and store the result in run history.</p>
+      <div class="mt-5 space-y-4">
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Source branch</span>
+          <input name="branch" value="{{ repository.default_branch }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Low content min lines</span>
+          <input type="number" min="0" name="low_content_min_lines" value="{{ repository.low_content_min_lines }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+      </div>
+      <button class="mt-5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900">Start publish run</button>
+    </form>
+
+    <form method="post" action="/admin/repositories/{{ repository.id }}/suggest-pr" class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <h3 class="text-lg font-semibold">Docstring suggestion PR</h3>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Create a suggestion branch and trigger `/suggest-python-docstrings-pr`.</p>
+      <div class="mt-5 space-y-4">
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Base branch</span>
+          <input name="base_branch" value="{{ repository.default_branch }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Suggestion branch</span>
+          <input name="suggestion_branch" value="" placeholder="autodocs-docstring-suggestions-..." class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">PR title</span>
+          <input name="title" value="Add suggested docstrings" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Max docstrings</span>
+          <input type="number" min="1" name="max_docstrings" value="50" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+      </div>
+      <button class="mt-5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white">Start PR run</button>
+    </form>
+  </section>
+
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">Recent runs</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Latest activity for this repository.</p>
+      </div>
+      <a href="/admin/runs?repository_id={{ repository.id }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700">Full history</a>
+    </div>
+    <div class="mt-4 space-y-3">
+      {% for run in recent_runs %}
+      <a href="/admin/runs/{{ run.id }}" class="block rounded-xl border border-slate-200 p-4 hover:border-teal-500 dark:border-slate-800 dark:hover:border-teal-400">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="font-medium">{{ endpoint_labels.get(run.endpoint, run.endpoint) }}</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ run.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+          </div>
+          <span class="rounded-full px-3 py-1 text-xs font-medium {% if run.status == 'completed' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200{% elif run.status == 'failed' %}bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200{% else %}bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200{% endif %}">{{ run.status }}</span>
+        </div>
+      </a>
+      {% else %}
+      <div class="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">No runs recorded for this repository yet.</div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

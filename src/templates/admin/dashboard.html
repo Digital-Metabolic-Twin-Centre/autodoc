@@ -1,0 +1,86 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard | Auto Doc Admin{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-teal-600 dark:text-teal-300">Overview</p>
+        <h2 class="mt-2 text-2xl font-semibold">Operational workflow dashboard</h2>
+        <p class="mt-2 max-w-3xl text-sm text-slate-500 dark:text-slate-400">Run generation, publish reviewed docs,
+          track failures, and inspect artifacts without leaving the service. Persistence is handled with a lightweight
+          SQLite admin store.</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a href="/admin/repositories" class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">Manage
+          repositories</a>
+        <a href="/admin/runs"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium dark:border-slate-700">View runs</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <p class="text-sm text-slate-500 dark:text-slate-400">Total repositories</p>
+      <p class="mt-3 text-3xl font-semibold">{{ stats.total_repositories }}</p>
+    </div>
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <p class="text-sm text-slate-500 dark:text-slate-400">Total runs</p>
+      <p class="mt-3 text-3xl font-semibold">{{ stats.total_runs }}</p>
+    </div>
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <p class="text-sm text-slate-500 dark:text-slate-400">Successful runs</p>
+      <p class="mt-3 text-3xl font-semibold text-emerald-600 dark:text-emerald-300">{{ stats.successful_runs }}</p>
+    </div>
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <p class="text-sm text-slate-500 dark:text-slate-400">Failed runs</p>
+      <p class="mt-3 text-3xl font-semibold text-rose-600 dark:text-rose-300">{{ stats.failed_runs }}</p>
+    </div>
+  </section>
+
+  <section class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]">
+    <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">Recent activity</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Live feed of the latest workflow runs.</p>
+        </div>
+        <button class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+          hx-get="/admin/activity" hx-target="#activity-feed" hx-swap="outerHTML">
+          Refresh
+        </button>
+      </div>
+      <div id="activity-feed" class="mt-4">
+        {% include "admin/partials/activity_feed.html" %}
+      </div>
+    </div>
+
+    <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <h3 class="text-lg font-semibold">Quick action targets</h3>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Jump into saved repository configurations.</p>
+      <div class="mt-4 space-y-3">
+        {% for repository in repositories[:6] %}
+        <a href="/admin/repositories/{{ repository.id }}"
+          class="block rounded-xl border border-slate-200 p-4 hover:border-teal-500 dark:border-slate-800 dark:hover:border-teal-400">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="font-medium">{{ repository.name }}</p>
+              <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ repository.provider|upper }} · {{
+                repository.repo_path }}</p>
+            </div>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs dark:bg-shell-800">{{ repository.default_branch
+              }}</span>
+          </div>
+        </a>
+        {% else %}
+        <div
+          class="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          No repository configurations yet.
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

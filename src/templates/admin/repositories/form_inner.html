@@ -1,0 +1,73 @@
+<div>
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-semibold">{% if repository %}Edit repository{% else %}Create repository{% endif %}</h2>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Tokens are encrypted at rest and only reused server-side for workflow runs.</p>
+    </div>
+    {% if repository %}
+    <a href="/admin/repositories/{{ repository.id }}" class="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700">Back</a>
+    {% endif %}
+  </div>
+
+  <form method="post" action="{% if repository %}/admin/repositories/{{ repository.id }}{% else %}/admin/repositories{% endif %}" class="mt-6 space-y-5">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="grid gap-5 md:grid-cols-2">
+      <label class="block text-sm">
+        <span class="mb-2 block font-medium">Display name</span>
+        <input name="name" required value="{{ repository.name if repository else '' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-2 block font-medium">Provider</span>
+        <select name="provider" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800">
+          <option value="github" {% if repository and repository.provider == 'github' %}selected{% endif %}>GitHub</option>
+          <option value="gitlab" {% if repository and repository.provider == 'gitlab' %}selected{% endif %}>GitLab</option>
+        </select>
+      </label>
+      <label class="block text-sm md:col-span-2">
+        <span class="mb-2 block font-medium">Repository URL or owner/repo</span>
+        <input name="repo_url" required value="{{ repository.repo_url if repository else '' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-2 block font-medium">Default branch</span>
+        <input name="default_branch" required value="{{ repository.default_branch if repository else 'main' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-2 block font-medium">Preferred OpenAI model</span>
+        <input name="preferred_model" value="{{ repository.preferred_model if repository else 'gpt-4o-mini' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+      </label>
+      <label class="block text-sm md:col-span-2">
+        <span class="mb-2 block font-medium">Target folders</span>
+        <textarea name="target_folders" rows="3" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800">{{ repository.target_folders|join(', ') if repository else '' }}</textarea>
+        <span class="mt-2 block text-xs text-slate-500 dark:text-slate-400">Comma or newline separated. Leave blank to analyze the whole repository.</span>
+      </label>
+      <label class="block text-sm">
+        <span class="mb-2 block font-medium">Docstring threshold</span>
+        <input type="number" step="0.05" min="0" max="1" name="docstring_threshold" value="{{ repository.docstring_threshold if repository else '0.5' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+      </label>
+      <label class="block text-sm">
+        <span class="mb-2 block font-medium">Low content min lines</span>
+        <input type="number" min="0" name="low_content_min_lines" value="{{ repository.low_content_min_lines if repository else '4' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+      </label>
+      <label class="block text-sm md:col-span-2">
+        <span class="mb-2 block font-medium">{% if repository %}Replace access token{% else %}Access token{% endif %}</span>
+        <input type="password" name="token" {% if not repository %}required{% endif %} class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        {% if repository %}
+        <span class="mt-2 block text-xs text-slate-500 dark:text-slate-400">Stored token ends in {{ repository.token_last4 }}. Leave this empty to keep the existing token.</span>
+        {% endif %}
+      </label>
+    </div>
+    <label class="flex items-center gap-3 text-sm">
+      <input type="checkbox" name="reuse_doc" value="true" {% if repository and repository.reuse_doc %}checked{% endif %} class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600 dark:border-slate-700" />
+      <span>Reuse stored docstring suggestions for future generate runs</span>
+    </label>
+    <div class="flex gap-3">
+      <button class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">{% if repository %}Save changes{% else %}Create repository{% endif %}</button>
+    </div>
+  </form>
+  {% if repository %}
+  <form method="post" action="/admin/repositories/{{ repository.id }}/delete" class="mt-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-700 dark:border-rose-500/40 dark:text-rose-200">Delete</button>
+  </form>
+  {% endif %}
+</div>

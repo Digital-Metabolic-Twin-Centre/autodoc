@@ -1,0 +1,51 @@
+{% extends "admin/base.html" %}
+{% block title %}Repositories | Auto Doc Admin{% endblock %}
+{% block content %}
+<div class="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(380px,1fr)]">
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-semibold">Repository configurations</h2>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Saved defaults for repeatable generate, publish, and docstring PR workflows.</p>
+      </div>
+      <a href="/admin/repositories/new" class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">New config</a>
+    </div>
+    <div class="mt-5 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+      <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
+        <thead class="bg-slate-50 dark:bg-shell-800">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium">Name</th>
+            <th class="px-4 py-3 text-left font-medium">Repository</th>
+            <th class="px-4 py-3 text-left font-medium">Defaults</th>
+            <th class="px-4 py-3 text-left font-medium">Token</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          {% for repository in repositories %}
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-shell-800/60">
+            <td class="px-4 py-4"><a href="/admin/repositories/{{ repository.id }}" class="font-medium text-teal-600 dark:text-teal-300">{{ repository.name }}</a></td>
+            <td class="px-4 py-4">
+              <div>{{ repository.provider|upper }}</div>
+              <div class="text-slate-500 dark:text-slate-400">{{ repository.repo_path }}</div>
+            </td>
+            <td class="px-4 py-4">
+              <div>{{ repository.default_branch }}</div>
+              <div class="text-slate-500 dark:text-slate-400">{{ repository.preferred_model or 'default model' }}</div>
+            </td>
+            <td class="px-4 py-4 text-slate-500 dark:text-slate-400">••••{{ repository.token_last4 }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="px-4 py-8 text-center text-slate-500 dark:text-slate-400">No repositories configured yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+    {% include "admin/repositories/form_inner.html" %}
+  </section>
+</div>
+{% endblock %}

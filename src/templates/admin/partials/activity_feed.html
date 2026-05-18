@@ -1,0 +1,23 @@
+<div id="activity-feed" class="space-y-3">
+  {% for run in recent_runs %}
+  <a href="/admin/runs/{{ run.id }}" class="block rounded-xl border border-slate-200 p-4 hover:border-teal-500 dark:border-slate-800 dark:hover:border-teal-400">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="font-medium">{{ endpoint_labels.get(run.endpoint, run.endpoint) }}</p>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {% if run.repository %}{{ run.repository.name }}{% else %}Manual run{% endif %}
+          · {{ run.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="rounded-full px-3 py-1 text-xs font-medium {% if run.status == 'completed' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200{% elif run.status == 'failed' %}bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200{% else %}bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200{% endif %}">{{ run.status }}</span>
+        <span class="text-sm text-slate-500 dark:text-slate-400">{{ run.duration_seconds|duration }}</span>
+      </div>
+    </div>
+  </a>
+  {% else %}
+  <div class="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+    No runs recorded yet.
+  </div>
+  {% endfor %}
+</div>
