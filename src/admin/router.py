@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, Res
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 
 from admin.database import SessionLocal
 from admin.jobs import enqueue_run
@@ -657,7 +658,8 @@ async def run_detail(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        run = session.get(RunRecord, run_id)
+        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
     context = {
