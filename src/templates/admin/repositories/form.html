@@ -1,0 +1,7 @@
+{% extends "admin/base.html" %}
+{% block title %}{% if repository %}Edit {{ repository.name }}{% else %}New Repository{% endif %} | Auto Doc Admin{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-4xl rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+  {% include "admin/repositories/form_inner.html" %}
+</section>
+{% endblock %}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title or "Admin Sign In" }} | Auto Doc</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            shell: {
+              950: '#07111f',
+              900: '#0f1c2f',
+              800: '#1a2b42',
+            }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-full bg-slate-950 text-slate-100">
+  <main class="relative isolate min-h-screen overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.18),_transparent_26%),linear-gradient(180deg,_#020617_0%,_#0f172a_48%,_#111827_100%)]"></div>
+    <div class="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:36px_36px]"></div>
+
+    <div class="relative mx-auto flex min-h-screen max-w-6xl items-center px-6 py-12">
+      <div class="grid w-full gap-10 lg:grid-cols-[minmax(0,1.15fr)_420px]">
+        <section class="flex flex-col justify-center">
+          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-teal-300">Internal Admin</p>
+          <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-5xl">Auto Doc operational control surface</h1>
+          <p class="mt-5 max-w-2xl text-base leading-7 text-slate-300">A lightweight engineering dashboard for repository configuration, generation runs, publish workflows, and artifact inspection. The admin store uses <span class="font-medium text-white">{{ database_label }}</span>.</p>
+
+          <div class="mt-8 grid gap-4 sm:grid-cols-3">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Backend</p>
+              <p class="mt-2 font-medium text-white">FastAPI + HTMX</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Auth</p>
+              <p class="mt-2 font-medium text-white">Environment-managed admin credentials</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Data</p>
+              <p class="mt-2 font-medium text-white">SQLite-backed run history</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-[28px] border border-white/10 bg-white/10 p-7 shadow-2xl shadow-black/30 backdrop-blur-xl">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-medium uppercase tracking-[0.18em] text-teal-300">Sign In</p>
+              <h2 class="mt-2 text-2xl font-semibold text-white">Admin access</h2>
+              <p class="mt-2 text-sm text-slate-300">Use the admin credentials configured in the environment for this service.</p>
+            </div>
+            <a href="/docs" class="rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-200 hover:border-teal-300 hover:text-white">API docs</a>
+          </div>
+
+          {% if error_message %}
+          <div class="mt-5 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+            {{ error_message }}
+          </div>
+          {% endif %}
+
+          <form method="post" action="/admin/login" class="mt-6 space-y-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <label class="block text-sm">
+              <span class="mb-2 block font-medium text-slate-200">Username</span>
+              <input name="username" autocomplete="username" required class="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white placeholder:text-slate-500 focus:border-teal-300 focus:outline-none" placeholder="admin" />
+            </label>
+            <label class="block text-sm">
+              <span class="mb-2 block font-medium text-slate-200">Password</span>
+              <input type="password" name="password" autocomplete="current-password" required class="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 text-white placeholder:text-slate-500 focus:border-teal-300 focus:outline-none" placeholder="Enter admin password" />
+            </label>
+            <button class="w-full rounded-xl bg-teal-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-teal-300">Open admin dashboard</button>
+          </form>
+
+          <div class="mt-6 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+            <p class="font-medium text-white">Operational note</p>
+            <p class="mt-2">Repository tokens are encrypted at rest. The admin UI never re-displays raw tokens after they are saved.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
