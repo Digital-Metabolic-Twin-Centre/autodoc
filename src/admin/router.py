@@ -305,7 +305,7 @@ def _dashboard_context() -> dict[str, Any]:
             select(func.count(RunRecord.id)).where(RunRecord.status == "failed")
         ) or 0
         recent_runs = session.scalars(
-            select(RunRecord).order_by(RunRecord.created_at.desc()).limit(MAX_ACTIVITY_ITEMS)
+            select(RunRecord).order_by(RunRecord.created_at.desc()).options(selectinload(RunRecord.repository)).limit(MAX_ACTIVITY_ITEMS)
         ).all()
         repositories = session.scalars(
             select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())
@@ -637,7 +637,7 @@ async def runs_page(
 ) -> Response:
     with SessionLocal() as session:
         repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.name.asc())).all()
-        query = select(RunRecord).order_by(RunRecord.created_at.desc())
+        query = select(RunRecord).order_by(RunRecord.created_at.desc()).options(selectinload(RunRecord.repository))
         if repository_id:
             query = query.where(RunRecord.repository_id == repository_id)
         runs = session.scalars(query.limit(100)).all()
@@ -679,7 +679,8 @@ async def run_status_fragment(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        run = session.get(RunRecord, run_id)
+        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
     context = {
@@ -698,7 +699,8 @@ async def retry_run(
     _: None = Depends(verify_csrf),
 ) -> Response:
     with SessionLocal() as session:
-        run = session.get(RunRecord, run_id)
+        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
         payload = _json_loads(run.request_payload)
@@ -729,7 +731,8 @@ async def download_artifact(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        run = session.get(RunRecord, run_id)
+        stmt = select(RunRecord).where(RunRecord.id == run_id)
+        run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
     artifact_dir = Path(run.artifact_dir or "")
