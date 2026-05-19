@@ -40,7 +40,9 @@ def test_load_reusable_suggestions_returns_empty_cache_shape_when_no_runs(monkey
     assert suggestions == {"exact": {}, "fuzzy": {}}
 
 
-def test_load_reusable_suggestions_reads_latest_matching_run(monkeypatch, tmp_path):
+def test_load_reusable_suggestions_reads_matching_run_even_if_latest_branch_differs(
+    monkeypatch, tmp_path
+):
     monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
     repo_dir = tmp_path / "github" / "octo-org__example-repo"
     old_run = repo_dir / "app_20260428_100000"
@@ -75,3 +77,67 @@ def test_load_reusable_suggestions_reads_latest_matching_run(monkeypatch, tmp_pa
 
     assert suggestions["exact"][("src/job_views.py", "build_job", "function", 12, "python")] == "Build a job."
     assert suggestions["fuzzy"][("src/job_views.py", "build_job", "function", "python")] == "Build a job."
+
+
+def test_load_reusable_suggestions_merges_partial_runs_for_same_branch(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
+    repo_dir = tmp_path / "github" / "octo-org__example-repo"
+    older_run = repo_dir / "app_20260428_100000"
+    newer_run = repo_dir / "app_20260428_110000"
+    older_run.mkdir(parents=True)
+    newer_run.mkdir(parents=True)
+    (older_run / "suggested_docstrings.json").write_text(
+        json.dumps(
+            {
+                "repo_path": "octo-org/example-repo",
+                "branch": "main",
+                "suggestions": [
+                    {
+                        "file_path": "src/job_views.py",
+                        "function_name": "build_job",
+                        "block_type": "function",
+                        "line_number": 12,
+                        "language": "python",
+                        "generated_docstring": "Build a job.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (newer_run / "suggested_docstrings.json").write_text(
+        json.dumps(
+            {
+                "repo_path": "octo-org/example-repo",
+                "branch": "main",
+                "suggestions": [
+                    {
+                        "file_path": "src/publish.py",
+                        "function_name": "publish_docs",
+                        "block_type": "function",
+                        "line_number": 22,
+                        "language": "python",
+                        "generated_docstring": "Publish the docs.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    suggestions = _load_reusable_suggestions("octo-org/example-repo", "github", "main")
+
+    assert suggestions["exact"][
+        ("src/job_views.py", "build_job", "function", 12, "python")
+    ] == "Build a job."
+    assert suggestions["exact"][
+        ("src/publish.py", "publish_docs", "function", 22, "python")
+    ] == "Publish the docs."
+    assert suggestions["fuzzy"][
+        ("src/job_views.py", "build_job", "function", "python")
+    ] == "Build a job."
+    assert suggestions["fuzzy"][
+        ("src/publish.py", "publish_docs", "function", "python")
+    ] == "Publish the docs."
