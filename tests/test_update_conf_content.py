@@ -21,10 +21,7 @@ def test_update_conf_adds_autoapi_and_napoleon_extensions(tmp_path):
 def test_update_conf_preserves_valid_python_for_multiline_extensions(tmp_path):
     conf_path = tmp_path / "conf.py"
     conf_path.write_text(
-        "extensions = [\n"
-        "    'sphinx.ext.autodoc',\n"
-        "]\n"
-        "project = 'Example'\n",
+        "extensions = [\n    'sphinx.ext.autodoc',\n]\nproject = 'Example'\n",
         encoding="utf-8",
     )
 

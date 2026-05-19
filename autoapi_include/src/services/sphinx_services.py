@@ -473,10 +473,7 @@ def _extract_autoapi_module_names(build_output: str) -> list[str]:
     """
     module_names = re.findall(r"module '([^']+)'", build_output or "")
     module_names.extend(
-        match.replace("/", ".")
-        for match in re.findall(
-            r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or ""
-        )
+        match.replace("/", ".") for match in re.findall(r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or "")
     )
     unique_module_names = []
     seen = set()
@@ -549,20 +546,14 @@ def _classify_autoapi_file(
     except SyntaxError:
         return False, "syntax-error"
 
-    if any(
-        isinstance(node, ImportFrom) and any(alias.name == "*" for alias in node.names)
-        for node in parsed.body
-    ):
+    if any(isinstance(node, ImportFrom) and any(alias.name == "*" for alias in node.names) for node in parsed.body):
         return False, "import-star"
 
     meaningful_lines = [line for line in file_text.splitlines() if line.strip()]
     if len(meaningful_lines) < low_content_min_meaningful_lines:
         return False, "low-content"
 
-    has_public_shape = any(
-        isinstance(node, (FunctionDef, AsyncFunctionDef, ClassDef))
-        for node in parsed.body
-    )
+    has_public_shape = any(isinstance(node, (FunctionDef, AsyncFunctionDef, ClassDef)) for node in parsed.body)
     if not has_public_shape:
         return False, "non-meaningful-module"
 
@@ -589,9 +580,7 @@ def _find_autoapi_skip_candidates(temp_dir: str, module_name: str) -> list[Path]
         autoapi_root / f"{normalized_module_path}.py",
         autoapi_root / normalized_module_path / "__init__.py",
     ]
-    existing_path_candidates = [
-        candidate for candidate in path_candidates if candidate.exists()
-    ]
+    existing_path_candidates = [candidate for candidate in path_candidates if candidate.exists()]
     if existing_path_candidates:
         return existing_path_candidates
     module_leaf = module_name.split(".")[-1]
@@ -644,9 +633,7 @@ def _collect_prebuild_autoapi_ignores(
     return ignore_patterns, skipped_files
 
 
-def _module_names_to_ignore_patterns(
-    temp_dir: str, module_names: list[str]
-) -> tuple[list[str], list[dict[str, str]]]:
+def _module_names_to_ignore_patterns(temp_dir: str, module_names: list[str]) -> tuple[list[str], list[dict[str, str]]]:
     """
     Generates ignore patterns and skipped file information for specified modules.
 
@@ -693,9 +680,7 @@ def _format_python_list(values: list[str]) -> str:
     return "[\n" + "".join(f"    {value!r},\n" for value in values) + "]"
 
 
-def _apply_autoapi_runtime_settings(
-    conf_py_path: str, ignore_patterns: list[str]
-) -> None:
+def _apply_autoapi_runtime_settings(conf_py_path: str, ignore_patterns: list[str]) -> None:
     """
     Applies runtime settings for autoapi configuration in a specified file.
 
@@ -811,18 +796,10 @@ def _run_sphinx_build_with_autoapi_filters(
         _write_skipped_autoapi_report(skipped_files)
         return build_result
 
-    build_output = "\n".join(
-        part
-        for part in [build_result.stderr.strip(), build_result.stdout.strip()]
-        if part
-    )
+    build_output = "\n".join(part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part)
     failed_modules = _extract_autoapi_module_names(build_output)
-    fallback_ignore_patterns, fallback_skipped = _module_names_to_ignore_patterns(
-        temp_dir, failed_modules
-    )
-    new_fallback_ignores = sorted(
-        set(fallback_ignore_patterns) - set(active_ignore_patterns)
-    )
+    fallback_ignore_patterns, fallback_skipped = _module_names_to_ignore_patterns(temp_dir, failed_modules)
+    new_fallback_ignores = sorted(set(fallback_ignore_patterns) - set(active_ignore_patterns))
     if not new_fallback_ignores:
         _write_skipped_autoapi_report(skipped_files)
         return build_result
@@ -830,8 +807,7 @@ def _run_sphinx_build_with_autoapi_filters(
     skipped_files.extend(
         item
         for item in fallback_skipped
-        if _to_autoapi_ignore_pattern(item["file"].replace(f"{AUTOAPI_DIRECTORY}/", ""))
-        in new_fallback_ignores
+        if _to_autoapi_ignore_pattern(item["file"].replace(f"{AUTOAPI_DIRECTORY}/", "")) in new_fallback_ignores
     )
     active_ignore_patterns.extend(new_fallback_ignores)
     logger.warning(
@@ -882,9 +858,7 @@ def _load_sample_text(relative_path: str) -> str:
     if fallback_text is not None:
         return fallback_text
 
-    raise FileNotFoundError(
-        f"Missing sample template for {relative_path}: {sample_path}"
-    )
+    raise FileNotFoundError(f"Missing sample template for {relative_path}: {sample_path}")
 
 
 def _build_sample_conf(project_name: str) -> str:
@@ -905,10 +879,7 @@ def _build_sample_conf(project_name: str) -> str:
         conf_text,
         count=1,
     )
-    if (
-        '"autoapi.extension"' not in conf_text
-        and "'autoapi.extension'" not in conf_text
-    ):
+    if '"autoapi.extension"' not in conf_text and "'autoapi.extension'" not in conf_text:
         conf_text = conf_text.replace(
             '"sphinx.ext.napoleon",',
             '"sphinx.ext.napoleon",\n    "autoapi.extension",',
@@ -921,11 +892,7 @@ def _build_sample_conf(project_name: str) -> str:
         "autoapi_add_toctree_entry = False",
     ]
     if not all(addition in conf_text for addition in additions):
-        conf_text += (
-            "\n\n"
-            + "\n".join(addition for addition in additions if addition not in conf_text)
-            + "\n"
-        )
+        conf_text += "\n\n" + "\n".join(addition for addition in additions if addition not in conf_text) + "\n"
     return conf_text
 
 
@@ -951,9 +918,7 @@ def _load_sample_binary(relative_path: str) -> bytes:
     if asset_path.exists():
         return asset_path.read_bytes()
 
-    raise FileNotFoundError(
-        f"Missing sample binary asset for {relative_path}: {sample_path}"
-    )
+    raise FileNotFoundError(f"Missing sample binary asset for {relative_path}: {sample_path}")
 
 
 def _build_sample_index(project_name: str) -> str:
@@ -975,12 +940,7 @@ def _build_sample_index(project_name: str) -> str:
     index_text = "\n".join(lines).rstrip() + "\n"
     if "api_reference" not in index_text:
         index_text += (
-            "\n.. toctree::\n"
-            "   :hidden:\n"
-            "   :maxdepth: 1\n"
-            "   :caption: Reference\n\n"
-            "   api_reference\n"
-            "   README\n"
+            "\n.. toctree::\n   :hidden:\n   :maxdepth: 1\n   :caption: Reference\n\n   api_reference\n   README\n"
         )
     return index_text
 
@@ -1081,14 +1041,10 @@ def _sample_docs_files(project_name: str) -> dict[str, str]:
         f"{DOCS_SRC}/api_reference.rst": _build_sample_api_reference(),
         f"{DOCS_SRC}/README.rst": _build_sample_readme(),
         f"{DOCS_SRC}/project/overview.rst": _build_sample_overview(project_name),
-        f"{DOCS_SRC}/project/objectives.rst": _load_sample_text(
-            "project/objectives.rst"
-        ),
+        f"{DOCS_SRC}/project/objectives.rst": _load_sample_text("project/objectives.rst"),
         f"{DOCS_SRC}/project/plan.rst": _load_sample_text("project/plan.rst"),
         f"{DOCS_SRC}/project/results.rst": _load_sample_text("project/results.rst"),
-        f"{DOCS_SRC}/_static/custom-wide.css": _load_sample_text(
-            "_static/custom-wide.css"
-        ),
+        f"{DOCS_SRC}/_static/custom-wide.css": _load_sample_text("_static/custom-wide.css"),
     }
 
 
@@ -1102,9 +1058,7 @@ def _sample_docs_binary_files() -> dict[str, bytes]:
     """
     return {
         f"{DOCS_SRC}/_static/img/logo.png": _load_sample_binary("_static/img/logo.png"),
-        f"{DOCS_SRC}/_static/img/favicon.ico": _load_sample_binary(
-            "_static/img/favicon.ico"
-        ),
+        f"{DOCS_SRC}/_static/img/favicon.ico": _load_sample_binary("_static/img/favicon.ico"),
     }
 
 
@@ -1148,9 +1102,7 @@ def _remote_text_file_exists(
     file_path_encoded = quote_plus(file_path)
     return (
         requests.get(
-            (
-                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"
-            ),
+            (f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"),
             headers={"PRIVATE-TOKEN": token},
             params={"ref": branch},
             timeout=10,
@@ -1352,11 +1304,7 @@ def create_sphinx_setup(
             files_with_high_coverage.append(file_path)
 
     analyzed_python_files = sorted(
-        {
-            str(file_path)
-            for file_path in df["file_path"].dropna().tolist()
-            if str(file_path).endswith((".py", ".pyw"))
-        }
+        {str(file_path) for file_path in df["file_path"].dropna().tolist() if str(file_path).endswith((".py", ".pyw"))}
     )
 
     logger.info(
@@ -1377,9 +1325,7 @@ def create_sphinx_setup(
 
     # Skip directory creation if there are no analyzed Python files to mirror.
     if not analyzed_python_files:
-        logger.warning(
-            "No analyzed Python files were found to mirror into AutoAPI. Skipping Sphinx setup."
-        )
+        logger.warning("No analyzed Python files were found to mirror into AutoAPI. Skipping Sphinx setup.")
         return False
 
     # CREATE DIRECTORY AND ADD ALL ANALYZED PYTHON FILES FOR API DOCUMENTATION
@@ -1395,23 +1341,17 @@ def create_sphinx_setup(
         logger.error("Directory creation failed.")
         return False
 
-    scaffold_created = _create_sample_sphinx_scaffold(
-        repo_path, branch, token, provider, project_name
-    )
+    scaffold_created = _create_sample_sphinx_scaffold(repo_path, branch, token, provider, project_name)
     if not scaffold_created:
         logger.error("Sample Sphinx scaffold creation failed.")
         return False
 
     # CREATE A FILE TO UPDATE CONF.PY FILE FOR SPHINX AUTOAPI
-    conf_file_path = os.path.join(
-        os.path.dirname(__file__), "..", "utils", "update_conf_content.py"
-    )
+    conf_file_path = os.path.join(os.path.dirname(__file__), "..", "utils", "update_conf_content.py")
     conf_file_path = os.path.abspath(conf_file_path)
     with open(conf_file_path, "r") as f:
         conf_content = f.read()
-    config_file_created = create_a_file(
-        repo_path, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider
-    )
+    config_file_created = create_a_file(repo_path, branch, CONFIGURATION_UPDATE_FILE, conf_content, token, provider)
     if not config_file_created:
         logger.error(f"{CONFIGURATION_UPDATE_FILE} file creation failed.")
         return False
@@ -1419,9 +1359,7 @@ def create_sphinx_setup(
     if provider == "gitlab":
         # CREATE A .gitlab-ci.yml FILE
         gitlab_ci_content = generate_gitlab_ci_file()
-        yml_file_created = create_a_file(
-            repo_path, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider
-        )
+        yml_file_created = create_a_file(repo_path, branch, GITLAB_YML_FILE, gitlab_ci_content, token, provider)
         if not yml_file_created:
             logger.error(f"{GITLAB_YML_FILE} file creation failed.")
             return False
@@ -1485,18 +1423,14 @@ def publish_github_pages(
     repo_path = extract_repo_path(repo_url, "github")
     project_name = _project_name_from_repo_path(repo_path)
 
-    pages_branch_ready = ensure_github_branch(
-        repo_path, source_branch, GITHUB_PAGES_BRANCH, token
-    )
+    pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
     if not pages_branch_ready:
         _raise_publish_error(
             "GitHub Pages branch setup failed. Check that the source branch exists and "
             "the token can read and write repository contents."
         )
 
-    pages_configured = configure_github_pages(
-        repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH
-    )
+    pages_configured = configure_github_pages(repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH)
     if not pages_configured:
         _raise_publish_error(
             "GitHub Pages configuration failed. GitHub usually returns this when the "
@@ -1506,9 +1440,7 @@ def publish_github_pages(
         )
 
     with tempfile.TemporaryDirectory(prefix="autodoc-pages-") as temp_dir:
-        snapshot_downloaded = download_github_branch_snapshot(
-            repo_path, source_branch, token, temp_dir
-        )
+        snapshot_downloaded = download_github_branch_snapshot(repo_path, source_branch, token, temp_dir)
         if not snapshot_downloaded:
             _raise_publish_error(
                 "Downloading the reviewed GitHub branch failed. Check that the branch "
@@ -1551,9 +1483,7 @@ def publish_github_pages(
         )
         if build_result.returncode != 0:
             build_output = "\n".join(
-                part
-                for part in [build_result.stderr.strip(), build_result.stdout.strip()]
-                if part
+                part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
             )
             logger.error("Sphinx build failed: %s", build_output)
             _raise_publish_error(
@@ -1581,15 +1511,11 @@ def publish_github_pages(
             )
 
     request_github_pages_build(repo_path, token)
-    logger.info(
-        "Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH
-    )
+    logger.info("Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH)
     return True
 
 
-def trigger_gitlab_pipeline(
-    repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None
-) -> bool:
+def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: dict[str, str] | None = None) -> bool:
     """
     Triggers a GitLab pipeline for the given project and branch.
 
@@ -1603,9 +1529,7 @@ def trigger_gitlab_pipeline(
         bool: True if the pipeline was triggered successfully, False otherwise.
     """
     project_path_encoded = quote_plus(repo_url)
-    api_url = (
-        f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/trigger/pipeline"
-    )
+    api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/trigger/pipeline"
     headers = {"PRIVATE-TOKEN": token}
     trigger_token = os.getenv("CI_TRIGGER_PIPELINE_TOKEN")
 
@@ -1616,9 +1540,7 @@ def trigger_gitlab_pipeline(
             data[f"variables[{key}]"] = value
 
     if not trigger_token:
-        logger.warning(
-            "CI_TRIGGER_PIPELINE_TOKEN environment variable not set. Cannot trigger pipeline."
-        )
+        logger.warning("CI_TRIGGER_PIPELINE_TOKEN environment variable not set. Cannot trigger pipeline.")
         return False
 
     try:
@@ -1627,9 +1549,7 @@ def trigger_gitlab_pipeline(
             logger.info(f"Pipeline triggered for {repo_url} on branch {branch}.")
             return True
         else:
-            logger.error(
-                f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})"
-            )
+            logger.error(f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})")
             return False
     except Exception as e:
         logger.error(f"Exception while triggering pipeline: {e}")

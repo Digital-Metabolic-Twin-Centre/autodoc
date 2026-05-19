@@ -157,7 +157,8 @@ def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
         ),
     )
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/generate",
         json={
             "provider": "github",
@@ -197,7 +198,8 @@ def test_generate_endpoint_uses_provided_docstring_threshold(monkeypatch):
         ),
     )
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/generate",
         json={
             "provider": "github",
@@ -236,7 +238,8 @@ def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
         ),
     )
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/generate",
         json={
             "provider": "github",
@@ -254,7 +257,8 @@ def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
 
 
 def test_generate_endpoint_rejects_invalid_docstring_threshold():
-    response = request("POST", 
+    response = request(
+        "POST",
         "/generate",
         json={
             "provider": "github",
@@ -274,7 +278,8 @@ def test_publish_pages_returns_specific_publish_error(monkeypatch):
 
     monkeypatch.setattr("services.workflow_service.publish_github_pages", fail_publish)
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/publish-pages",
         json={
             "repo_url": "example/project",
@@ -296,7 +301,8 @@ def test_publish_pages_uses_provided_low_content_min_lines(monkeypatch):
 
     monkeypatch.setattr("services.workflow_service.publish_github_pages", fake_publish)
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/publish-pages",
         json={
             "repo_url": "example/project",
@@ -319,7 +325,8 @@ def test_publish_pages_uses_default_low_content_min_lines(monkeypatch):
 
     monkeypatch.setattr("services.workflow_service.publish_github_pages", fake_publish)
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/publish-pages",
         json={
             "repo_url": "example/project",
@@ -495,10 +502,7 @@ def test_classify_autoapi_file_uses_dynamic_low_content_threshold(tmp_path):
     file_path = autoapi_root / "api" / "small_module.py"
     file_path.parent.mkdir(parents=True)
     file_path.write_text(
-        "def first():\n"
-        "    return 1\n\n"
-        "def second():\n"
-        "    return 2\n",
+        "def first():\n    return 1\n\ndef second():\n    return 2\n",
         encoding="utf-8",
     )
 
@@ -674,7 +678,8 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
         lambda: "autodocs-docstring-suggestions-20260424-1430",
     )
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",
@@ -704,7 +709,8 @@ def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatc
         fake_create_pr,
     )
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",
@@ -736,7 +742,8 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
         },
     )
 
-    response = request("POST", 
+    response = request(
+        "POST",
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",
@@ -749,13 +756,12 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
     assert response.status_code == 200
     assert response.json()["status"] == "no_changes"
     assert response.json()["pull_request_url"] is None
-    assert response.json()["message"] == (
-        "No new Python docstring suggestions are available for this branch."
-    )
+    assert response.json()["message"] == ("No new Python docstring suggestions are available for this branch.")
 
 
 def test_suggest_python_docstrings_pr_requires_base_branch():
-    response = request("POST", 
+    response = request(
+        "POST",
         "/suggest-python-docstrings-pr",
         json={
             "provider": "github",

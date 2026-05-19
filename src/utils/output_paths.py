@@ -9,7 +9,6 @@ _ACTIVE_RUN_DIRS: dict[tuple[str, str], str] = {}
 LOG_RETENTION_COUNT = 6  # Keep only the last 6 logs per project
 
 
-
 def _repo_base_dir(repo_path: str, provider: str) -> str:
     """
     Constructs a base directory path for a repository.
@@ -31,28 +30,28 @@ def _repo_base_dir(repo_path: str, provider: str) -> str:
 def _cleanup_old_logs(repo_path: str, provider: str) -> None:
     """
     Remove old log directories, keeping only the last LOG_RETENTION_COUNT for each project.
-    
+
     Args:
         repo_path (str): The path of the repository.
         provider (str): The provider name for the repository.
-    
+
     Returns:
         None
     """
     repo_dir = _repo_base_dir(repo_path, provider)
     if not os.path.isdir(repo_dir):
         return
-    
+
     # Get all log directories for this project
     log_dirs = []
     for entry in os.listdir(repo_dir):
         if entry.startswith("app_") and os.path.isdir(os.path.join(repo_dir, entry)):
             full_path = os.path.join(repo_dir, entry)
             log_dirs.append((entry, full_path))
-    
+
     # Sort by name (timestamp-based, lexicographic sort works for format YYYYMMDD_HHMMSS)
     log_dirs.sort()
-    
+
     # Remove old directories beyond retention count
     if len(log_dirs) > LOG_RETENTION_COUNT:
         for _, old_dir in log_dirs[:-LOG_RETENTION_COUNT]:
@@ -61,7 +60,6 @@ def _cleanup_old_logs(repo_path: str, provider: str) -> None:
             except Exception:
                 # Silently ignore errors during cleanup
                 pass
-
 
 
 def build_repo_output_dir(repo_path: str, provider: str) -> str:
@@ -78,7 +76,6 @@ def build_repo_output_dir(repo_path: str, provider: str) -> str:
     # Clean up old logs, keeping only the last 6
     _cleanup_old_logs(repo_path, provider)
     return output_dir
-
 
 
 def build_repo_output_file(repo_path: str, provider: str, filename: str) -> str:
@@ -116,7 +113,6 @@ def bind_repo_run_log_dir(repo_path: str, provider: str) -> str:
     # Clean up old logs, keeping only the last 6
     _cleanup_old_logs(repo_path, provider)
     return bind_repo_log_dir(output_dir)
-
 
 
 def clear_repo_output_history(repo_path: str, provider: str) -> None:

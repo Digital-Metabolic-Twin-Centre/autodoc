@@ -52,9 +52,7 @@ def _replace_extensions_block(text: str) -> str:
                 if isinstance(target, ast.Name) and target.id == "extensions":
                     current_value = ast.literal_eval(node.value)
                     if not isinstance(current_value, list):
-                        raise ValueError(
-                            "docs/conf.py must define 'extensions' as a Python list."
-                        )
+                        raise ValueError("docs/conf.py must define 'extensions' as a Python list.")
                     merged = list(current_value)
                     for extension in REQUIRED_EXTENSIONS:
                         if extension not in merged:
@@ -98,9 +96,7 @@ def update_conf(conf_py: str) -> None:
     try:
         ast.parse(text)
     except SyntaxError as exc:
-        raise ValueError(
-            f"Updated docs/conf.py would be invalid Python: {exc.msg} (line {exc.lineno})."
-        ) from exc
+        raise ValueError(f"Updated docs/conf.py would be invalid Python: {exc.msg} (line {exc.lineno}).") from exc
 
     conf_path.write_text(text, encoding="utf-8")
 

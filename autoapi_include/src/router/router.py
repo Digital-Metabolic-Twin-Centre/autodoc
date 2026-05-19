@@ -43,9 +43,7 @@ def _default_docstring_suggestion_branch() -> str:
 @router.get("/")
 async def root():
     logger.info("Root endpoint accessed.")
-    return {
-        "message": "Welcome to the Markdown Generator API. Visit /docs for API documentation."
-    }
+    return {"message": "Welcome to the Markdown Generator API. Visit /docs for API documentation."}
 
 
 @router.post("/generate")
@@ -114,9 +112,7 @@ async def generate_docs(req: RepoRequest):
         raise HTTPException(status_code=rae.status_code, detail=str(rae))
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve)
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
     except PermissionError as pe:
         logger.error(f"PermissionError: {pe}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
@@ -157,9 +153,7 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
             req.max_docstrings,
         )
     except DocstringPullRequestError as dpe:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe)
-        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe))
     except Exception as e:
         logger.error(f"Unhandled Exception: {e}")
         raise HTTPException(
