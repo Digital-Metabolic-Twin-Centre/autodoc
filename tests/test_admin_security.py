@@ -15,6 +15,7 @@ from admin.security import (
 
 def test_validate_admin_credentials_rejects_invalid_credentials(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_PASSWORD", "secret")
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
     with pytest.raises(ValueError):
         validate_admin_credentials("admin", "wrong")
