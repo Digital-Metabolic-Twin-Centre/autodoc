@@ -47,22 +47,25 @@ class DummyResponse:
 
 
 def test_fetch_repo_tree_reports_missing_branch(monkeypatch):
-    def fake_get(url, headers, params, timeout):
-        return DummyResponse(404, {"message": "No commit found for the ref missing-branch"})
+    import subprocess
+    def fake_run(*args, **kwargs):
+        raise subprocess.CalledProcessError(1, "git clone", stderr=b"fatal: Remote branch missing-branch not found")
+    
+    monkeypatch.setattr("subprocess.run", fake_run)
 
-    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
-
-    with pytest.raises(RepositoryAccessError, match="Branch 'missing-branch' was not found"):
+    with pytest.raises(RepositoryAccessError, match="not found or is not accessible"):
         fetch_repo_tree("example/project", "secret", branch="missing-branch", provider="github")
 
 
+
 def test_fetch_repo_tree_reports_inaccessible_repo(monkeypatch):
-    def fake_get(url, headers, params, timeout):
-        return DummyResponse(404, {"message": "Not Found"})
+    import subprocess
+    def fake_run(*args, **kwargs):
+        raise subprocess.CalledProcessError(1, "git clone", stderr=b"fatal: Authentication failed for 'https://github.com/example/project.git/'")
+    
+    monkeypatch.setattr("subprocess.run", fake_run)
 
-    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
-
-    with pytest.raises(RepositoryAccessError, match="was not found or is not accessible"):
+    with pytest.raises(RepositoryAccessError, match="Authentication failed"):
         fetch_repo_tree("example/project", "secret", branch="main", provider="github")
 
 
