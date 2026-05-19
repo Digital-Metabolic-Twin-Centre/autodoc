@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,12 +12,14 @@ from typing import Callable, Dict, List, Optional, Union
 from config.log_config import get_logger
 from utils.git_utils import (
     GitHubApiError,
+    RepositoryAccessError,
     commit_files_to_github_branch,
     create_github_pull_request,
     ensure_github_branch,
     extract_repo_path,
     fetch_content_from_github,
     fetch_repo_tree,
+    read_file_content_from_local,
 )
 from utils.output_paths import build_repo_output_file, find_latest_repo_run_dir
 
@@ -448,104 +451,138 @@ def create_python_docstring_pull_request(
             "No generated Python docstring suggestions were found. Run /generate first."
         )
 
-    files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
-    python_files = [
-        item.get("path", "")
-        for item in files
-        if item.get("type") == "file" and item.get("path", "").endswith((".py", ".pyw"))
-    ]
-    if not python_files:
-        raise DocstringPullRequestError("No Python files found on the selected branch.")
-
-    remaining = max_docstrings
-    patched_files: Dict[str, PatchedPythonFile] = {}
-    for file_path in python_files:
-        if remaining <= 0:
-            break
-        content = fetch_content_from_github(repo_path, base_branch, file_path, token)
-        if not content:
-            continue
-        suggestions = suggestions_by_file.get(file_path)
-        if not suggestions:
-            continue
-        try:
-            patched = patch_python_docstrings(
-                content,
-                generator=_suggestion_generator(suggestions),
-                max_docstrings=remaining,
-            )
-        except SyntaxError:
-            logger.warning("Skipping %s because Python parsing failed.", file_path)
-            continue
-        if patched.inserted:
-            patched_files[file_path] = patched
-            remaining -= len(patched.inserted)
-
-    if not patched_files:
-        return _build_no_changes_response(
-            base_branch,
-            suggestion_branch,
-            "No new Python docstring suggestions are available for this branch.",
-        )
-
-    patched_files = _run_ruff_on_patched_files(patched_files)
-
-    branch_ready = ensure_github_branch(
-        repo_path, base_branch, suggestion_branch, token
-    )
-    if not branch_ready:
-        raise DocstringPullRequestError(
-            "Could not create or access the suggestion branch."
-        )
-
-    changed_files = {
-        file_path: patched
-        for file_path, patched in patched_files.items()
-        if fetch_content_from_github(repo_path, suggestion_branch, file_path, token)
-        != patched.content
-    }
-    if not changed_files:
-        return _build_no_changes_response(
-            base_branch,
-            suggestion_branch,
-            "No new Python docstring suggestions are available for this branch.",
-        )
-
-    committed = commit_files_to_github_branch(
-        repo_path,
-        suggestion_branch,
-        {file_path: patched.content for file_path, patched in changed_files.items()},
-        token,
-        "Add generated Python docstring suggestions",
-    )
-    if not committed:
-        raise DocstringPullRequestError(
-            "Could not commit docstring suggestions to the suggestion branch."
-        )
-
+    # Clone repository once to temp_dir for efficient local file reading
+    temp_dir = None
     try:
-        pr_url = create_github_pull_request(
+        temp_dir = tempfile.mkdtemp(prefix="autodoc_docstring_pr_")
+        clone_url = f"https://github.com/{repo_path}.git"
+        clone_url_with_auth = clone_url.replace("https://", f"https://x-access-token:{token}@")
+        
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "--branch", base_branch, clone_url_with_auth, temp_dir],
+            check=True,
+            timeout=300,
+            capture_output=True,
+        )
+        logger.info(f"Cloned repository to {temp_dir} for docstring PR generation")
+
+        files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
+        python_files = [
+            item.get("path", "")
+            for item in files
+            if item.get("type") == "file" and item.get("path", "").endswith((".py", ".pyw"))
+        ]
+        if not python_files:
+            raise DocstringPullRequestError("No Python files found on the selected branch.")
+
+        remaining = max_docstrings
+        patched_files: Dict[str, PatchedPythonFile] = {}
+        for file_path in python_files:
+            if remaining <= 0:
+                break
+            # Read file locally from cloned repository instead of GitHub API
+            content = read_file_content_from_local(temp_dir, file_path)
+            if not content:
+                continue
+            suggestions = suggestions_by_file.get(file_path)
+            if not suggestions:
+                continue
+            try:
+                patched = patch_python_docstrings(
+                    content,
+                    generator=_suggestion_generator(suggestions),
+                    max_docstrings=remaining,
+                )
+            except SyntaxError:
+                logger.warning("Skipping %s because Python parsing failed.", file_path)
+                continue
+            if patched.inserted:
+                patched_files[file_path] = patched
+                remaining -= len(patched.inserted)
+
+        if not patched_files:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "No new Python docstring suggestions are available for this branch.",
+            )
+
+        patched_files = _run_ruff_on_patched_files(patched_files)
+
+        branch_ready = ensure_github_branch(
+            repo_path, base_branch, suggestion_branch, token
+        )
+        if not branch_ready:
+            raise DocstringPullRequestError(
+                "Could not create or access the suggestion branch."
+            )
+
+        # Filter to only files that actually differ from suggestion_branch
+        changed_files = {}
+        for file_path, patched in patched_files.items():
+            try:
+                suggestion_content = fetch_content_from_github(
+                    repo_path, suggestion_branch, file_path, token
+                )
+                if suggestion_content != patched.content:
+                    changed_files[file_path] = patched
+            except Exception:
+                # If we can't fetch from suggestion_branch, include the file (new or error)
+                changed_files[file_path] = patched
+
+        if not changed_files:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "No new Python docstring suggestions are available for this branch.",
+            )
+
+        committed = commit_files_to_github_branch(
             repo_path,
             suggestion_branch,
-            base_branch,
-            title,
-            _build_pull_request_body(base_branch, changed_files),
+            {file_path: patched.content for file_path, patched in changed_files.items()},
             token,
+            "Add generated Python docstring suggestions",
         )
-    except GitHubApiError as error:
-        raise DocstringPullRequestError(str(error)) from error
-    if not pr_url:
-        raise DocstringPullRequestError("Could not create the GitHub pull request.")
+        if not committed:
+            raise DocstringPullRequestError(
+                "Could not commit docstring suggestions to the suggestion branch."
+            )
 
-    return {
-        "status": "success",
-        "provider": "github",
-        "base_branch": base_branch,
-        "suggestion_branch": suggestion_branch,
-        "pull_request_url": pr_url,
-        "files_changed": len(changed_files),
-        "docstrings_added": sum(
-            len(patched.inserted) for patched in changed_files.values()
-        ),
-        "changed_files": sorted(changed_files.keys()),
-    }
+        try:
+            pr_url = create_github_pull_request(
+                repo_path,
+                suggestion_branch,
+                base_branch,
+                title,
+                _build_pull_request_body(base_branch, changed_files),
+                token,
+            )
+        except GitHubApiError as error:
+            raise DocstringPullRequestError(str(error)) from error
+        if not pr_url:
+            raise DocstringPullRequestError("Could not create the GitHub pull request.")
+
+        return {
+            "status": "success",
+            "provider": "github",
+            "base_branch": base_branch,
+            "suggestion_branch": suggestion_branch,
+            "pull_request_url": pr_url,
+            "files_changed": len(changed_files),
+            "docstrings_added": sum(
+                len(patched.inserted) for patched in changed_files.values()
+            ),
+            "changed_files": sorted(changed_files.keys()),
+        }
+    except RepositoryAccessError as exc:
+        logger.error("Repository access failed: %s", exc)
+        raise DocstringPullRequestError(str(exc)) from exc
+    except Exception as e:
+        logger.error(f"Error creating docstring PR: {e}")
+        raise
+    finally:
+        # Clean up temporary directory
+        if temp_dir and os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
+

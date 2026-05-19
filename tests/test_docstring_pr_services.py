@@ -224,6 +224,12 @@ def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
 def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to_patch(
     monkeypatch,
 ):
+    def fake_run_git(command, *args, **kwargs):
+        """Mock subprocess.run for git clone."""
+        class Result:
+            returncode = 0
+        return Result()
+
     monkeypatch.setattr(
         "services.docstring_pr_services._load_generated_suggestions",
         lambda repo_path, branch: {
@@ -243,10 +249,18 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
         ],
     )
     monkeypatch.setattr(
-        "services.docstring_pr_services.fetch_content_from_github",
-        lambda repo_path, branch, file_path, token: (
+        "services.docstring_pr_services.subprocess.run",
+        fake_run_git,
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.read_file_content_from_local",
+        lambda temp_dir, file_path: (
             'def documented():\n    """Already documented."""\n    return True\n'
         ),
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_content_from_github",
+        lambda repo_path, branch, file_path, token: None,  # No files in suggestion_branch yet
     )
 
     result = create_python_docstring_pull_request(
@@ -265,6 +279,9 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
     assert result["detail"] == result["message"]
 
 
+
+
+
 def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_current(
     monkeypatch,
 ):
@@ -274,6 +291,12 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_
         '    """Add two values."""\n'
         "    return left + right\n"
     )
+
+    def fake_run_git(command, *args, **kwargs):
+        """Mock subprocess.run for git clone."""
+        class Result:
+            returncode = 0
+        return Result()
 
     monkeypatch.setattr(
         "services.docstring_pr_services._load_generated_suggestions",
@@ -293,17 +316,24 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_
             {"type": "file", "path": "src/example.py"}
         ],
     )
-
-    def fake_fetch_content(repo_path, branch, file_path, token):
-        if branch == "main":
-            return source
+    monkeypatch.setattr(
+        "services.docstring_pr_services.subprocess.run",
+        fake_run_git,
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.read_file_content_from_local",
+        lambda temp_dir, file_path: source,  # Return source code from cloned repo
+    )
+    
+    def fake_fetch_github(repo_path, branch, file_path, token):
+        # Return patched content for suggestion_branch to simulate already up-to-date branch
         if branch == "autodocs/suggestions":
             return patched_source
         return None
 
     monkeypatch.setattr(
         "services.docstring_pr_services.fetch_content_from_github",
-        fake_fetch_content,
+        fake_fetch_github,
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.ensure_github_branch",
