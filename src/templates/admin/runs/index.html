@@ -13,7 +13,7 @@
           <label class="block text-sm">
             <span class="mb-2 block font-medium">Repository filter</span>
             <select name="repository_id" class="rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800">
-              <option value="">All repositories</option>
+              <option value="0">All repositories</option>
               {% for repository in repositories %}
               <option value="{{ repository.id }}" {% if selected_repository_id == repository.id %}selected{% endif %}>{{ repository.name }}</option>
               {% endfor %}
