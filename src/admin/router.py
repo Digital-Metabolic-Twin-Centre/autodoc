@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -263,7 +263,7 @@ def _build_publish_request(
 
 
 def _default_suggestion_branch() -> str:
-    return f"autodocs-docstring-suggestions-{datetime.utcnow().strftime('%Y%m%d-%H%M')}"
+    return f"autodocs-docstring-suggestions-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"
 
 
 def _build_pr_request(

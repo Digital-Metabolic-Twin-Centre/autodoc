@@ -120,3 +120,10 @@ def test_clear_runs_deletes_only_selected_repository_history():
     with SessionLocal() as session:
         assert session.get(RunRecord, run_a_id) is None
         assert session.get(RunRecord, run_b_id) is not None
+        
+        # Cleanup: delete test repositories and remaining runs
+        session.query(RunRecord).filter(RunRecord.repository_id.is_not(None)).delete()
+        session.query(RepositoryConfig).filter(RepositoryConfig.name.in_(["Repo A", "Repo B"])).delete(
+            synchronize_session=False
+        )
+        session.commit()

@@ -1,7 +1,7 @@
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from config.log_config import get_run_log_dir
 from models.repo_request import (
@@ -118,7 +118,7 @@ def execute_generate_request(req: RepoRequest) -> WorkflowRunResult:
 def execute_docstring_pr_request(req: DocstringPullRequestRequest) -> WorkflowRunResult:
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
     suggestion_branch = req.suggestion_branch or (
-        f"autodocs-docstring-suggestions-{datetime.utcnow().strftime('%Y%m%d-%H%M')}"
+        f"autodocs-docstring-suggestions-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"
     )
     response = create_python_docstring_pull_request(
         req.provider,
