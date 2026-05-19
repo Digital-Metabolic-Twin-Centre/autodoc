@@ -6,12 +6,12 @@ from dotenv import load_dotenv
 env_path = Path(__file__).resolve().parents[1] / ".env"
 load_dotenv(env_path)
 
-from fastapi import FastAPI
+from fastapi import FastAPI  # noqa: E402
 
-from admin.database import init_db
-from admin.router import router as admin_router
-from config.log_config import get_logger
-from router.router import router as docs_router
+from admin.database import init_db  # noqa: E402
+from admin.router import router as admin_router  # noqa: E402
+from config.log_config import get_logger  # noqa: E402
+from router.router import router as docs_router  # noqa: E402
 
 logger = get_logger(__name__)
 app = FastAPI()
