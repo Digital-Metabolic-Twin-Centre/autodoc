@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -18,6 +17,7 @@ from utils.docstring_validation import (
 )
 from utils.git_utils import (
     RepositoryAccessError,
+    clone_repository,
     extract_repo_path,
     fetch_repo_tree,
     read_file_content_from_local,
@@ -303,45 +303,18 @@ def analyse_repo(
         logger.debug(f"Deleted {block_analysis_file}")
 
     # Fetch repo tree - now using git clone + local filesystem
-    temp_dir = None
     try:
-        temp_dir = tempfile.mkdtemp(prefix="autodoc_repo_")
-        file_list = fetch_repo_tree(
-            repo_url, token, branch=branch, provider=provider.lower()
-        )
-        logger.info(f"Fetched repo tree, {len(file_list)} files found.")
-        # Note: fetch_repo_tree now clones to temp_dir internally
-        # We need to get the cloned path - let's clone separately
-        import subprocess
-        
-        clone_url = repo_url if repo_url.startswith(("http://", "https://")) else \
-            (f"https://github.com/{repo_url}.git" if provider.lower() == "github" else \
-             f"https://gitlab.com/{repo_url}.git")
-        
-        if provider.lower() == "github":
-            clone_url_with_auth = clone_url.replace("https://", f"https://x-access-token:{token}@")
-        elif provider.lower() == "gitlab":
-            clone_url_with_auth = clone_url.replace("https://", f"https://oauth2:{token}@")
-        else:
-            clone_url_with_auth = clone_url
-        
-        subprocess.run(
-            ["git", "clone", "--depth", "1", "--branch", branch, clone_url_with_auth, temp_dir],
-            check=True,
-            timeout=300,
-            capture_output=True,
-        )
-        logger.info(f"Cloned repository to {temp_dir}")
+        with clone_repository(repo_url, token, branch, provider) as temp_dir:
+            file_list = fetch_repo_tree(
+                repo_url, token, branch=branch, provider=provider.lower()
+            )
+            logger.info(f"Fetched repo tree, {len(file_list)} files found.")
         
     except RepositoryAccessError as exc:
         logger.error("Repository access failed: %s", exc)
-        if temp_dir and os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
         raise RepoAnalysisError(str(exc), status_code=exc.status_code or 404) from exc
     except Exception as e:
         logger.error(f"Error fetching repo tree: {e}")
-        if temp_dir and os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
         raise
     
     # Determine file type key for provider

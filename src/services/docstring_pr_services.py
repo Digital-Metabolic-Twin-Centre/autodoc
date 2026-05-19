@@ -1,7 +1,6 @@
 import ast
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -13,6 +12,7 @@ from config.log_config import get_logger
 from utils.git_utils import (
     GitHubApiError,
     RepositoryAccessError,
+    clone_repository,
     commit_files_to_github_branch,
     create_github_pull_request,
     ensure_github_branch,
@@ -451,54 +451,42 @@ def create_python_docstring_pull_request(
             "No generated Python docstring suggestions were found. Run /generate first."
         )
 
-    # Clone repository once to temp_dir for efficient local file reading
-    temp_dir = None
+    # Clone repository once for efficient local file reading
     try:
-        temp_dir = tempfile.mkdtemp(prefix="autodoc_docstring_pr_")
-        clone_url = f"https://github.com/{repo_path}.git"
-        clone_url_with_auth = clone_url.replace("https://", f"https://x-access-token:{token}@")
-        
-        subprocess.run(
-            ["git", "clone", "--depth", "1", "--branch", base_branch, clone_url_with_auth, temp_dir],
-            check=True,
-            timeout=300,
-            capture_output=True,
-        )
-        logger.info(f"Cloned repository to {temp_dir} for docstring PR generation")
+        with clone_repository(repo_url, token, base_branch, "github") as temp_dir:
+            files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
+            python_files = [
+                item.get("path", "")
+                for item in files
+                if item.get("type") == "file" and item.get("path", "").endswith((".py", ".pyw"))
+            ]
+            if not python_files:
+                raise DocstringPullRequestError("No Python files found on the selected branch.")
 
-        files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
-        python_files = [
-            item.get("path", "")
-            for item in files
-            if item.get("type") == "file" and item.get("path", "").endswith((".py", ".pyw"))
-        ]
-        if not python_files:
-            raise DocstringPullRequestError("No Python files found on the selected branch.")
-
-        remaining = max_docstrings
-        patched_files: Dict[str, PatchedPythonFile] = {}
-        for file_path in python_files:
-            if remaining <= 0:
-                break
-            # Read file locally from cloned repository instead of GitHub API
-            content = read_file_content_from_local(temp_dir, file_path)
-            if not content:
-                continue
-            suggestions = suggestions_by_file.get(file_path)
-            if not suggestions:
-                continue
-            try:
-                patched = patch_python_docstrings(
-                    content,
-                    generator=_suggestion_generator(suggestions),
-                    max_docstrings=remaining,
-                )
-            except SyntaxError:
-                logger.warning("Skipping %s because Python parsing failed.", file_path)
-                continue
-            if patched.inserted:
-                patched_files[file_path] = patched
-                remaining -= len(patched.inserted)
+            remaining = max_docstrings
+            patched_files: Dict[str, PatchedPythonFile] = {}
+            for file_path in python_files:
+                if remaining <= 0:
+                    break
+                # Read file locally from cloned repository instead of GitHub API
+                content = read_file_content_from_local(temp_dir, file_path)
+                if not content:
+                    continue
+                suggestions = suggestions_by_file.get(file_path)
+                if not suggestions:
+                    continue
+                try:
+                    patched = patch_python_docstrings(
+                        content,
+                        generator=_suggestion_generator(suggestions),
+                        max_docstrings=remaining,
+                    )
+                except SyntaxError:
+                    logger.warning("Skipping %s because Python parsing failed.", file_path)
+                    continue
+                if patched.inserted:
+                    patched_files[file_path] = patched
+                    remaining -= len(patched.inserted)
 
         if not patched_files:
             return _build_no_changes_response(
@@ -581,8 +569,4 @@ def create_python_docstring_pull_request(
     except Exception as e:
         logger.error(f"Error creating docstring PR: {e}")
         raise
-    finally:
-        # Clean up temporary directory
-        if temp_dir and os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
 
