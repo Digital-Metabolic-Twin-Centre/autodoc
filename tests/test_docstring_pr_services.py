@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import textwrap
 from contextlib import contextmanager
 
@@ -206,6 +207,44 @@ def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
     )
 
     assert cleaned["src/example.py"].content == "def run():\n    return True\n"
+
+
+def test_run_ruff_on_patched_files_gracefully_handles_e402_from_analyzed_project(
+    monkeypatch, caplog
+):
+    calls = {"count": 0}
+
+    def fake_run(command, cwd, capture_output, text, timeout):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            target_path = command[-1]
+            with open(target_path, "w", encoding="utf-8") as file_handle:
+                file_handle.write("def run():\n    return True\n")
+            return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+        return subprocess.CompletedProcess(
+            command,
+            1,
+            stdout=(
+                "api/prediction_engines/kinform.py:19:1: E402 Module level import not at top of file\n"
+                "Found 1 error.\n"
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr("services.docstring_pr_services.subprocess.run", fake_run)
+
+    with caplog.at_level("INFO"):
+        cleaned = _run_ruff_on_patched_files(
+            {
+                "src/example.py": PatchedPythonFile(
+                    content="def run():\n return True\n",
+                    inserted=[],
+                )
+            }
+        )
+
+    assert cleaned["src/example.py"].content == "def run():\n    return True\n"
+    assert "Ruff cleanup skipped import-order lint from the analyzed project" in caplog.text
 
 
 def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to_patch(monkeypatch, tmp_path):
