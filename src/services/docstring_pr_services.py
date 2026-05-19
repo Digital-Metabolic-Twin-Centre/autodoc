@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -343,6 +344,29 @@ def _run_ruff_on_patched_files(
     if not files:
         return files
 
+    def _read_cleaned_files(
+        path_map: Dict[str, str],
+        original_files: Dict[str, PatchedPythonFile],
+    ) -> Dict[str, PatchedPythonFile]:
+        cleaned_files = {}
+        for local_path, file_path in path_map.items():
+            with open(local_path, "r", encoding="utf-8") as file_handle:
+                cleaned_files[file_path] = PatchedPythonFile(
+                    content=file_handle.read(),
+                    inserted=original_files[file_path].inserted,
+                )
+        return cleaned_files
+
+    def _summarize_ruff_output(output: str) -> str:
+        lines = [line.strip() for line in output.splitlines() if line.strip()]
+        if not lines:
+            return "unknown Ruff error"
+        first_issue = next((line for line in lines if ":" in line and "Found " not in line), lines[0])
+        e402_count = len(re.findall(r"\bE402\b", output))
+        if e402_count:
+            return f"{first_issue} ({e402_count} E402 issue(s) in analyzed project)"
+        return first_issue
+
     with tempfile.TemporaryDirectory(prefix="autodoc-ruff-") as temp_dir:
         local_paths = []
         path_map = {}
@@ -366,17 +390,21 @@ def _run_ruff_on_patched_files(
                 timeout=120,
             )
             if result.returncode != 0:
-                logger.warning("Ruff cleanup failed: %s", result.stderr.strip() or result.stdout)
-                return files
-
-        cleaned_files = {}
-        for local_path, file_path in path_map.items():
-            with open(local_path, "r", encoding="utf-8") as file_handle:
-                cleaned_files[file_path] = PatchedPythonFile(
-                    content=file_handle.read(),
-                    inserted=files[file_path].inserted,
+                output = result.stderr.strip() or result.stdout.strip()
+                summary = _summarize_ruff_output(output)
+                if " E402" in output or "\nE402" in output or "E402 " in output:
+                    logger.info(
+                        "Ruff cleanup skipped import-order lint from the analyzed project: %s",
+                        summary,
+                    )
+                    return _read_cleaned_files(path_map, files)
+                logger.warning(
+                    "Ruff cleanup skipped due to non-docstring lint in the analyzed project: %s",
+                    summary,
                 )
-        return cleaned_files
+                return _read_cleaned_files(path_map, files)
+
+        return _read_cleaned_files(path_map, files)
 
 
 def _build_no_changes_response(

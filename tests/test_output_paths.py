@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from utils.output_paths import (
+    bind_repo_run_log_dir,
     build_repo_output_dir,
     build_repo_output_file,
     clear_repo_output_history,
@@ -39,3 +42,25 @@ def test_clear_repo_output_history_removes_repo_folder(monkeypatch, tmp_path):
     clear_repo_output_history("octo-org/example-repo", "github")
 
     assert not repo_dir.exists()
+
+
+def test_bind_repo_run_log_dir_copies_previous_text_json_and_csv_artifacts(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
+    repo_dir = tmp_path / "github" / "octo-org__example-repo"
+    previous_run = repo_dir / "app_20260428_100000"
+    previous_run.mkdir(parents=True)
+    (previous_run / "block_analysis.csv").write_text("file_name\nexample.py\n", encoding="utf-8")
+    (previous_run / "suggested_docstrings.json").write_text("{}", encoding="utf-8")
+    (previous_run / "suggested_docstring.txt").write_text("docstring", encoding="utf-8")
+    (previous_run / "app.log").write_text("log data", encoding="utf-8")
+
+    bound_log_file = bind_repo_run_log_dir("octo-org/example-repo", "github")
+    bound_dir = Path(bound_log_file).parent
+
+    assert str(bound_dir).startswith(str(repo_dir / "app_"))
+    assert (bound_dir / "block_analysis.csv").read_text(encoding="utf-8") == "file_name\nexample.py\n"
+    assert (bound_dir / "suggested_docstrings.json").read_text(encoding="utf-8") == "{}"
+    assert (bound_dir / "suggested_docstring.txt").read_text(encoding="utf-8") == "docstring"
+    assert not (bound_dir / "non_preserved.log").exists()
