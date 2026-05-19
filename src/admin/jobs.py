@@ -1,9 +1,12 @@
 import json
+import os
+import signal
 from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from multiprocessing import Process
 from threading import Condition, Lock, Thread
+from time import sleep
 from typing import Any
 
 from admin.database import SessionLocal
@@ -32,6 +35,7 @@ CURRENT_PROCESS: Process | None = None
 CURRENT_RUN_ID: int | None = None
 PROCESS_LOCK = Lock()
 UNEXPECTED_EXIT_MESSAGE = "Job process exited unexpectedly before the run could finish."
+CANCEL_GRACE_SECONDS = 10.0
 
 
 def _update_run(run_id: int, updater) -> None:
@@ -69,6 +73,36 @@ def _mark_cancelled(run_id: int, message: str) -> None:
         run.error_message = message
 
     _update_run(run_id, apply)
+
+
+def _terminate_process_tree(process: Process) -> bool:
+    if not process.pid:
+        return False
+    try:
+        process_group_id = os.getpgid(process.pid)
+    except ProcessLookupError:
+        return True
+
+    try:
+        os.killpg(process_group_id, signal.SIGTERM)
+    except ProcessLookupError:
+        return True
+
+    deadline = datetime.now(UTC).timestamp() + CANCEL_GRACE_SECONDS
+    while process.is_alive() and datetime.now(UTC).timestamp() < deadline:
+        process.join(timeout=0.2)
+        sleep(0.05)
+
+    if not process.is_alive():
+        return True
+
+    try:
+        os.killpg(process_group_id, signal.SIGKILL)
+    except ProcessLookupError:
+        return True
+
+    process.join(timeout=2)
+    return not process.is_alive()
 
 
 def _ensure_dispatcher() -> None:
@@ -147,10 +181,11 @@ def request_run_cancellation(run_id: int) -> str:
         active_run_id = CURRENT_RUN_ID
 
     if active_run_id == run_id and active_process is not None and active_process.is_alive():
-        active_process.terminate()
-        active_process.join(timeout=10)
-        _mark_cancelled(run_id, "Run was cancelled while execution was in progress.")
-        return "cancelled"
+        terminated = _terminate_process_tree(active_process)
+        if terminated:
+            _mark_cancelled(run_id, "Run was cancelled while execution was in progress.")
+            return "cancelled"
+        return "running"
 
     with SessionLocal() as session:
         run = session.get(RunRecord, run_id)
@@ -168,6 +203,7 @@ def request_run_cancellation(run_id: int) -> str:
 
 
 def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
+    os.setsid()
     started_at = datetime.now(UTC)
 
     with SessionLocal() as session:
