@@ -28,8 +28,7 @@ def run_step(title: str, command: list[str], env: dict[str, str] | None = None) 
 def ensure_tool(tool_name: str) -> None:
     if shutil.which(tool_name) is None:
         print(
-            f"Error: '{tool_name}' is not installed or not on PATH. "
-            f"Install it first, then re-run this script.",
+            f"Error: '{tool_name}' is not installed or not on PATH. Install it first, then re-run this script.",
             file=sys.stderr,
         )
         sys.exit(1)

@@ -93,8 +93,7 @@ def _file_matches_target_folders(file_path, target_folders):
         return True
     normalized_path = file_path.strip("/")
     return any(
-        normalized_path == target_folder
-        or normalized_path.startswith(f"{target_folder}/")
+        normalized_path == target_folder or normalized_path.startswith(f"{target_folder}/")
         for target_folder in target_folders
     )
 
@@ -200,9 +199,7 @@ def _load_reusable_suggestions(repo_path: str, provider: str, branch: str) -> di
     return empty_suggestions
 
 
-def _write_suggested_docstring_report(
-    suggested_file: str, suggestions: list[dict]
-) -> None:
+def _write_suggested_docstring_report(suggested_file: str, suggestions: list[dict]) -> None:
     """
     Writes a report of suggested docstrings to a specified file.
 
@@ -266,9 +263,7 @@ def analyse_repo(
     unreadable_supported_files = 0
     logger.info(f"Analyzing repo: provider={provider}, url={repo_url}, branch={branch}")
     if normalized_target_folders:
-        logger.info(
-            "Limiting analysis to target folders: %s", normalized_target_folders
-        )
+        logger.info("Limiting analysis to target folders: %s", normalized_target_folders)
 
     # Extract repo path from URL
     repo_path = extract_repo_path(repo_url, provider)
@@ -282,15 +277,9 @@ def analyse_repo(
     # Keep each repository analysis isolated under logs/<provider>/<repo>/app_<timestamp>/.
     bind_repo_run_log_dir(repo_path, provider)
     output_dir = build_repo_output_dir(repo_path, provider)
-    suggested_file = build_repo_output_file(
-        repo_path, provider, "suggested_docstring.txt"
-    )
-    suggested_json_file = build_repo_output_file(
-        repo_path, provider, "suggested_docstrings.json"
-    )
-    block_analysis_file = build_repo_output_file(
-        repo_path, provider, "block_analysis.csv"
-    )
+    suggested_file = build_repo_output_file(repo_path, provider, "suggested_docstring.txt")
+    suggested_json_file = build_repo_output_file(repo_path, provider, "suggested_docstrings.json")
+    block_analysis_file = build_repo_output_file(repo_path, provider, "block_analysis.csv")
     if not reuse_doc and os.path.exists(suggested_file):
         os.remove(suggested_file)
         logger.debug(f"Deleted {suggested_file}")
@@ -303,9 +292,7 @@ def analyse_repo(
 
     # Fetch repo tree
     try:
-        file_list = fetch_repo_tree(
-            repo_path, token, branch=branch, provider=provider.lower()
-        )
+        file_list = fetch_repo_tree(repo_path, token, branch=branch, provider=provider.lower())
         logger.info(f"Fetched repo tree, {len(file_list)} files found.")
     except RepositoryAccessError as exc:
         logger.error("Repository access failed: %s", exc)
@@ -334,9 +321,7 @@ def analyse_repo(
             language = "matlab"
         # File type not supported
         else:
-            logger.warning(
-                f"File {file_name} is not supported for docstring validation. Skipping..."
-            )
+            logger.warning(f"File {file_name} is not supported for docstring validation. Skipping...")
             continue
         supported_files_found += 1
         file_path = file.get("path", "")
@@ -365,9 +350,7 @@ def analyse_repo(
         code_blocks = extractor.code_block_extractor()
         # If no code blocks found, check for module-level docstring
         if not code_blocks:
-            logger.warning(
-                f"No code blocks found in {file_name}. Checking for module-level docstring..."
-            )
+            logger.warning(f"No code blocks found in {file_name}. Checking for module-level docstring...")
             module_docstring = analyse_docstring_in_module(content, language)
             if module_docstring:
                 block_analysis = {
@@ -426,9 +409,7 @@ def analyse_repo(
                 if generated_docstring:
                     docstring_source = "exact-cache"
                 if not generated_docstring:
-                    generated_docstring = existing_suggestions["fuzzy"].get(
-                        fuzzy_suggestion_key
-                    )
+                    generated_docstring = existing_suggestions["fuzzy"].get(fuzzy_suggestion_key)
                     if generated_docstring:
                         docstring_source = "fuzzy-cache"
                 if not generated_docstring:
@@ -441,18 +422,14 @@ def analyse_repo(
                         docstring_source = "openai"
 
                 if generated_docstring:
-                    block_analysis["docstring_analysis"][0]["generated_docstring"] = (
-                        generated_docstring
-                    )
+                    block_analysis["docstring_analysis"][0]["generated_docstring"] = generated_docstring
                     if docstring_source == "openai":
                         logger.info("Generated Docstring:")
                     elif docstring_source == "exact-cache":
                         logger.info("Reused cached docstring (exact match):")
                     else:
                         logger.info("Reused cached docstring (line number changed):")
-                    logger.info(
-                        format_docstring_for_language(generated_docstring, language)
-                    )
+                    logger.info(format_docstring_for_language(generated_docstring, language))
                     suggested_file = os.path.join(output_dir, "suggested_docstring.txt")
                     doc_info = block_analysis["docstring_analysis"][0]
                     with open(suggested_file, "a") as f:
@@ -461,9 +438,7 @@ def analyse_repo(
                             f"{file_name}, Path: {file_path}, Function: "
                             f"{doc_info['function_name']}, Line: {doc_info['line_number']}\n"
                         )
-                        f.write(
-                            f"{format_docstring_for_language(generated_docstring, language)}\n"
-                        )
+                        f.write(f"{format_docstring_for_language(generated_docstring, language)}\n")
                         f.write(f"{'-' * 100}\n")
                 else:
                     logger.warning("Docstring generation failed.")
@@ -568,10 +543,7 @@ def analyse_repo(
                 f"target_folders={normalized_target_folders}.",
                 status_code=404,
             )
-        if (
-            supported_files_in_scope > 0
-            and unreadable_supported_files == supported_files_in_scope
-        ):
+        if supported_files_in_scope > 0 and unreadable_supported_files == supported_files_in_scope:
             raise RepoAnalysisError(
                 "Repository tree was found, but Auto Doc could not read any matching source file "
                 f"contents on branch '{branch}'. Check that the branch exists and that the token "

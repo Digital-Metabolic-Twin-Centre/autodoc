@@ -5,9 +5,9 @@ author = "Digital Metabolic Twin Centre"
 copyright = f"{datetime.now().year}, {author}"
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
-    'autoapi.extension',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "autoapi.extension",
 ]
 
 templates_path = ["_templates"]
@@ -25,30 +25,33 @@ html_theme_options = {
 
 html_show_sphinx = False
 
-autoapi_dirs = ['../autoapi_include']
+autoapi_dirs = ["../autoapi_include"]
 autoapi_add_toctree_entry = False
 
 # Configure AutoAPI to handle import errors gracefully
 autoapi_options = [
-    'members',
-    'undoc-members',
-    'show-inheritance',
+    "members",
+    "undoc-members",
+    "show-inheritance",
 ]
+
 
 def autoapi_skip_member(app, what, name, obj, skip, options):
     """Skip members that cause import errors during parsing."""
     return skip
 
+
 def setup(app):
     """Setup Sphinx extension to handle AutoAPI import errors."""
-    app.connect('autoapi-skip-member', autoapi_skip_member)
-    
+    app.connect("autoapi-skip-member", autoapi_skip_member)
+
     # Patch AutoAPI's astroid utilities to handle TooManyLevelsError gracefully
     try:
         from autoapi import _astroid_utils
         from astroid.exceptions import TooManyLevelsError
+
         original_get_full_import_name = _astroid_utils.get_full_import_name
-        
+
         def safe_get_full_import_name(module_node, level):
             """Safely get full import name, handling TooManyLevelsError."""
             try:
@@ -56,7 +59,7 @@ def setup(app):
             except TooManyLevelsError:
                 # Return None for relative imports with too many levels
                 return None
-        
+
         _astroid_utils.get_full_import_name = safe_get_full_import_name
     except (ImportError, AttributeError):
         pass

@@ -39,15 +39,10 @@ def _summarize_generate(docstring_analysis: list[dict]) -> tuple[int, int, int]:
     docstrings_generated = 0
     skipped_files = 0
     for file_summary in docstring_analysis:
-        generated_for_file = any(
-            item.get("generated_docstring")
-            for item in file_summary.get("docstring_analysis", [])
-        )
+        generated_for_file = any(item.get("generated_docstring") for item in file_summary.get("docstring_analysis", []))
         if generated_for_file:
             docstrings_generated += sum(
-                1
-                for item in file_summary.get("docstring_analysis", [])
-                if item.get("generated_docstring")
+                1 for item in file_summary.get("docstring_analysis", []) if item.get("generated_docstring")
             )
         else:
             skipped_files += 1

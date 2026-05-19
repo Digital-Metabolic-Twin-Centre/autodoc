@@ -208,21 +208,19 @@ def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
     assert cleaned["src/example.py"].content == "def run():\n    return True\n"
 
 
-def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to_patch(
-    monkeypatch, tmp_path
-):
+def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to_patch(monkeypatch, tmp_path):
     @contextmanager
     def fake_clone(repo_url, token, base_branch, provider):
         """Mock clone_repository context manager."""
         temp_dir = str(tmp_path / "clone")
         os.makedirs(temp_dir, exist_ok=True)
-        
+
         # Create the Python file that read_file_content_from_local will try to read
         py_file_path = os.path.join(temp_dir, "src/example.py")
         os.makedirs(os.path.dirname(py_file_path), exist_ok=True)
-        with open(py_file_path, 'w') as f:
+        with open(py_file_path, "w") as f:
             f.write('def documented():\n    """Already documented."""\n    return True\n')
-        
+
         yield temp_dir
 
     monkeypatch.setattr(
@@ -239,9 +237,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.fetch_repo_tree",
-        lambda repo_path, token, branch, provider: [
-            {"type": "file", "path": "src/example.py"}
-        ],
+        lambda repo_path, token, branch, provider: [{"type": "file", "path": "src/example.py"}],
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.clone_repository",
@@ -249,9 +245,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.read_file_content_from_local",
-        lambda temp_dir, file_path: (
-            'def documented():\n    """Already documented."""\n    return True\n'
-        ),
+        lambda temp_dir, file_path: ('def documented():\n    """Already documented."""\n    return True\n'),
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.fetch_content_from_github",
@@ -274,23 +268,18 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
     assert result["detail"] == result["message"]
 
 
-
-
-
 def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_current(
     monkeypatch,
 ):
     source = "def add(left, right):\n    return left + right\n"
-    patched_source = (
-        'def add(left, right):\n'
-        '    """Add two values."""\n'
-        "    return left + right\n"
-    )
+    patched_source = 'def add(left, right):\n    """Add two values."""\n    return left + right\n'
 
     def fake_run_git(command, *args, **kwargs):
         """Mock subprocess.run for git clone."""
+
         class Result:
             returncode = 0
+
         return Result()
 
     monkeypatch.setattr(
@@ -307,9 +296,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.fetch_repo_tree",
-        lambda repo_path, token, branch, provider: [
-            {"type": "file", "path": "src/example.py"}
-        ],
+        lambda repo_path, token, branch, provider: [{"type": "file", "path": "src/example.py"}],
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.subprocess.run",
@@ -319,7 +306,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_
         "services.docstring_pr_services.read_file_content_from_local",
         lambda temp_dir, file_path: source,  # Return source code from cloned repo
     )
-    
+
     def fake_fetch_github(repo_path, branch, file_path, token):
         # Return patched content for suggestion_branch to simulate already up-to-date branch
         if branch == "autodocs/suggestions":

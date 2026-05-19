@@ -202,10 +202,7 @@ def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, priva
     """
     project_path_encoded = urllib.parse.quote_plus(repo_path)
     file_path_encoded = urllib.parse.quote_plus(file_path)
-    url = (
-        f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}"
-        f"/repository/files/{file_path_encoded}/raw"
-    )
+    url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}/raw"
     try:
         response = requests.get(
             url,
@@ -480,8 +477,7 @@ def create_directory_and_add_files(
         try:
             gitkeep_path_encoded = urllib.parse.quote_plus(gitkeep_path)
             check_url = (
-                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}"
-                f"/repository/files/{gitkeep_path_encoded}"
+                f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{gitkeep_path_encoded}"
             )
             check_resp = requests.get(
                 check_url,
@@ -524,8 +520,7 @@ def create_directory_and_add_files(
             try:
                 target_path_encoded = urllib.parse.quote_plus(target_path)
                 check_url = (
-                    f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}"
-                    f"/repository/files/{target_path_encoded}"
+                    f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{target_path_encoded}"
                 )
                 check_resp = requests.get(
                     check_url,
@@ -611,10 +606,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         # GitLab: Create or update a file using the REST API
         project_path_encoded = urllib.parse.quote_plus(repo_url)
         file_path_encoded = urllib.parse.quote_plus(file_path)
-        api_url = (
-            f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}"
-            f"/repository/files/{file_path_encoded}"
-        )
+        api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"
         headers = {"PRIVATE-TOKEN": token}
         # Check if file exists
         get_resp = requests.get(api_url, headers=headers, params={"ref": branch})

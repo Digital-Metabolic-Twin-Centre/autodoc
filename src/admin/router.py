@@ -238,9 +238,7 @@ def _build_repo_run_request(
         reuse_doc=repository.reuse_doc if reuse_doc is None else reuse_doc,
         docstring_threshold=repository.docstring_threshold if docstring_threshold is None else docstring_threshold,
         low_content_min_lines=(
-            repository.low_content_min_lines
-            if low_content_min_lines is None
-            else low_content_min_lines
+            repository.low_content_min_lines if low_content_min_lines is None else low_content_min_lines
         ),
     )
 
@@ -255,9 +253,7 @@ def _build_publish_request(
         token=decrypt_token(repository.encrypted_token),
         branch=branch or repository.default_branch,
         low_content_min_lines=(
-            repository.low_content_min_lines
-            if low_content_min_lines is None
-            else low_content_min_lines
+            repository.low_content_min_lines if low_content_min_lines is None else low_content_min_lines
         ),
     )
 
@@ -313,18 +309,15 @@ def _dashboard_context() -> dict[str, Any]:
     with SessionLocal() as session:
         total_repositories = session.scalar(select(func.count(RepositoryConfig.id))) or 0
         total_runs = session.scalar(select(func.count(RunRecord.id))) or 0
-        successful_runs = session.scalar(
-            select(func.count(RunRecord.id)).where(RunRecord.status == "completed")
-        ) or 0
-        failed_runs = session.scalar(
-            select(func.count(RunRecord.id)).where(RunRecord.status == "failed")
-        ) or 0
+        successful_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "completed")) or 0
+        failed_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "failed")) or 0
         recent_runs = session.scalars(
-            select(RunRecord).order_by(RunRecord.created_at.desc()).options(selectinload(RunRecord.repository)).limit(MAX_ACTIVITY_ITEMS)
+            select(RunRecord)
+            .order_by(RunRecord.created_at.desc())
+            .options(selectinload(RunRecord.repository))
+            .limit(MAX_ACTIVITY_ITEMS)
         ).all()
-        repositories = session.scalars(
-            select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())
-        ).all()
+        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())).all()
     return {
         "stats": {
             "total_repositories": total_repositories,
@@ -358,9 +351,7 @@ async def recent_activity_fragment(
 @router.get("/repositories", response_class=HTMLResponse)
 async def repositories_page(request: Request, admin_user: str = Depends(require_admin)) -> Response:
     with SessionLocal() as session:
-        repositories = session.scalars(
-            select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())
-        ).all()
+        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())).all()
     context = {
         "repositories": repositories,
         "admin_user": admin_user,
