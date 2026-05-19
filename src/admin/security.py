@@ -18,6 +18,14 @@ from admin.settings import (
 )
 
 
+def admin_auth_config_error() -> str | None:
+    if not ADMIN_PASSWORD:
+        return "ADMIN_PASSWORD must be configured to sign in to the admin dashboard."
+    if not ADMIN_SECRET_KEY:
+        return "ADMIN_SECRET_KEY must be configured to sign in to the admin dashboard."
+    return None
+
+
 def _require_secret() -> str:
     if not ADMIN_SECRET_KEY:
         raise HTTPException(
@@ -42,10 +50,11 @@ def decrypt_token(token: str) -> str:
 
 
 def validate_admin_credentials(username: str, password: str) -> str:
-    if not ADMIN_PASSWORD:
+    config_error = admin_auth_config_error()
+    if config_error:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="ADMIN_PASSWORD must be configured to use the admin dashboard.",
+            detail=config_error,
         )
     valid_username = secrets.compare_digest(username, ADMIN_USERNAME)
     valid_password = secrets.compare_digest(password, ADMIN_PASSWORD)
@@ -71,6 +80,8 @@ def create_admin_session(username: str) -> str:
 
 
 def read_admin_session(session_value: str | None) -> str | None:
+    if not ADMIN_SECRET_KEY:
+        return None
     if not session_value or "." not in session_value:
         return None
     payload_b64, signature = session_value.rsplit(".", 1)

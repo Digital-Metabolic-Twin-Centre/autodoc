@@ -12,9 +12,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from admin.database import SessionLocal
-from admin.jobs import enqueue_run
+from admin.jobs import enqueue_run, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
 from admin.security import (
+    admin_auth_config_error,
     clear_admin_session,
     decrypt_token,
     encrypt_token,
@@ -34,11 +35,6 @@ from admin.settings import (
     TEMPLATES_DIR,
 )
 from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
-from services.workflow_service import (
-    execute_docstring_pr_request,
-    execute_generate_request,
-    execute_publish_request,
-)
 from utils.git_utils import extract_repo_path
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -74,8 +70,19 @@ def _fmt_duration(seconds: float | None) -> str:
     return f"{minutes}m {remainder}s"
 
 
+def _status_badge_classes(status_value: str) -> str:
+    if status_value == "completed":
+        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
+    if status_value == "failed":
+        return "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200"
+    if status_value == "cancelled":
+        return "bg-slate-200 text-slate-700 dark:bg-slate-700/60 dark:text-slate-200"
+    return "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200"
+
+
 templates.env.filters["from_json"] = _json_loads
 templates.env.filters["duration"] = _fmt_duration
+templates.env.filters["status_badge_classes"] = _status_badge_classes
 
 
 def _is_htmx(request: Request) -> bool:
@@ -112,7 +119,7 @@ async def login_page(request: Request) -> Response:
         return _redirect("/admin", request)
     context = {
         "page_title": "Admin Sign In",
-        "error_message": None,
+        "error_message": admin_auth_config_error(),
     }
     return _template_response(request, "admin/login.html", context)
 
@@ -132,6 +139,14 @@ async def login_submit(
             "error_message": "The username or password was not recognized.",
         }
         response = _template_response(request, "admin/login.html", context, status_code=401)
+        clear_admin_session(response)
+        return response
+    except HTTPException as exc:
+        context = {
+            "page_title": "Admin Sign In",
+            "error_message": str(exc.detail),
+        }
+        response = _template_response(request, "admin/login.html", context, status_code=exc.status_code)
         clear_admin_session(response)
         return response
 
@@ -573,7 +588,7 @@ async def trigger_generate(
             low_content_min_lines=low_content_min_lines,
         )
     run_id = _create_run_record(repository_id, "/generate", admin_user, repo_request.model_dump())
-    enqueue_run(run_id, lambda: execute_generate_request(repo_request))
+    enqueue_run(run_id, "/generate", repo_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
 
@@ -596,7 +611,7 @@ async def trigger_publish(
             low_content_min_lines=low_content_min_lines,
         )
     run_id = _create_run_record(repository_id, "/publish-pages", admin_user, publish_request.model_dump())
-    enqueue_run(run_id, lambda: execute_publish_request(publish_request))
+    enqueue_run(run_id, "/publish-pages", publish_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
 
@@ -625,7 +640,7 @@ async def trigger_suggest_pr(
             max_docstrings=max_docstrings,
         )
     run_id = _create_run_record(repository_id, "/suggest-python-docstrings-pr", admin_user, pr_request.model_dump())
-    enqueue_run(run_id, lambda: execute_docstring_pr_request(pr_request))
+    enqueue_run(run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
 
@@ -649,6 +664,29 @@ async def runs_page(
         "admin_user": admin_user,
     }
     return _template_response(request, "admin/runs/index.html", context)
+
+
+@router.post("/runs/clear", response_class=HTMLResponse)
+async def clear_runs(
+    request: Request,
+    admin_user: str = Depends(require_admin),
+    _: None = Depends(verify_csrf),
+    repository_id: int | None = Form(default=None),
+) -> Response:
+    del admin_user
+    with SessionLocal() as session:
+        query = select(RunRecord)
+        if repository_id is not None:
+            query = query.where(RunRecord.repository_id == repository_id)
+        runs = session.scalars(query).all()
+        for run in runs:
+            session.delete(run)
+        session.commit()
+
+    redirect_url = "/admin/runs"
+    if repository_id is not None:
+        redirect_url = f"/admin/runs?repository_id={repository_id}"
+    return _redirect(redirect_url, request)
 
 
 @router.get("/runs/{run_id}", response_class=HTMLResponse)
@@ -691,6 +729,25 @@ async def run_status_fragment(
     return _template_response(request, "admin/partials/run_status.html", context)
 
 
+@router.get("/runs/{run_id}/row", response_class=HTMLResponse)
+async def run_row_fragment(
+    run_id: int,
+    request: Request,
+    admin_user: str = Depends(require_admin),
+) -> Response:
+    with SessionLocal() as session:
+        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        run = session.scalars(stmt).first()
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found.")
+    context = {
+        "run": run,
+        "endpoint_labels": ENDPOINT_LABELS,
+        "admin_user": admin_user,
+    }
+    return _template_response(request, "admin/partials/run_row.html", context)
+
+
 @router.post("/runs/{run_id}/retry", response_class=HTMLResponse)
 async def retry_run(
     run_id: int,
@@ -711,16 +768,51 @@ async def retry_run(
     new_run_id = _create_run_record(repository_id, endpoint, admin_user, payload)
     if endpoint == "/generate":
         repo_request = RepoRequest(**payload)
-        enqueue_run(new_run_id, lambda: execute_generate_request(repo_request))
+        enqueue_run(new_run_id, "/generate", repo_request.model_dump())
     elif endpoint == "/publish-pages":
         publish_request = PublishPagesRequest(**payload)
-        enqueue_run(new_run_id, lambda: execute_publish_request(publish_request))
+        enqueue_run(new_run_id, "/publish-pages", publish_request.model_dump())
     elif endpoint == "/suggest-python-docstrings-pr":
         pr_request = DocstringPullRequestRequest(**payload)
-        enqueue_run(new_run_id, lambda: execute_docstring_pr_request(pr_request))
+        enqueue_run(new_run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
     else:
         raise HTTPException(status_code=422, detail="Run type is not retryable.")
     return _redirect(f"/admin/runs/{new_run_id}", request)
+
+
+@router.post("/runs/{run_id}/cancel", response_class=HTMLResponse)
+async def cancel_run(
+    run_id: int,
+    request: Request,
+    admin_user: str = Depends(require_admin),
+    _: None = Depends(verify_csrf),
+    fragment: str = Form(default="redirect"),
+) -> Response:
+    del admin_user
+    try:
+        outcome = request_run_cancellation(run_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Run not found.")
+
+    if outcome not in {"queued", "running", "cancelled"}:
+        raise HTTPException(status_code=422, detail="Only queued or running runs can be cancelled.")
+
+    if _is_htmx(request):
+        with SessionLocal() as session:
+            stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+            run = session.scalars(stmt).first()
+            if run is None:
+                raise HTTPException(status_code=404, detail="Run not found.")
+        context = {
+            "run": run,
+            "endpoint_labels": ENDPOINT_LABELS,
+            "admin_user": "",
+        }
+        if fragment == "row":
+            return _template_response(request, "admin/partials/run_row.html", context)
+        return _template_response(request, "admin/partials/run_status.html", context)
+
+    return _redirect(f"/admin/runs/{run_id}", request)
 
 
 @router.get("/runs/{run_id}/artifacts/{artifact_name}")
