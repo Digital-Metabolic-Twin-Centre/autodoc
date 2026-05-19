@@ -46,17 +46,16 @@ def setup(app):
     # Patch AutoAPI's astroid utilities to handle TooManyLevelsError gracefully
     try:
         from autoapi import _astroid_utils
+        from astroid.exceptions import TooManyLevelsError
         original_get_full_import_name = _astroid_utils.get_full_import_name
         
         def safe_get_full_import_name(module_node, level):
             """Safely get full import name, handling TooManyLevelsError."""
             try:
                 return original_get_full_import_name(module_node, level)
-            except Exception as e:
-                # Return None for imports that can't be resolved
-                if 'TooManyLevels' in type(e).__name__:
-                    return None
-                raise
+            except TooManyLevelsError:
+                # Return None for relative imports with too many levels
+                return None
         
         _astroid_utils.get_full_import_name = safe_get_full_import_name
     except (ImportError, AttributeError):
