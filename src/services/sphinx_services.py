@@ -69,7 +69,23 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         'html_theme = "sphinx_rtd_theme"\n'
         'html_static_path = ["_static"]\n'
         'html_css_files = ["custom-wide.css"]\n'
-        'html_favicon = "_static/img/favicon.ico"\n'
+        'html_favicon = "_static/img/favicon.ico"\n\n'
+        "def setup(app):\n"
+        '    """Setup Sphinx to handle AutoAPI import errors gracefully."""\n'
+        "    try:\n"
+        "        from autoapi import _astroid_utils\n"
+        "        original_get_full_import_name = _astroid_utils.get_full_import_name\n\n"
+        "        def safe_get_full_import_name(module_node, level):\n"
+        '            """Safely get full import name, handling TooManyLevelsError."""\n'
+        "            try:\n"
+        "                return original_get_full_import_name(module_node, level)\n"
+        "            except Exception as e:\n"
+        "                if 'TooManyLevels' in type(e).__name__:\n"
+        "                    return None\n"
+        "                raise\n\n"
+        "        _astroid_utils.get_full_import_name = safe_get_full_import_name\n"
+        "    except (ImportError, AttributeError):\n"
+        "        pass\n"
     ),
     "index.rst": (
         "Auto Doc\n"
