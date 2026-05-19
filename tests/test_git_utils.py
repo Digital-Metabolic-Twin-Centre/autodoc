@@ -37,6 +37,7 @@ class DummyResponse:
         self.status_code = status_code
         self._payload = payload or {}
         self.text = text
+        self.content = b""  # Default empty bytes
 
     def json(self):
         return self._payload
@@ -94,8 +95,10 @@ def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkey
     captured = {}
 
     def fake_post(url, headers=None, json=None):
+        if json is None:
+            json = {}
         if url.endswith("/git/trees"):
-            captured["tree"] = json["tree"]
+            captured["tree"] = json.get("tree", [])
             return DummyResponse(201, {"sha": "newtree"})
         if url.endswith("/git/commits"):
             return DummyResponse(201, {"sha": "newcommit"})
@@ -143,8 +146,10 @@ def test_create_directory_and_add_files_removes_stale_flattened_github_files(mon
     captured = {}
 
     def fake_post(url, headers=None, json=None):
+        if json is None:
+            json = {}
         if url.endswith("/git/trees"):
-            captured["tree"] = json["tree"]
+            captured["tree"] = json.get("tree", [])
             return DummyResponse(201, {"sha": "newtree"})
         if url.endswith("/git/commits"):
             return DummyResponse(201, {"sha": "newcommit"})
