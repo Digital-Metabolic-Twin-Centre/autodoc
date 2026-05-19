@@ -1,5 +1,7 @@
 import json
 import os
+import shutil
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -17,9 +19,8 @@ from utils.docstring_validation import (
 from utils.git_utils import (
     RepositoryAccessError,
     extract_repo_path,
-    fetch_content_from_github,
-    fetch_content_from_gitlab,
     fetch_repo_tree,
+    read_file_content_from_local,
 )
 from utils.output_paths import (
     bind_repo_run_log_dir,
@@ -301,73 +302,97 @@ def analyse_repo(
         os.remove(block_analysis_file)
         logger.debug(f"Deleted {block_analysis_file}")
 
-    # Fetch repo tree
+    # Fetch repo tree - now using git clone + local filesystem
+    temp_dir = None
     try:
+        temp_dir = tempfile.mkdtemp(prefix="autodoc_repo_")
         file_list = fetch_repo_tree(
-            repo_path, token, branch=branch, provider=provider.lower()
+            repo_url, token, branch=branch, provider=provider.lower()
         )
         logger.info(f"Fetched repo tree, {len(file_list)} files found.")
+        # Note: fetch_repo_tree now clones to temp_dir internally
+        # We need to get the cloned path - let's clone separately
+        import subprocess
+        
+        clone_url = repo_url if repo_url.startswith(("http://", "https://")) else \
+            (f"https://github.com/{repo_url}.git" if provider.lower() == "github" else \
+             f"https://gitlab.com/{repo_url}.git")
+        
+        if provider.lower() == "github":
+            clone_url_with_auth = clone_url.replace("https://", f"https://x-access-token:{token}@")
+        elif provider.lower() == "gitlab":
+            clone_url_with_auth = clone_url.replace("https://", f"https://oauth2:{token}@")
+        else:
+            clone_url_with_auth = clone_url
+        
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "--branch", branch, clone_url_with_auth, temp_dir],
+            check=True,
+            timeout=300,
+            capture_output=True,
+        )
+        logger.info(f"Cloned repository to {temp_dir}")
+        
     except RepositoryAccessError as exc:
         logger.error("Repository access failed: %s", exc)
+        if temp_dir and os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
         raise RepoAnalysisError(str(exc), status_code=exc.status_code or 404) from exc
     except Exception as e:
         logger.error(f"Error fetching repo tree: {e}")
+        if temp_dir and os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
         raise
-    # tech = detect_tech_stack(file_list)
-
+    
     # Determine file type key for provider
     file_type_key = "blob" if provider.lower() == "gitlab" else "file"
+    
+    try:
+        for file in file_list:
+            # To make sure item is a file not a directory
+            if file.get("type", "") != file_type_key:
+                continue
+            file_name = file.get("name", "")
+            language = None
+            if file_name.endswith((".py", ".pyw")):
+                language = "python"
+            elif file_name.endswith((".js", ".jsx")):
+                language = "javascript"
+            elif file_name.endswith((".ts", ".tsx")):
+                language = "typescript"
+            elif file_name.endswith((".m", ".mat")):
+                language = "matlab"
+            # File type not supported
+            else:
+                logger.warning(
+                    f"File {file_name} is not supported for docstring validation. Skipping..."
+                )
+                continue
+            supported_files_found += 1
+            file_path = file.get("path", "")
+            if not _file_matches_target_folders(file_path, normalized_target_folders):
+                logger.debug(
+                    "Skipping %s because it is outside the requested target folders.",
+                    file_path,
+                )
+                continue
+            supported_files_in_scope += 1
 
-    for file in file_list:
-        # To make sure item is a file not a directory
-        if file.get("type", "") != file_type_key:
-            continue
-        file_name = file.get("name", "")
-        language = None
-        if file_name.endswith((".py", ".pyw")):
-            language = "python"
-        elif file_name.endswith((".js", ".jsx")):
-            language = "javascript"
-        elif file_name.endswith((".ts", ".tsx")):
-            language = "typescript"
-        elif file_name.endswith((".m", ".mat")):
-            language = "matlab"
-        # File type not supported
-        else:
-            logger.warning(
-                f"File {file_name} is not supported for docstring validation. Skipping..."
-            )
-            continue
-        supported_files_found += 1
-        file_path = file.get("path", "")
-        if not _file_matches_target_folders(file_path, normalized_target_folders):
-            logger.debug(
-                "Skipping %s because it is outside the requested target folders.",
-                file_path,
-            )
-            continue
-        supported_files_in_scope += 1
+            # Read content from local cloned repository (NOT from API)
+            content = read_file_content_from_local(temp_dir, file_path)
+            if content is None or content == "":
+                logger.warning(f"Empty file {file_name}. Cannot validate docstring.")
+                unreadable_supported_files += 1
+                continue
 
-        # fetch content based on provider
-        if provider.lower() == "github":
-            content = fetch_content_from_github(repo_path, branch, file_path, token)
-        elif provider.lower() == "gitlab":
-            content = fetch_content_from_gitlab(repo_path, branch, file_path, token)
-        else:
-            content = ""
-        if content is None or content == "":
-            logger.warning(f"Empty file {file_name}. Cannot validate docstring.")
-            unreadable_supported_files += 1
-            continue
-
-        # Create a code blocks in the file to Analyse
-        extractor = GenericCodeBlockExtractor(content, file_name)
-        code_blocks = extractor.code_block_extractor()
-        # If no code blocks found, check for module-level docstring
-        if not code_blocks:
-            logger.warning(
-                f"No code blocks found in {file_name}. Checking for module-level docstring..."
-            )
+            # Create a code blocks in the file to Analyse
+            extractor = GenericCodeBlockExtractor(content, file_name)
+            code_blocks = extractor.code_block_extractor()
+            # If no code blocks found, check for module-level docstring
+            if not code_blocks:
+                logger.warning(
+                    f"No code blocks found in {file_name}. Checking for module-level docstring..."
+                )
             module_docstring = analyse_docstring_in_module(content, language)
             if module_docstring:
                 block_analysis = {
@@ -483,104 +508,111 @@ def analyse_repo(
         )
         block_analysis_list.append(block_analysis)
 
-    # save details in csv
-    output_path = os.path.join(output_dir, "block_analysis.csv")
+        # save details in csv
+        output_path = os.path.join(output_dir, "block_analysis.csv")
 
-    # save details in csv
-    flattened_data = []
+        # save details in csv
+        flattened_data = []
 
-    for block_analysis in block_analysis_list:
-        # Extract main keys
-        file_name = block_analysis.get("file_name", "")
-        file_path = block_analysis.get("file_path", "")
+        for block_analysis in block_analysis_list:
+            # Extract main keys
+            file_name = block_analysis.get("file_name", "")
+            file_path = block_analysis.get("file_path", "")
 
-        # Extract nested dictionary data from docstring_analysis
-        docstring_analysis = block_analysis.get("docstring_analysis", [])
-        for analysis in docstring_analysis:
-            row = {
-                "file_name": file_name,
-                "file_path": file_path,
-                "function_name": analysis.get("function_name", ""),
-                "block_type": analysis.get("block_type", ""),
-                "missing_docstring": analysis.get("missing_docstring", True),
-                "language": analysis.get("language", ""),
-                "line_number": analysis.get("line_number", 0),
-            }
-            flattened_data.append(row)
-
-    # Create DataFrame with proper columns (empty if no data)
-    columns = [
-        "file_name",
-        "file_path",
-        "function_name",
-        "block_type",
-        "missing_docstring",
-        "language",
-        "line_number",
-    ]
-    df = pd.DataFrame(flattened_data, columns=columns)
-    df.to_csv(output_path, index=False)
-
-    suggestions = []
-    for block_analysis in block_analysis_list:
-        file_path = block_analysis.get("file_path", "")
-        for analysis in block_analysis.get("docstring_analysis", []):
-            generated_docstring = analysis.get("generated_docstring")
-            if not generated_docstring:
-                continue
-            suggestions.append(
-                {
+            # Extract nested dictionary data from docstring_analysis
+            docstring_analysis = block_analysis.get("docstring_analysis", [])
+            for analysis in docstring_analysis:
+                row = {
+                    "file_name": file_name,
                     "file_path": file_path,
-                    "file_name": block_analysis.get("file_name", ""),
                     "function_name": analysis.get("function_name", ""),
                     "block_type": analysis.get("block_type", ""),
-                    "line_number": analysis.get("line_number", 0),
+                    "missing_docstring": analysis.get("missing_docstring", True),
                     "language": analysis.get("language", ""),
-                    "generated_docstring": generated_docstring,
+                    "line_number": analysis.get("line_number", 0),
                 }
+                flattened_data.append(row)
+
+        # Create DataFrame with proper columns (empty if no data)
+        columns = [
+            "file_name",
+            "file_path",
+            "function_name",
+            "block_type",
+            "missing_docstring",
+            "language",
+            "line_number",
+        ]
+        df = pd.DataFrame(flattened_data, columns=columns)
+        df.to_csv(output_path, index=False)
+
+        suggestions = []
+        for block_analysis in block_analysis_list:
+            file_path = block_analysis.get("file_path", "")
+            for analysis in block_analysis.get("docstring_analysis", []):
+                generated_docstring = analysis.get("generated_docstring")
+                if not generated_docstring:
+                    continue
+                suggestions.append(
+                    {
+                        "file_path": file_path,
+                        "file_name": block_analysis.get("file_name", ""),
+                        "function_name": analysis.get("function_name", ""),
+                        "block_type": analysis.get("block_type", ""),
+                        "line_number": analysis.get("line_number", 0),
+                        "language": analysis.get("language", ""),
+                        "generated_docstring": generated_docstring,
+                    }
+                )
+
+        _write_suggested_docstring_report(suggested_file, suggestions)
+
+        with open(suggested_json_file, "w", encoding="utf-8") as file_handle:
+            json.dump(
+                {
+                    "provider": provider.lower(),
+                    "repo_path": repo_path,
+                    "branch": branch,
+                    "suggestions": suggestions,
+                },
+                file_handle,
+                indent=2,
             )
 
-    _write_suggested_docstring_report(suggested_file, suggestions)
+        if not block_analysis_list:
+            logger.warning("No files with docstring analysis found.")
+            if supported_files_found == 0:
+                raise RepoAnalysisError(
+                    "Repository was reachable, but no supported source files were found. "
+                    "Auto Doc currently analyses .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
+                    status_code=404,
+                )
+            if normalized_target_folders and supported_files_in_scope == 0:
+                raise RepoAnalysisError(
+                    "Repository was reachable, but none of the supported source files matched "
+                    f"target_folders={normalized_target_folders}.",
+                    status_code=404,
+                )
+            if (
+                supported_files_in_scope > 0
+                and unreadable_supported_files == supported_files_in_scope
+            ):
+                raise RepoAnalysisError(
+                    "Repository tree was found, but Auto Doc could not read any matching source file "
+                    f"contents on branch '{branch}'. Check that the branch exists and that the token "
+                    "can read file contents for this repository or fork.",
+                    status_code=403,
+                )
+            raise RepoAnalysisError(
+                "Repository was reachable, but Auto Doc could not extract any analyzable code blocks "
+                f"from the supported files on branch '{branch}'.",
+                status_code=422,
+            )
+        return output_path, block_analysis_list
+    finally:
+        # Clean up temporary directory
+        if temp_dir and os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            logger.info(f"Cleaned up temporary repository directory: {temp_dir}")
 
-    with open(suggested_json_file, "w", encoding="utf-8") as file_handle:
-        json.dump(
-            {
-                "provider": provider.lower(),
-                "repo_path": repo_path,
-                "branch": branch,
-                "suggestions": suggestions,
-            },
-            file_handle,
-            indent=2,
-        )
 
-    if not block_analysis_list:
-        logger.warning("No files with docstring analysis found.")
-        if supported_files_found == 0:
-            raise RepoAnalysisError(
-                "Repository was reachable, but no supported source files were found. "
-                "Auto Doc currently analyses .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
-                status_code=404,
-            )
-        if normalized_target_folders and supported_files_in_scope == 0:
-            raise RepoAnalysisError(
-                "Repository was reachable, but none of the supported source files matched "
-                f"target_folders={normalized_target_folders}.",
-                status_code=404,
-            )
-        if (
-            supported_files_in_scope > 0
-            and unreadable_supported_files == supported_files_in_scope
-        ):
-            raise RepoAnalysisError(
-                "Repository tree was found, but Auto Doc could not read any matching source file "
-                f"contents on branch '{branch}'. Check that the branch exists and that the token "
-                "can read file contents for this repository or fork.",
-                status_code=403,
-            )
-        raise RepoAnalysisError(
-            "Repository was reachable, but Auto Doc could not extract any analyzable code blocks "
-            f"from the supported files on branch '{branch}'.",
-            status_code=422,
-        )
-    return output_path, block_analysis_list
