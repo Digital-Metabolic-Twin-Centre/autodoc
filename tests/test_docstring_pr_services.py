@@ -1,6 +1,7 @@
 import json
+import os
 import textwrap
-from pathlib import Path
+from contextlib import contextmanager
 
 from services.docstring_pr_services import (
     PatchedPythonFile,
@@ -200,20 +201,6 @@ def test_load_generated_suggestions_skips_newer_run_dirs_without_suggestion_file
 
 
 def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
-    def fake_run(command, cwd, capture_output, text, timeout):
-        local_path = Path(command[-1])
-        if "format" in command:
-            local_path.write_text("def run():\n    return True\n", encoding="utf-8")
-
-        class Result:
-            returncode = 0
-            stderr = ""
-            stdout = ""
-
-        return Result()
-
-    monkeypatch.setattr("services.docstring_pr_services.subprocess.run", fake_run)
-
     cleaned = _run_ruff_on_patched_files(
         {"src/example.py": PatchedPythonFile(content="def run():\n return True\n", inserted=[])}
     )
@@ -222,13 +209,21 @@ def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
 
 
 def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to_patch(
-    monkeypatch,
+    monkeypatch, tmp_path
 ):
-    def fake_run_git(command, *args, **kwargs):
-        """Mock subprocess.run for git clone."""
-        class Result:
-            returncode = 0
-        return Result()
+    @contextmanager
+    def fake_clone(repo_url, token, base_branch, provider):
+        """Mock clone_repository context manager."""
+        temp_dir = str(tmp_path / "clone")
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Create the Python file that read_file_content_from_local will try to read
+        py_file_path = os.path.join(temp_dir, "src/example.py")
+        os.makedirs(os.path.dirname(py_file_path), exist_ok=True)
+        with open(py_file_path, 'w') as f:
+            f.write('def documented():\n    """Already documented."""\n    return True\n')
+        
+        yield temp_dir
 
     monkeypatch.setattr(
         "services.docstring_pr_services._load_generated_suggestions",
@@ -249,8 +244,8 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
         ],
     )
     monkeypatch.setattr(
-        "services.docstring_pr_services.subprocess.run",
-        fake_run_git,
+        "services.docstring_pr_services.clone_repository",
+        fake_clone,
     )
     monkeypatch.setattr(
         "services.docstring_pr_services.read_file_content_from_local",

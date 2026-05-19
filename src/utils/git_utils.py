@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import urllib.parse
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Tuple
 
@@ -13,7 +14,7 @@ import gitlab
 import requests
 
 from config.config import GITHUB_API_URL, GITLAB_API_URL
-from config.log_config import get_logger
+from config.log_config import LOG_DIR, get_logger
 from utils.code_block_extraction import GenericCodeBlockExtractor
 from utils.docstring_validation import analyse_docstring_in_blocks
 
@@ -164,7 +165,7 @@ def clone_repository(
     repo_url: str, token: str, branch: str = "main", provider: str = "github"
 ) -> Generator[str, None, None]:
     """
-    Clone a repository to a temporary directory and yield the path.
+    Clone a repository to logs/.clones/ directory and yield the path.
     
     Automatically cleans up the temporary directory when done.
     
@@ -191,7 +192,12 @@ def clone_repository(
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     
-    temp_dir = tempfile.mkdtemp(prefix="autodoc_repo_")
+    # Use logs directory for clones instead of /tmp
+    clones_dir = os.path.join(LOG_DIR, ".clones")
+    os.makedirs(clones_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+    temp_dir = os.path.join(clones_dir, f"clone_{timestamp}")
+    
     try:
         logger.info(f"Cloning {clone_url} to {temp_dir}")
         
@@ -243,9 +249,46 @@ def clone_repository(
             status_code=500,
         ) from e
     finally:
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            logger.info(f"Cleaned up temporary directory {temp_dir}")
+       if os.path.exists(temp_dir):
+           shutil.rmtree(temp_dir, ignore_errors=True)
+           logger.info(f"Cleaned up temporary directory {temp_dir}")
+       _cleanup_old_clones()
+
+
+def _cleanup_old_clones(keep_count: int = 10) -> None:
+    """
+    Clean up old clone directories, keeping only the most recent ones.
+    
+    Args:
+       keep_count (int): Number of clones to keep. Defaults to 10.
+    """
+    clones_dir = os.path.join(LOG_DIR, ".clones")
+    if not os.path.isdir(clones_dir):
+       return
+    
+    try:
+       clones = []
+       for entry in os.listdir(clones_dir):
+           if entry.startswith("clone_"):
+               full_path = os.path.join(clones_dir, entry)
+               if os.path.isdir(full_path):
+                   clones.append((entry, full_path))
+        
+       # Sort by name (timestamp-based)
+       clones.sort()
+        
+       # Remove old clones
+       if len(clones) > keep_count:
+           for _, old_clone in clones[:-keep_count]:
+               try:
+                   shutil.rmtree(old_clone, ignore_errors=True)
+                   logger.debug(f"Cleaned up old clone directory: {old_clone}")
+               except Exception:
+                   pass
+    except Exception as e:
+       logger.warning(f"Error during clone cleanup: {e}")
+
+
 
 
 def list_repository_files(
