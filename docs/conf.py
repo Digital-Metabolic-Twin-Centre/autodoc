@@ -57,8 +57,21 @@ def setup(app):
             try:
                 return original_get_full_import_name(module_node, level)
             except TooManyLevelsError:
-                # Return None for relative imports with too many levels
-                return None
+                # Preserve a string result so downstream AutoAPI parsing does not
+                # crash on string operations such as rsplit().
+                partial_name = None
+                if isinstance(level, str):
+                    partial_name = level
+                elif hasattr(module_node, "names"):
+                    for import_name, imported_as in module_node.names:
+                        partial_name = imported_as or import_name
+                        if partial_name:
+                            break
+
+                module_name = getattr(module_node, "modname", "") or ""
+                if module_name and partial_name:
+                    return f"{module_name}.{partial_name}"
+                return partial_name or module_name or "__autoapi_unresolved__"
 
         _astroid_utils.get_full_import_name = safe_get_full_import_name
     except (ImportError, AttributeError):

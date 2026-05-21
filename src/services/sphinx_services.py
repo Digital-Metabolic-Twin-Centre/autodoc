@@ -81,7 +81,18 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         "                return original_get_full_import_name(module_node, level)\n"
         "            except Exception as e:\n"
         "                if 'TooManyLevels' in type(e).__name__:\n"
-        "                    return None\n"
+        "                    partial_name = None\n"
+        "                    if isinstance(level, str):\n"
+        "                        partial_name = level\n"
+        '                    elif hasattr(module_node, "names"):\n'
+        "                        for import_name, imported_as in module_node.names:\n"
+        "                            partial_name = imported_as or import_name\n"
+        "                            if partial_name:\n"
+        "                                break\n"
+        '                    module_name = getattr(module_node, "modname", "") or ""\n'
+        "                    if module_name and partial_name:\n"
+        '                        return f"{module_name}.{partial_name}"\n'
+        '                    return partial_name or module_name or "__autoapi_unresolved__"\n'
         "                raise\n\n"
         "        _astroid_utils.get_full_import_name = safe_get_full_import_name\n"
         "    except (ImportError, AttributeError):\n"
