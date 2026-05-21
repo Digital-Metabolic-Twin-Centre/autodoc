@@ -35,6 +35,8 @@ CURRENT_PROCESS: Process | None = None
 CURRENT_RUN_ID: int | None = None
 PROCESS_LOCK = Lock()
 UNEXPECTED_EXIT_MESSAGE = "Job process exited unexpectedly before the run could finish."
+RESTART_EXIT_MESSAGE = "Run was interrupted because the server stopped before the job could finish."
+RESTART_QUEUE_MESSAGE = "Run was interrupted because the server stopped before the queued job could start."
 CANCEL_GRACE_SECONDS = 10.0
 
 
@@ -46,6 +48,16 @@ def _update_run(run_id: int, updater) -> None:
         updater(run)
         session.add(run)
         session.commit()
+
+
+def _set_run_progress(run_id: int, percent: float, message: str) -> None:
+    normalized_percent = max(0.0, min(100.0, percent))
+
+    def apply(run: RunRecord) -> None:
+        run.progress_percent = normalized_percent
+        run.progress_message = message
+
+    _update_run(run_id, apply)
 
 
 def _duration_seconds(
@@ -68,11 +80,33 @@ def _mark_cancelled(run_id: int, message: str) -> None:
 
     def apply(run: RunRecord) -> None:
         run.status = "cancelled"
+        run.progress_percent = 100.0
+        run.progress_message = "Cancelled"
         run.completed_at = cancelled_at
         run.duration_seconds = _duration_seconds(run.started_at, cancelled_at)
         run.error_message = message
 
     _update_run(run_id, apply)
+
+
+def reconcile_interrupted_runs() -> int:
+    recovered_at = datetime.now(UTC)
+
+    with SessionLocal() as session:
+        interrupted_runs = session.query(RunRecord).filter(RunRecord.status.in_(("queued", "running"))).all()
+        for run in interrupted_runs:
+            previous_status = run.status
+            run.status = "failed"
+            run.progress_percent = 100.0
+            run.progress_message = "Failed"
+            run.completed_at = recovered_at
+            run.duration_seconds = _duration_seconds(run.started_at, recovered_at)
+            run.error_message = (
+                RESTART_EXIT_MESSAGE if previous_status == "running" else RESTART_QUEUE_MESSAGE
+            )
+            session.add(run)
+        session.commit()
+        return len(interrupted_runs)
 
 
 def _terminate_process_tree(process: Process) -> bool:
@@ -161,6 +195,8 @@ def _dispatch_loop() -> None:
                 continue
             if run.status == "running":
                 run.status = "failed"
+                run.progress_percent = 100.0
+                run.progress_message = "Failed"
                 run.completed_at = datetime.now(UTC)
                 run.duration_seconds = _duration_seconds(run.started_at, run.completed_at)
                 run.error_message = UNEXPECTED_EXIT_MESSAGE
@@ -211,16 +247,24 @@ def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) ->
         if run is None or run.status == "cancelled":
             return
         run.status = "running"
+        run.progress_percent = 12.0
+        run.progress_message = "Starting run"
         run.started_at = started_at
         session.add(run)
         session.commit()
 
     try:
-        result = _execute_endpoint(endpoint, payload)
+        result = _execute_endpoint(
+            endpoint,
+            payload,
+            progress_callback=lambda percent, message: _set_run_progress(run_id, percent, message),
+        )
         completed_at = datetime.now(UTC)
 
         def mark_completed(run: RunRecord) -> None:
             run.status = "completed"
+            run.progress_percent = 100.0
+            run.progress_message = "Completed"
             run.completed_at = completed_at
             run.duration_seconds = _duration_seconds(started_at, completed_at)
             run.result_payload = json.dumps(result.response, default=str, indent=2)
@@ -243,6 +287,8 @@ def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) ->
             if run.status == "cancelled":
                 return
             run.status = "failed"
+            run.progress_percent = 100.0
+            run.progress_message = "Failed"
             run.completed_at = completed_at
             run.duration_seconds = _duration_seconds(started_at, completed_at)
             run.error_message = error_message
@@ -250,11 +296,15 @@ def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) ->
         _update_run(run_id, mark_failed)
 
 
-def _execute_endpoint(endpoint: str, payload: dict[str, Any]) -> WorkflowRunResult:
+def _execute_endpoint(
+    endpoint: str,
+    payload: dict[str, Any],
+    progress_callback=None,
+) -> WorkflowRunResult:
     if endpoint == "/generate":
-        return execute_generate_request(RepoRequest(**payload))
+        return execute_generate_request(RepoRequest(**payload), progress_callback=progress_callback)
     if endpoint == "/publish-pages":
-        return execute_publish_request(PublishPagesRequest(**payload))
+        return execute_publish_request(PublishPagesRequest(**payload), progress_callback=progress_callback)
     if endpoint == "/suggest-python-docstrings-pr":
-        return execute_docstring_pr_request(DocstringPullRequestRequest(**payload))
+        return execute_docstring_pr_request(DocstringPullRequestRequest(**payload), progress_callback=progress_callback)
     raise ValueError(f"Unsupported endpoint for queued execution: {endpoint}")

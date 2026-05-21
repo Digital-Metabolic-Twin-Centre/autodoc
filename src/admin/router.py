@@ -543,6 +543,8 @@ def _create_run_record(
             repository_id=repository_id,
             endpoint=endpoint,
             status="queued",
+            progress_percent=5.0,
+            progress_message="Queued",
             triggered_by=admin_user,
             request_payload=json.dumps(payload, default=str, indent=2),
         )

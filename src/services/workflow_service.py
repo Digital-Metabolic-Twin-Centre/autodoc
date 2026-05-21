@@ -34,6 +34,11 @@ class WorkflowRunResult:
     metrics_skipped_files: int | None = None
 
 
+def _notify_progress(progress_callback, percent: float, message: str) -> None:
+    if progress_callback is not None:
+        progress_callback(percent, message)
+
+
 def _summarize_generate(docstring_analysis: list[dict]) -> tuple[int, int, int]:
     files_analyzed = len(docstring_analysis)
     docstrings_generated = 0
@@ -57,10 +62,11 @@ def _github_pages_url(repo_url: str) -> str | None:
     return f"https://{owner}.github.io/{repo_name}/"
 
 
-def execute_generate_request(req: RepoRequest) -> WorkflowRunResult:
+def execute_generate_request(req: RepoRequest, progress_callback=None) -> WorkflowRunResult:
     if not req.repo_url or not req.token or not req.branch or not req.provider:
         raise ValueError("Missing required parameters: repo_url, token, branch, or provider.")
 
+    _notify_progress(progress_callback, 25.0, "Analyzing repository")
     analysis_file, docstring_analysis = analyse_repo(
         req.provider,
         req.repo_url,
@@ -70,6 +76,7 @@ def execute_generate_request(req: RepoRequest) -> WorkflowRunResult:
         req.model or DEFAULT_OPENAI_MODEL,
         req.reuse_doc,
     )
+    _notify_progress(progress_callback, 70.0, "Building documentation")
     sphinx_setup_created = create_sphinx_setup(
         req.provider,
         req.repo_url,
@@ -84,6 +91,7 @@ def execute_generate_request(req: RepoRequest) -> WorkflowRunResult:
             "Sphinx setup creation failed. Token may lack 'write_repository' scope, "
             f"or branch '{req.branch}' is protected."
         )
+    _notify_progress(progress_callback, 90.0, "Finalizing results")
     files_analyzed, docstrings_generated, skipped_files = _summarize_generate(docstring_analysis)
     response = {
         "status": "success",
@@ -110,11 +118,13 @@ def execute_generate_request(req: RepoRequest) -> WorkflowRunResult:
     )
 
 
-def execute_docstring_pr_request(req: DocstringPullRequestRequest) -> WorkflowRunResult:
+def execute_docstring_pr_request(req: DocstringPullRequestRequest, progress_callback=None) -> WorkflowRunResult:
+    _notify_progress(progress_callback, 25.0, "Preparing docstring suggestions")
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
     suggestion_branch = req.suggestion_branch or (
         f"autodocs-docstring-suggestions-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"
     )
+    _notify_progress(progress_callback, 70.0, "Creating pull request")
     response = create_python_docstring_pull_request(
         req.provider,
         req.repo_url,
@@ -124,6 +134,7 @@ def execute_docstring_pr_request(req: DocstringPullRequestRequest) -> WorkflowRu
         req.title,
         req.max_docstrings,
     )
+    _notify_progress(progress_callback, 90.0, "Finalizing results")
     artifact_dir = get_run_log_dir()
     log_path = os.path.join(artifact_dir, "app.log") if artifact_dir else None
     return WorkflowRunResult(
@@ -144,8 +155,10 @@ def execute_docstring_pr_request(req: DocstringPullRequestRequest) -> WorkflowRu
     )
 
 
-def execute_publish_request(req: PublishPagesRequest) -> WorkflowRunResult:
+def execute_publish_request(req: PublishPagesRequest, progress_callback=None) -> WorkflowRunResult:
+    _notify_progress(progress_callback, 25.0, "Preparing publish job")
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
+    _notify_progress(progress_callback, 70.0, "Publishing GitHub Pages")
     published = publish_github_pages(
         req.repo_url,
         req.branch,
@@ -156,6 +169,7 @@ def execute_publish_request(req: PublishPagesRequest) -> WorkflowRunResult:
         raise PermissionError(
             "GitHub Pages publish failed. Ensure the branch contains docs sources and the token can write."
         )
+    _notify_progress(progress_callback, 90.0, "Finalizing results")
     response = {
         "status": "success",
         "published_branch": "gh-pages",

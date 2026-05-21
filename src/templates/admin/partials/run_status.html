@@ -33,6 +33,23 @@
       {% endif %}
     </div>
   </div>
+  {% set progress_percent = run.progress_percent if run.progress_percent is not none else (100 if run.status in ['completed', 'failed', 'cancelled'] else 0) %}
+  {% set progress_label = run.progress_message or ('Completed' if run.status == 'completed' else 'Failed' if run.status == 'failed' else 'Cancelled' if run.status == 'cancelled' else 'Queued') %}
+  <div class="mt-5 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <p class="text-sm font-medium text-slate-900 dark:text-slate-100">Progress</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ progress_label }}</p>
+      </div>
+      <span class="text-sm font-medium text-slate-600 dark:text-slate-300">{{ '%.0f'|format(progress_percent) }}%</span>
+    </div>
+    <div class="mt-3 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-shell-800">
+      <div
+        class="h-full rounded-full bg-gradient-to-r from-teal-500 via-cyan-500 to-emerald-500 transition-all duration-700 ease-out {% if run.status in ['queued', 'running'] %}animate-pulse{% endif %}"
+        style="width: {{ progress_percent }}%;"
+      ></div>
+    </div>
+  </div>
   <dl class="mt-5 grid gap-4 md:grid-cols-3">
     <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
       <dt class="text-sm text-slate-500 dark:text-slate-400">Files analyzed</dt>

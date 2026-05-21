@@ -1,8 +1,9 @@
 from datetime import UTC, datetime
 
 from admin.database import SessionLocal
-from admin.jobs import request_run_cancellation
+from admin.jobs import _execute_run_process, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
+from services.workflow_service import WorkflowRunResult
 
 
 def test_request_run_cancellation_marks_queued_run_cancelled():
@@ -127,3 +128,44 @@ def test_clear_runs_deletes_only_selected_repository_history():
             synchronize_session=False
         )
         session.commit()
+
+
+def test_execute_run_process_updates_progress_and_completion(monkeypatch):
+    with SessionLocal() as session:
+        run = RunRecord(
+            endpoint="/generate",
+            status="queued",
+            progress_percent=5.0,
+            progress_message="Queued",
+            created_at=datetime.now(UTC),
+            request_payload="{}",
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+        run_id = run.id
+
+    def fake_execute_endpoint(endpoint, payload, progress_callback=None):
+        assert endpoint == "/generate"
+        assert progress_callback is not None
+        progress_callback(35.0, "Analyzing repository")
+        progress_callback(80.0, "Building documentation")
+        return WorkflowRunResult(
+            response={"status": "success"},
+            summary_output="{}",
+            metrics_files_analyzed=3,
+            metrics_docstrings_generated=2,
+            metrics_skipped_files=1,
+        )
+
+    monkeypatch.setattr("admin.jobs._execute_endpoint", fake_execute_endpoint)
+
+    _execute_run_process(run_id, "/generate", {})
+
+    with SessionLocal() as session:
+        stored_run = session.get(RunRecord, run_id)
+        assert stored_run is not None
+        assert stored_run.status == "completed"
+        assert stored_run.progress_percent == 100.0
+        assert stored_run.progress_message == "Completed"
+        assert stored_run.metrics_files_analyzed == 3
