@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from admin.database import SessionLocal
-from admin.jobs import _execute_run_process, request_run_cancellation
+from admin.jobs import _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
 from services.workflow_service import WorkflowRunResult
 
@@ -49,6 +49,37 @@ def test_request_run_cancellation_marks_running_run_cancelled():
         assert stored_run is not None
         assert stored_run.status == "cancelled"
         assert stored_run.error_message is not None
+
+
+def test_reconcile_interrupted_runs_marks_stale_running_run_failed():
+    with SessionLocal() as session:
+        run = RunRecord(
+            endpoint="/generate",
+            status="running",
+            progress_percent=42.0,
+            progress_message="Building docs",
+            created_at=datetime.now(UTC),
+            started_at=datetime.now(UTC),
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+        run_id = run.id
+
+    recovered_count = reconcile_interrupted_runs()
+
+    assert recovered_count >= 1
+    with SessionLocal() as session:
+        stored_run = session.get(RunRecord, run_id)
+        assert stored_run is not None
+        assert stored_run.status == "failed"
+        assert stored_run.progress_percent == 100.0
+        assert stored_run.progress_message == "Failed"
+        assert (
+            stored_run.error_message
+            == "Run was interrupted because the server stopped before the job could finish."
+        )
+        assert stored_run.completed_at is not None
 
 
 def test_clear_runs_deletes_only_selected_repository_history():
