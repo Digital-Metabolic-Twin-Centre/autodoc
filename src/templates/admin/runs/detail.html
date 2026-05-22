@@ -59,14 +59,43 @@
       </div>
 
       <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+        <h3 class="text-lg font-semibold">Run logs</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Open the key logs and fallback reports captured for this run.</p>
+        <div class="mt-4 space-y-3">
+          {% for log_file in run_logs %}
+          <button
+            type="button"
+            class="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-left hover:border-teal-500 dark:border-slate-800 dark:hover:border-teal-400"
+            onclick="openArtifactModal()"
+            hx-get="/admin/runs/{{ run.id }}/artifacts/{{ log_file.name }}/preview"
+            hx-target="#artifact-preview-body"
+            hx-swap="innerHTML"
+          >
+            <span class="font-medium">{{ log_file.label }}</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400">{{ log_file.size }} bytes</span>
+          </button>
+          {% else %}
+          <div class="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">No log files recorded for this run.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
         <h3 class="text-lg font-semibold">Artifacts</h3>
-        <p class="text-sm text-slate-500 dark:text-slate-400">Download generated files and logs from this run.</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Download generated files and any additional artifacts from this run.</p>
         <div class="mt-4 space-y-3">
           {% for artifact in artifacts %}
-          <a href="/admin/runs/{{ run.id }}/artifacts/{{ artifact.name }}" class="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3 hover:border-teal-500 dark:border-slate-800 dark:hover:border-teal-400">
+          <button
+            type="button"
+            class="flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-3 text-left hover:border-teal-500 dark:border-slate-800 dark:hover:border-teal-400"
+            onclick="openArtifactModal()"
+            hx-get="/admin/runs/{{ run.id }}/artifacts/{{ artifact.name }}/preview"
+            hx-target="#artifact-preview-body"
+            hx-swap="innerHTML"
+          >
             <span class="font-medium">{{ artifact.name }}</span>
             <span class="text-xs text-slate-500 dark:text-slate-400">{{ artifact.size }} bytes</span>
-          </a>
+          </button>
           {% else %}
           <div class="rounded-xl border border-dashed border-slate-300 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">No artifact files recorded for this run.</div>
           {% endfor %}

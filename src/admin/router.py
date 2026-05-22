@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from html import escape
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -297,12 +298,58 @@ def _artifact_entries(run: RunRecord) -> list[dict[str, str]]:
     return entries
 
 
+def _run_log_entries(run: RunRecord) -> list[dict[str, str]]:
+    artifact_entries = _artifact_entries(run)
+    entries_by_name = {entry["name"]: dict(entry) for entry in artifact_entries}
+    prioritized_names = [
+        "app.log",
+        "sphinx_build.log",
+        "sphinx_publish_fallback.txt",
+        "skipped_autoapi_files.txt",
+    ]
+
+    if run.log_path and os.path.exists(run.log_path):
+        log_name = os.path.basename(run.log_path)
+        entries_by_name.setdefault(
+            log_name,
+            {
+                "name": log_name,
+                "size": str(os.path.getsize(run.log_path)),
+            },
+        )
+
+    ordered: list[dict[str, str]] = []
+    for name in prioritized_names:
+        if name in entries_by_name:
+            entry = entries_by_name.pop(name)
+            entry["label"] = name
+            ordered.append(entry)
+
+    for name in sorted(entries_by_name):
+        if not (name.endswith(".log") or name.endswith(".txt")):
+            continue
+        entry = entries_by_name[name]
+        entry["label"] = name
+        ordered.append(entry)
+
+    return ordered
+
+
 def _log_snippet(log_path: str | None, limit: int = 80) -> str:
     if not log_path or not os.path.exists(log_path):
         return ""
     with open(log_path, "r", encoding="utf-8", errors="replace") as file_handle:
         lines = file_handle.readlines()
     return "".join(lines[-limit:])
+
+
+def _read_artifact_preview(artifact_path: Path, max_chars: int = 120_000) -> tuple[str, bool]:
+    with open(artifact_path, "r", encoding="utf-8", errors="replace") as file_handle:
+        content = file_handle.read(max_chars + 1)
+    truncated = len(content) > max_chars
+    if truncated:
+        content = content[:max_chars]
+    return content, truncated
 
 
 def _dashboard_context() -> dict[str, Any]:
@@ -697,6 +744,7 @@ async def run_detail(
         "run": run,
         "endpoint_labels": ENDPOINT_LABELS,
         "artifacts": _artifact_entries(run),
+        "run_logs": _run_log_entries(run),
         "log_snippet": _log_snippet(run.log_path),
         "admin_user": admin_user,
     }
@@ -827,3 +875,45 @@ async def download_artifact(
     if not target.exists() or not target.is_file():
         raise HTTPException(status_code=404, detail="Artifact not found.")
     return FileResponse(path=str(target), filename=artifact_name)
+
+
+@router.get("/runs/{run_id}/artifacts/{artifact_name}/preview", response_class=HTMLResponse)
+async def preview_artifact(
+    run_id: int,
+    artifact_name: str,
+    request: Request,
+    admin_user: str = Depends(require_admin),
+) -> Response:
+    del request, admin_user
+    with SessionLocal() as session:
+        stmt = select(RunRecord).where(RunRecord.id == run_id)
+        run = session.scalars(stmt).first()
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found.")
+    artifact_dir = Path(run.artifact_dir or "")
+    target = (artifact_dir / artifact_name).resolve()
+    if not artifact_dir or not str(target).startswith(str(artifact_dir.resolve())):
+        raise HTTPException(status_code=403, detail="Artifact path is invalid.")
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail="Artifact not found.")
+
+    content, truncated = _read_artifact_preview(target)
+    escaped_content = escape(content)
+    truncated_note = (
+        '<p class="mb-3 text-xs text-amber-600 dark:text-amber-300">'
+        "Preview truncated for readability. Download the file for the complete contents."
+        "</p>"
+        if truncated
+        else ""
+    )
+    html = (
+        f'<div class="flex items-center justify-between gap-4">'
+        f'<div><h3 class="text-lg font-semibold">{escape(artifact_name)}</h3>'
+        f'<p class="text-sm text-slate-500 dark:text-slate-400">{target}</p></div>'
+        f'<a href="/admin/runs/{run_id}/artifacts/{escape(artifact_name)}" '
+        f'class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium '
+        f'text-slate-700 dark:border-slate-700 dark:text-slate-200">Download</a></div>'
+        f'<div class="mt-4 rounded-xl bg-slate-950 p-4 text-xs text-slate-100">'
+        f"{truncated_note}<pre class=\"overflow-x-auto whitespace-pre-wrap\">{escaped_content}</pre></div>"
+    )
+    return HTMLResponse(content=html)
