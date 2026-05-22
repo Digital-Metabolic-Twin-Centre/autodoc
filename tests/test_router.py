@@ -20,6 +20,7 @@ from services.sphinx_services import (
     _run_sphinx_build_with_autoapi_filters,
     _to_autoapi_ignore_pattern,
     create_sphinx_setup,
+    publish_github_pages,
 )
 
 
@@ -337,6 +338,55 @@ def test_publish_pages_uses_default_low_content_min_lines(monkeypatch):
 
     assert response.status_code == 200
     assert captured["low_content_min_lines"] == 4
+
+
+def test_publish_github_pages_degrades_when_autoapi_build_still_fails(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
+        docs_dir = tmp_dir = __import__("pathlib").Path(temp_dir) / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        (docs_dir / "conf.py").write_text(
+            'extensions = ["sphinx.ext.autodoc", "autoapi.extension"]\n'
+            'autoapi_dirs = ["../autoapi_include"]\n',
+            encoding="utf-8",
+        )
+        (docs_dir / "index.rst").write_text("Project\n=======\n", encoding="utf-8")
+        return True
+
+    def fake_run_with_filters(temp_dir, conf_py_path, low_content_min_meaningful_lines):
+        return type("Result", (), {"returncode": 1, "stderr": "AttributeError: boom", "stdout": ""})()
+
+    def fake_build_once(temp_dir):
+        api_reference_path = __import__("pathlib").Path(temp_dir) / "docs" / "api_reference.rst"
+        captured["api_reference_text"] = api_reference_path.read_text(encoding="utf-8")
+        build_dir = __import__("pathlib").Path(temp_dir) / "docs" / "build" / "html"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        (build_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
+        return type("Result", (), {"returncode": 0, "stderr": "", "stdout": "degraded build ok"})()
+
+    def fake_publish_local(repo_path, build_dir, target_branch, token, source_branch_for_seed):
+        captured["build_dir"] = build_dir
+        captured["published_index"] = (__import__("pathlib").Path(build_dir) / "index.html").read_text(encoding="utf-8")
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.ensure_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.configure_github_pages", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.download_github_branch_snapshot", fake_download_snapshot)
+    monkeypatch.setattr("services.sphinx_services._run_sphinx_build_with_autoapi_filters", fake_run_with_filters)
+    monkeypatch.setattr("services.sphinx_services._build_sphinx_once", fake_build_once)
+    monkeypatch.setattr("services.sphinx_services.publish_local_directory_to_github_branch", fake_publish_local)
+    monkeypatch.setattr("services.sphinx_services.request_github_pages_build", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.get_run_log_dir", lambda: str(tmp_path))
+
+    result = publish_github_pages("example/project", "main", "secret")
+
+    assert result is True
+    fallback_report = (tmp_path / "sphinx_publish_fallback.txt").read_text(encoding="utf-8")
+    assert "AttributeError: boom" in fallback_report
+    assert "generated API reference is unavailable for this run" in captured["api_reference_text"]
+    log_text = (tmp_path / "sphinx_build.log").read_text(encoding="utf-8")
+    assert "=== degraded-publish-retry ===" in log_text
 
 
 def test_create_sphinx_setup_mirrors_all_analyzed_python_files(tmp_path, monkeypatch):

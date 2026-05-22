@@ -833,6 +833,73 @@ def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
             report_file.write(f"  reason: {item['reason']}\n\n")
 
 
+def _write_publish_fallback_report(reason: str) -> None:
+    """
+    Records that GitHub Pages publish degraded gracefully after Sphinx/AutoAPI failed.
+    """
+    run_log_dir = get_run_log_dir()
+    if not run_log_dir:
+        return
+    report_path = Path(run_log_dir) / "sphinx_publish_fallback.txt"
+    with open(report_path, "w", encoding="utf-8") as report_file:
+        report_file.write("Sphinx Publish Fallback\n")
+        report_file.write("=======================\n\n")
+        report_file.write(f"{reason}\n")
+
+
+def _disable_autoapi_in_conf(conf_py_path: str) -> None:
+    """
+    Removes AutoAPI extension and config from the generated Sphinx config for fallback builds.
+    """
+    conf_path = Path(conf_py_path)
+    if not conf_path.exists():
+        return
+
+    conf_text = conf_path.read_text(encoding="utf-8")
+    conf_text = re.sub(
+        r'^\s*["\']autoapi\.extension["\'],?\n',
+        "",
+        conf_text,
+        flags=re.MULTILINE,
+    )
+    conf_text = re.sub(r"^\s*autoapi_[A-Za-z0-9_]+\s*=.*\n?", "", conf_text, flags=re.MULTILINE)
+    marker_pattern = re.compile(
+        rf"{re.escape(AUTOAPI_CONF_MARKER_START)}.*?{re.escape(AUTOAPI_CONF_MARKER_END)}\n?",
+        flags=re.DOTALL,
+    )
+    conf_text = marker_pattern.sub("", conf_text).rstrip() + "\n"
+    conf_path.write_text(conf_text, encoding="utf-8")
+
+
+def _build_degraded_api_reference(reason: str) -> str:
+    """
+    Builds a publish-safe API reference page when AutoAPI output cannot be generated.
+    """
+    return (
+        "API Reference\n"
+        "=============\n\n"
+        "The rest of this documentation set was published successfully, but the "
+        "generated API reference is unavailable for this run.\n\n"
+        f"Reason: {reason}\n\n"
+        "See the run artifacts for `sphinx_build.log`, `skipped_autoapi_files.txt`, "
+        "and `sphinx_publish_fallback.txt` for the full failure details.\n"
+    )
+
+
+def _degrade_sphinx_publish_after_autoapi_failure(
+    conf_py_path: str,
+    docs_source_dir: str,
+    failure_reason: str,
+) -> None:
+    """
+    Prepares a fallback Sphinx build that publishes non-AutoAPI pages only.
+    """
+    _disable_autoapi_in_conf(conf_py_path)
+    api_reference_path = Path(docs_source_dir) / "api_reference.rst"
+    api_reference_path.write_text(_build_degraded_api_reference(failure_reason), encoding="utf-8")
+    _write_publish_fallback_report(failure_reason)
+
+
 def _run_sphinx_build_with_autoapi_filters(
     temp_dir: str,
     conf_py_path: str,
@@ -1559,11 +1626,23 @@ def publish_github_pages(
             build_output = "\n".join(
                 part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
             )
-            logger.error("Sphinx build failed: %s", build_output)
-            _raise_publish_error(
-                f"Sphinx build failed: {build_output}",
-                status_code=422,
+            logger.warning("Sphinx AutoAPI build failed; attempting degraded publish: %s", build_output)
+            _degrade_sphinx_publish_after_autoapi_failure(
+                conf_py_path,
+                docs_source_dir,
+                build_output or "AutoAPI build failure",
             )
+            build_result = _build_sphinx_once(temp_dir)
+            _write_sphinx_build_log("degraded-publish-retry", build_result, [], temp_dir)
+            if build_result.returncode != 0:
+                degraded_output = "\n".join(
+                    part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
+                )
+                logger.error("Sphinx build failed even after degraded fallback: %s", degraded_output)
+                _raise_publish_error(
+                    f"Sphinx build failed: {degraded_output}",
+                    status_code=422,
+                )
 
         if not os.path.isdir(build_dir):
             _raise_publish_error(
