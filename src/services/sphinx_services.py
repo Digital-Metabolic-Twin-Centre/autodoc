@@ -848,6 +848,28 @@ def _write_publish_fallback_report(reason: str) -> None:
         report_file.write(f"{reason}\n")
 
 
+def _summarize_publish_fallback_reason(reason: str) -> str:
+    """
+    Compresses verbose Sphinx/AutoAPI output into a short publish-safe summary.
+    """
+    reason_text = (reason or "").strip()
+    if not reason_text:
+        return "AutoAPI build failure"
+
+    extension_match = re.search(r"Extension error \(autoapi\.extension\)!", reason_text)
+    attribute_match = re.search(r"AttributeError:\s*([^\n]+)", reason_text)
+    if extension_match and attribute_match:
+        return f"AutoAPI extension failure: {attribute_match.group(1).strip()}"
+    if attribute_match:
+        return f"AutoAPI failure: {attribute_match.group(1).strip()}"
+
+    lines = [line.strip() for line in reason_text.splitlines() if line.strip()]
+    for line in lines:
+        if not line.startswith("[AutoAPI] Reading files"):
+            return line[:240]
+    return lines[0][:240] if lines else "AutoAPI build failure"
+
+
 def _disable_autoapi_in_conf(conf_py_path: str) -> None:
     """
     Removes AutoAPI extension and config from the generated Sphinx config for fallback builds.
@@ -881,7 +903,7 @@ def _build_degraded_api_reference(reason: str) -> str:
         "=============\n\n"
         "The rest of this documentation set was published successfully, but the "
         "generated API reference is unavailable for this run.\n\n"
-        f"Reason: {reason}\n\n"
+        f"Reason: {_summarize_publish_fallback_reason(reason)}\n\n"
         "See the run artifacts for `sphinx_build.log`, `skipped_autoapi_files.txt`, "
         "and `sphinx_publish_fallback.txt` for the full failure details.\n"
     )

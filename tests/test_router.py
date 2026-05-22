@@ -427,6 +427,8 @@ def test_publish_github_pages_degrades_when_autoapi_build_still_fails(monkeypatc
     fallback_report = (tmp_path / "sphinx_publish_fallback.txt").read_text(encoding="utf-8")
     assert "AttributeError: boom" in fallback_report
     assert "generated API reference is unavailable for this run" in captured["api_reference_text"]
+    assert "Reason: AutoAPI failure: boom" in captured["api_reference_text"]
+    assert "Traceback" not in captured["api_reference_text"]
     log_text = (tmp_path / "sphinx_build.log").read_text(encoding="utf-8")
     assert "=== degraded-publish-retry ===" in log_text
 
