@@ -293,6 +293,48 @@ def test_publish_pages_returns_specific_publish_error(monkeypatch):
     assert response.json()["detail"] == "GitHub Pages configuration failed."
 
 
+def test_publish_pages_returns_raw_publish_branch_update_error(monkeypatch):
+    def fail_publish(repo_url, branch, token, low_content_min_lines):
+        raise PublishPagesError("GitHub publish failed for 'example/project': Update is not a fast forward", 422)
+
+    monkeypatch.setattr("services.workflow_service.publish_github_pages", fail_publish)
+
+    response = request(
+        "POST",
+        "/publish-pages",
+        json={
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "docs-review",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "GitHub publish failed for 'example/project': Update is not a fast forward"
+
+
+def test_publish_pages_returns_raw_unexpected_error_detail(monkeypatch):
+    monkeypatch.setattr(
+        "services.workflow_service.publish_github_pages",
+        lambda repo_url, branch, token, low_content_min_lines: (_ for _ in ()).throw(
+            RuntimeError("raw github error body")
+        ),
+    )
+
+    response = request(
+        "POST",
+        "/publish-pages",
+        json={
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "docs-review",
+        },
+    )
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "raw github error body"
+
+
 def test_publish_pages_uses_provided_low_content_min_lines(monkeypatch):
     captured = {}
 

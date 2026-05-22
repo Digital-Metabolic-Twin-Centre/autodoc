@@ -10,6 +10,7 @@ from utils.git_utils import (
     fetch_content_bytes_from_github,
     fetch_content_from_github,
     fetch_repo_tree,
+    publish_local_directory_to_github_branch,
     should_ignore,
 )
 from utils.update_conf_content import _append_extension
@@ -85,6 +86,68 @@ def test_fetch_content_bytes_from_github_preserves_empty_file(monkeypatch):
     monkeypatch.setattr("utils.git_utils.requests.get", lambda *args, **kwargs: response)
 
     assert fetch_content_bytes_from_github("example/project", "main", "__init__.py", "secret") == b""
+
+
+def test_configure_github_pages_raises_exact_github_error(monkeypatch):
+    def fake_get(url, headers=None):
+        return DummyResponse(404, {"message": "Not Found"}, text='{"message":"Not Found"}')
+
+    def fake_post(url, headers=None, json=None):
+        return DummyResponse(
+            403,
+            {"message": "Resource not accessible by personal access token"},
+            text='{"message":"Resource not accessible by personal access token"}',
+        )
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+
+    with pytest.raises(GitHubApiError, match="Resource not accessible by personal access token"):
+        configure_github_pages("example/project", "gh-pages", "secret")
+
+
+def test_publish_local_directory_to_github_branch_raises_non_fast_forward_error(monkeypatch, tmp_path):
+    docs_dir = tmp_path / "build"
+    docs_dir.mkdir()
+    (docs_dir / "index.html").write_text("<html></html>", encoding="utf-8")
+
+    def fake_get(url, headers=None, params=None):
+        if url.endswith("/git/refs/heads/gh-pages"):
+            return DummyResponse(200, {"object": {"sha": "commitsha"}})
+        if url.endswith("/git/commits/commitsha"):
+            return DummyResponse(200, {"tree": {"sha": "treesha"}})
+        raise AssertionError(f"Unexpected GET {url}")
+
+    def fake_post(url, headers=None, json=None):
+        if url.endswith("/git/blobs"):
+            return DummyResponse(201, {"sha": "blobsha"})
+        if url.endswith("/git/trees"):
+            return DummyResponse(201, {"sha": "newtree"})
+        if url.endswith("/git/commits"):
+            return DummyResponse(201, {"sha": "newcommit"})
+        raise AssertionError(f"Unexpected POST {url}")
+
+    def fake_patch(url, headers=None, json=None):
+        return DummyResponse(
+            422,
+            {"message": "Update is not a fast forward"},
+            text='{"message":"Update is not a fast forward","status":"422"}',
+        )
+
+    monkeypatch.setattr("utils.git_utils.ensure_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+    monkeypatch.setattr("utils.git_utils.requests.patch", fake_patch)
+    monkeypatch.setattr("utils.git_utils.list_github_tree", lambda *args, **kwargs: [])
+
+    with pytest.raises(GitHubApiError, match="Update is not a fast forward"):
+        publish_local_directory_to_github_branch(
+            "example/project",
+            str(docs_dir),
+            "gh-pages",
+            "secret",
+            "main",
+        )
 
 
 def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkeypatch):

@@ -24,6 +24,11 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+def _error_detail(exc: Exception) -> str:
+    """Return a more explicit error payload for temporary debugging."""
+    return str(exc) or repr(exc)
+
+
 def _default_docstring_suggestion_branch() -> str:
     """
     Generate a default docstring suggestion with a timestamp.
@@ -76,10 +81,10 @@ async def generate_docs(req: RepoRequest):
         logger.error(f"PermissionError: {pe}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
     except Exception as e:
-        logger.error(f"Unhandled Exception: {e}")
+        logger.exception("Unhandled exception during /generate")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred: " + str(e),
+            detail=_error_detail(e),
         )
 
 
@@ -105,10 +110,10 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
     except DocstringPullRequestError as dpe:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe))
     except Exception as e:
-        logger.error(f"Unhandled Exception: {e}")
+        logger.exception("Unhandled exception during /suggest-python-docstrings-pr")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred: " + str(e),
+            detail=_error_detail(e),
         )
 
 
@@ -135,8 +140,8 @@ async def publish_pages(req: PublishPagesRequest):
     except PermissionError as pe:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
     except Exception as e:
-        logger.error(f"Unhandled Exception: {e}")
+        logger.exception("Unhandled exception during /publish-pages")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred: " + str(e),
+            detail=_error_detail(e),
         )

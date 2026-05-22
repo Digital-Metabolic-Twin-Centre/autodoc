@@ -1052,12 +1052,20 @@ def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: s
         resp = requests.post(api_url, headers=_github_headers(token), json=payload)
         success_codes = (201,)
     else:
+        message = _parse_response_message(get_resp)
         logger.error(f"Failed to inspect GitHub Pages settings: {get_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub Pages inspection failed for '{repo_url}': {message}",
+            status_code=get_resp.status_code,
+        )
 
     if resp.status_code not in success_codes:
+        message = _parse_response_message(resp)
         logger.error(f"Failed to configure GitHub Pages: {resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub Pages configuration failed for '{repo_url}': {message}",
+            status_code=resp.status_code,
+        )
     return True
 
 
@@ -1269,13 +1277,18 @@ def publish_local_directory_to_github_branch(
     Publishes a local directory to a GitHub branch in a single commit.
     """
     if not ensure_github_branch(repo_url, source_branch_for_seed, target_branch, token):
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': could not create or access branch '{target_branch}'."
+        )
 
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{target_branch}"
     ref_resp = requests.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
         logger.error(f"Failed to get target branch ref: {ref_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(ref_resp)}",
+            status_code=ref_resp.status_code,
+        )
     latest_commit_sha = ref_resp.json()["object"]["sha"]
 
     commit_resp = requests.get(
@@ -1284,7 +1297,10 @@ def publish_local_directory_to_github_branch(
     )
     if commit_resp.status_code != 200:
         logger.error(f"Failed to get target branch commit: {commit_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(commit_resp)}",
+            status_code=commit_resp.status_code,
+        )
     base_tree_sha = commit_resp.json()["tree"]["sha"]
 
     target_items = list_github_tree(repo_url, target_branch, token, recursive=True)
@@ -1305,7 +1321,7 @@ def publish_local_directory_to_github_branch(
             with open(local_path, "rb") as file_handle:
                 blob_sha = create_github_blob(repo_url, token, file_handle.read())
             if not blob_sha:
-                return False
+                raise GitHubApiError(f"GitHub publish failed for '{repo_url}': could not create blob for {target_path}.")
             tree.append(
                 {
                     "path": target_path,
@@ -1318,7 +1334,7 @@ def publish_local_directory_to_github_branch(
 
     nojekyll_sha = create_github_blob(repo_url, token, b"")
     if not nojekyll_sha:
-        return False
+        raise GitHubApiError(f"GitHub publish failed for '{repo_url}': could not create blob for .nojekyll.")
     tree.append({"path": ".nojekyll", "mode": "100644", "type": "blob", "sha": nojekyll_sha})
     published_paths.add(".nojekyll")
 
@@ -1333,7 +1349,10 @@ def publish_local_directory_to_github_branch(
     )
     if tree_resp.status_code not in (200, 201):
         logger.error(f"Failed to create publish tree: {tree_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(tree_resp)}",
+            status_code=tree_resp.status_code,
+        )
     new_tree_sha = tree_resp.json()["sha"]
 
     new_commit_resp = requests.post(
@@ -1347,7 +1366,10 @@ def publish_local_directory_to_github_branch(
     )
     if new_commit_resp.status_code not in (200, 201):
         logger.error(f"Failed to create publish commit: {new_commit_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(new_commit_resp)}",
+            status_code=new_commit_resp.status_code,
+        )
     new_commit_sha = new_commit_resp.json()["sha"]
 
     update_resp = requests.patch(
@@ -1357,7 +1379,10 @@ def publish_local_directory_to_github_branch(
     )
     if update_resp.status_code not in (200, 201):
         logger.error(f"Failed to update publish branch ref: {update_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(update_resp)}",
+            status_code=update_resp.status_code,
+        )
 
     return True
 

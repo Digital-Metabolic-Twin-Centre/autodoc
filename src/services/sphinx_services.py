@@ -40,6 +40,7 @@ from utils.generate_yml_content import (
     generate_gitlab_ci_file,
 )
 from utils.git_utils import (
+    GitHubApiError,
     configure_github_pages,
     create_a_file,
     create_directory_and_add_files,
@@ -1564,21 +1565,19 @@ def publish_github_pages(
     repo_path = extract_repo_path(repo_url, "github")
     project_name = _project_name_from_repo_path(repo_path)
 
-    pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
-    if not pages_branch_ready:
-        _raise_publish_error(
-            "GitHub Pages branch setup failed. Check that the source branch exists and "
-            "the token can read and write repository contents."
-        )
+    try:
+        pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
+        if not pages_branch_ready:
+            _raise_publish_error(
+                "GitHub Pages branch setup failed. Check that the source branch exists and "
+                "the token can read and write repository contents."
+            )
 
-    pages_configured = configure_github_pages(repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH)
-    if not pages_configured:
-        _raise_publish_error(
-            "GitHub Pages configuration failed. GitHub usually returns this when the "
-            "token is missing Pages read/write access, the repository does not allow "
-            "Pages configuration by that token, or the token owner lacks admin access "
-            "to the repository."
-        )
+        pages_configured = configure_github_pages(repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH)
+        if not pages_configured:
+            _raise_publish_error("GitHub Pages configuration failed.")
+    except GitHubApiError as error:
+        _raise_publish_error(str(error), status_code=error.status_code or 403)
 
     with tempfile.TemporaryDirectory(prefix="autodoc-pages-") as temp_dir:
         snapshot_downloaded = download_github_branch_snapshot(repo_path, source_branch, token, temp_dir)
@@ -1650,18 +1649,18 @@ def publish_github_pages(
                 status_code=422,
             )
 
-        published = publish_local_directory_to_github_branch(
-            repo_path,
-            build_dir,
-            GITHUB_PAGES_BRANCH,
-            token,
-            source_branch_for_seed=source_branch,
-        )
-        if not published:
-            _raise_publish_error(
-                "Publishing built docs to the GitHub Pages branch failed. Check that "
-                "the token can write repository contents and the gh-pages branch is not protected."
+        try:
+            published = publish_local_directory_to_github_branch(
+                repo_path,
+                build_dir,
+                GITHUB_PAGES_BRANCH,
+                token,
+                source_branch_for_seed=source_branch,
             )
+            if not published:
+                _raise_publish_error("Publishing built docs to the GitHub Pages branch failed.")
+        except GitHubApiError as error:
+            _raise_publish_error(str(error), status_code=error.status_code or 403)
 
     request_github_pages_build(repo_path, token)
     logger.info("Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH)
