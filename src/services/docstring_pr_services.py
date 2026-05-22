@@ -20,6 +20,8 @@ from utils.git_utils import (
     extract_repo_path,
     fetch_content_from_github,
     fetch_repo_tree,
+    list_github_pull_request_files,
+    list_open_github_pull_requests,
     read_file_content_from_local,
 )
 from utils.output_paths import build_repo_output_file, find_latest_repo_run_dir
@@ -411,6 +413,7 @@ def _build_no_changes_response(
     base_branch: str,
     suggestion_branch: str,
     reason: str,
+    existing_pull_request_url: Optional[str] = None,
 ) -> dict:
     """
     Constructs a response indicating no changes between branches.
@@ -435,7 +438,63 @@ def _build_no_changes_response(
         "changed_files": [],
         "message": reason,
         "detail": reason,
+        "existing_pull_request_url": existing_pull_request_url,
     }
+
+
+def _filter_changed_files_against_base(
+    patched_files: Dict[str, PatchedPythonFile],
+    original_contents: Dict[str, str],
+) -> Dict[str, PatchedPythonFile]:
+    """
+    Keeps only files whose patched content actually differs from the base branch source.
+    """
+    return {
+        file_path: patched
+        for file_path, patched in patched_files.items()
+        if patched.content != original_contents.get(file_path, "")
+    }
+
+
+def _find_matching_open_pull_request(
+    repo_path: str,
+    base_branch: str,
+    patched_files: Dict[str, PatchedPythonFile],
+    token: str,
+) -> Optional[dict]:
+    """
+    Returns an open GitHub pull request whose proposed file contents already match the patch set.
+    """
+    expected_paths = set(patched_files)
+    if not expected_paths:
+        return None
+
+    for pull_request in list_open_github_pull_requests(repo_path, base_branch, token):
+        pull_number = pull_request.get("number")
+        head_ref = (pull_request.get("head") or {}).get("ref")
+        if not pull_number or not head_ref:
+            continue
+
+        changed_paths = {
+            item.get("filename", "")
+            for item in list_github_pull_request_files(repo_path, pull_number, token)
+            if item.get("filename")
+        }
+        if changed_paths != expected_paths:
+            continue
+
+        matches_existing_pr = True
+        for file_path, patched in patched_files.items():
+            if fetch_content_from_github(repo_path, head_ref, file_path, token) != patched.content:
+                matches_existing_pr = False
+                break
+
+        if matches_existing_pr:
+            return {
+                "url": pull_request.get("html_url"),
+                "head_ref": head_ref,
+            }
+    return None
 
 
 def create_python_docstring_pull_request(
@@ -472,6 +531,7 @@ def create_python_docstring_pull_request(
 
             remaining = max_docstrings
             patched_files: Dict[str, PatchedPythonFile] = {}
+            original_contents: Dict[str, str] = {}
             for file_path in python_files:
                 if remaining <= 0:
                     break
@@ -482,6 +542,7 @@ def create_python_docstring_pull_request(
                 suggestions = suggestions_by_file.get(file_path)
                 if not suggestions:
                     continue
+                original_contents[file_path] = content
                 try:
                     patched = patch_python_docstrings(
                         content,
@@ -503,6 +564,23 @@ def create_python_docstring_pull_request(
             )
 
         patched_files = _run_ruff_on_patched_files(patched_files)
+        patched_files = _filter_changed_files_against_base(patched_files, original_contents)
+
+        if not patched_files:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "No new Python docstring suggestions are available for this branch.",
+            )
+
+        existing_pr = _find_matching_open_pull_request(repo_path, base_branch, patched_files, token)
+        if existing_pr:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "A matching Python docstring suggestion pull request is already open for this branch.",
+                existing_pull_request_url=existing_pr.get("url"),
+            )
 
         branch_ready = ensure_github_branch(repo_path, base_branch, suggestion_branch, token)
         if not branch_ready:

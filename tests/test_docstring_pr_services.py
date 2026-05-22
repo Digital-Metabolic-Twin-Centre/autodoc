@@ -387,3 +387,84 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_
     assert result["files_changed"] == 0
     assert result["message"] == "No new Python docstring suggestions are available for this branch."
     assert result["detail"] == result["message"]
+
+
+def test_create_python_docstring_pull_request_returns_no_changes_when_matching_pr_already_exists(
+    monkeypatch,
+):
+    source = "def add(left, right):\n    return left + right\n"
+    patched_source = 'def add(left, right):\n    """Add two values."""\n    return left + right\n'
+
+    @contextmanager
+    def fake_clone(repo_url, token, base_branch, provider):
+        yield "/tmp/fake-clone"
+
+    monkeypatch.setattr(
+        "services.docstring_pr_services._load_generated_suggestions",
+        lambda repo_path, branch: {
+            "src/example.py": [
+                {
+                    "function_name": "add",
+                    "block_type": "function",
+                    "generated_docstring": "Add two values.",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_repo_tree",
+        lambda repo_path, token, branch, provider: [{"type": "file", "path": "src/example.py"}],
+    )
+    monkeypatch.setattr("services.docstring_pr_services.clone_repository", fake_clone)
+    monkeypatch.setattr(
+        "services.docstring_pr_services.read_file_content_from_local",
+        lambda temp_dir, file_path: source,
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.list_open_github_pull_requests",
+        lambda repo_path, base_branch, token: [
+            {
+                "number": 17,
+                "html_url": "https://github.com/example/project/pull/17",
+                "head": {"ref": "autodocs-docstring-suggestions-20260522-1000"},
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.list_github_pull_request_files",
+        lambda repo_path, pull_number, token: [{"filename": "src/example.py"}],
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_content_from_github",
+        lambda repo_path, branch, file_path, token: patched_source,
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.ensure_github_branch",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("ensure_github_branch should not be called")),
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.commit_files_to_github_branch",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("commit_files_to_github_branch should not be called")
+        ),
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.create_github_pull_request",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("create_github_pull_request should not be called")
+        ),
+    )
+
+    result = create_python_docstring_pull_request(
+        "github",
+        "example/project",
+        "secret",
+        "main",
+        "autodocs-docstring-suggestions-20260522-1100",
+        "Add suggested docstrings",
+    )
+
+    assert result["status"] == "no_changes"
+    assert result["pull_request_url"] is None
+    assert result["existing_pull_request_url"] == "https://github.com/example/project/pull/17"
+    assert result["message"] == "A matching Python docstring suggestion pull request is already open for this branch."

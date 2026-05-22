@@ -1469,5 +1469,37 @@ def create_github_pull_request(
         raise GitHubApiError(
             f"GitHub pull request creation failed: {resp.text}",
             status_code=resp.status_code,
-        )
+    )
     return resp.json().get("html_url")
+
+
+def list_open_github_pull_requests(repo_url: str, base_branch: str, token: str) -> List[Dict]:
+    """
+    Lists open GitHub pull requests targeting the provided base branch.
+    """
+    resp = requests.get(
+        f"{GITHUB_API_URL}/repos/{repo_url}/pulls",
+        headers=_github_headers(token),
+        params={"state": "open", "base": base_branch, "per_page": 100},
+    )
+    if resp.status_code != 200:
+        logger.error(f"Failed to list GitHub pull requests: {resp.text}")
+        return []
+    payload = resp.json()
+    return payload if isinstance(payload, list) else []
+
+
+def list_github_pull_request_files(repo_url: str, pull_number: int, token: str) -> List[Dict]:
+    """
+    Lists files changed in a GitHub pull request.
+    """
+    resp = requests.get(
+        f"{GITHUB_API_URL}/repos/{repo_url}/pulls/{pull_number}/files",
+        headers=_github_headers(token),
+        params={"per_page": 100},
+    )
+    if resp.status_code != 200:
+        logger.error(f"Failed to list GitHub pull request files: {resp.text}")
+        return []
+    payload = resp.json()
+    return payload if isinstance(payload, list) else []
