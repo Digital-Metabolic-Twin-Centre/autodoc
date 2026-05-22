@@ -448,6 +448,18 @@ def test_extract_autoapi_module_names_reads_modules_from_docutils_errors():
     assert modules == ["urls_v1", "tools.gpu_embed_service"]
 
 
+def test_extract_autoapi_module_names_uses_last_autoapi_read_file_when_traceback_omits_module():
+    build_output = (
+        "Traceback ... AttributeError: 'NoneType' object has no attribute 'rsplit'\n"
+        "[AutoAPI] Reading files... [ 98%] /tmp/autodoc-pages/autoapi_include/api/management/commands/benchmark_methods.py\n"
+        "[AutoAPI] Reading files... [100%] /tmp/autodoc-pages/autoapi_include/api/embeddings/registry.py\n"
+    )
+
+    modules = _extract_autoapi_module_names(build_output)
+
+    assert modules == ["api.embeddings.registry"]
+
+
 def test_find_autoapi_skip_candidates_matches_module_leaf(tmp_path):
     autoapi_dir = tmp_path / "autoapi_include"
     (autoapi_dir / "api" / "views").mkdir(parents=True)

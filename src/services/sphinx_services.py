@@ -502,6 +502,16 @@ def _extract_autoapi_module_names(build_output: str) -> list[str]:
     module_names.extend(
         match.replace("/", ".") for match in re.findall(r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or "")
     )
+    mirrored_source_matches = re.findall(
+        r"(?:^|\s)(?:\[AutoAPI\] Reading files\.\.\.\s+\[\s*\d+%\]\s+)?[^\s]*autoapi_include/([A-Za-z0-9_./-]+)\.py",
+        build_output or "",
+        flags=re.MULTILINE,
+    )
+    if mirrored_source_matches:
+        # AutoAPI may crash before it names the failing module directly. In that
+        # case, the last mirrored Python file it reported reading is the best
+        # available signal for a targeted skip-and-retry fallback.
+        module_names.append(mirrored_source_matches[-1].replace("/", "."))
     unique_module_names = []
     seen = set()
     for module_name in module_names:
