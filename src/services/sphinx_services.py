@@ -772,6 +772,41 @@ def _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess:
     )
 
 
+def _write_sphinx_build_log(
+    attempt_name: str,
+    result: subprocess.CompletedProcess,
+    ignore_patterns: list[str],
+    temp_dir: str,
+) -> None:
+    """
+    Appends detailed Sphinx build activity to a persistent run log artifact.
+    """
+    run_log_dir = get_run_log_dir()
+    if not run_log_dir:
+        return
+
+    log_path = Path(run_log_dir) / "sphinx_build.log"
+    with open(log_path, "a", encoding="utf-8") as log_file:
+        log_file.write(f"=== {attempt_name} ===\n")
+        log_file.write(f"temp_dir: {temp_dir}\n")
+        log_file.write(f"returncode: {result.returncode}\n")
+        log_file.write(f"command: {sys.executable} -m sphinx -b html {DOCS_SRC} {BUILD_DIR}\n")
+        log_file.write("autoapi_ignore:\n")
+        if ignore_patterns:
+            for pattern in sorted(set(ignore_patterns)):
+                log_file.write(f"- {pattern}\n")
+        else:
+            log_file.write("- <none>\n")
+
+        log_file.write("\n[stdout]\n")
+        stdout = (result.stdout or "").strip()
+        log_file.write(stdout if stdout else "<empty>")
+        log_file.write("\n\n[stderr]\n")
+        stderr = (result.stderr or "").strip()
+        log_file.write(stderr if stderr else "<empty>")
+        log_file.write("\n\n")
+
+
 def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
     """
     Generates a report of skipped AutoAPI files and writes it to a text file.
@@ -829,6 +864,7 @@ def _run_sphinx_build_with_autoapi_filters(
     )
     _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
     build_result = _build_sphinx_once(temp_dir)
+    _write_sphinx_build_log("initial-build", build_result, active_ignore_patterns, temp_dir)
     if build_result.returncode == 0:
         _write_skipped_autoapi_report(skipped_files)
         return build_result
@@ -853,6 +889,7 @@ def _run_sphinx_build_with_autoapi_filters(
     )
     _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
     retry_result = _build_sphinx_once(temp_dir)
+    _write_sphinx_build_log("fallback-retry", retry_result, active_ignore_patterns, temp_dir)
     _write_skipped_autoapi_report(skipped_files)
     return retry_result
 

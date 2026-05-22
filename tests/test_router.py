@@ -671,6 +671,53 @@ def test_run_sphinx_build_with_autoapi_filters_uses_single_fallback_retry(tmp_pa
     assert "fallback-module-failure" in report_text
 
 
+def test_run_sphinx_build_with_autoapi_filters_writes_full_sphinx_build_log(tmp_path, monkeypatch):
+    autoapi_root = tmp_path / "autoapi_include"
+    conf_path = tmp_path / "docs" / "source" / "conf.py"
+    build_path = tmp_path / "docs" / "build" / "html"
+    broken_module = autoapi_root / "api" / "broken.py"
+    broken_module.parent.mkdir(parents=True)
+    conf_path.parent.mkdir(parents=True)
+    build_path.mkdir(parents=True)
+    broken_module.write_text(
+        "def broken():\n    return 1\n"
+        "def x():\n    return 1\n"
+        "def y():\n    return 2\n"
+        "def z():\n    return 3\n",
+        encoding="utf-8",
+    )
+    conf_path.write_text("project = 'X'\n", encoding="utf-8")
+
+    calls = {"count": 0}
+
+    def fake_run(*args, **kwargs):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return type(
+                "Result",
+                (),
+                {
+                    "returncode": 1,
+                    "stderr": "AttributeError: boom",
+                    "stdout": "[AutoAPI] Reading files... [100%] /tmp/work/autoapi_include/api/broken.py",
+                },
+            )()
+        return type("Result", (), {"returncode": 0, "stderr": "", "stdout": "build succeeded"})()
+
+    monkeypatch.setattr("services.sphinx_services.subprocess.run", fake_run)
+    monkeypatch.setattr("services.sphinx_services.get_run_log_dir", lambda: str(tmp_path))
+
+    result = _run_sphinx_build_with_autoapi_filters(str(tmp_path), str(conf_path))
+
+    assert result.returncode == 0
+    log_text = (tmp_path / "sphinx_build.log").read_text(encoding="utf-8")
+    assert "=== initial-build ===" in log_text
+    assert "=== fallback-retry ===" in log_text
+    assert "AttributeError: boom" in log_text
+    assert "build succeeded" in log_text
+    assert "*/api/broken.py" in log_text
+
+
 def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
     captured = {}
 
