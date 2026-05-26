@@ -46,6 +46,14 @@ To publish updated docs without GitHub Actions:
 └── tests/
 ```
 
+## Architecture
+
+The repository includes Structurizr-generated architecture diagrams under `diagrams/`.
+
+### System Context
+
+![System Context diagram](diagrams/img/SystemContext-001.png)
+
 ## Runtime Outputs
 
 Each repo run gets its own folder:
