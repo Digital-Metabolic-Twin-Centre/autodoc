@@ -1684,7 +1684,10 @@ def publish_github_pages(
         except GitHubApiError as error:
             _raise_publish_error(str(error), status_code=error.status_code or 403)
 
-    request_github_pages_build(repo_path, token)
+    try:
+        request_github_pages_build(repo_path, token)
+    except GitHubApiError as error:
+        _raise_publish_error(str(error), status_code=error.status_code or 403)
     logger.info("Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH)
     return True
 

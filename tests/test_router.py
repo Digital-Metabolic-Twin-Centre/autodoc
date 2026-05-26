@@ -1,6 +1,7 @@
 from asyncio import run
 
 import httpx
+from utils.git_utils import GitHubApiError
 
 from main import app
 from services.doc_services import RepoAnalysisError
@@ -431,6 +432,37 @@ def test_publish_github_pages_degrades_when_autoapi_build_still_fails(monkeypatc
     assert "Traceback" not in captured["api_reference_text"]
     log_text = (tmp_path / "sphinx_build.log").read_text(encoding="utf-8")
     assert "=== degraded-publish-retry ===" in log_text
+
+
+def test_publish_github_pages_raises_when_pages_rebuild_request_fails(monkeypatch, tmp_path):
+    def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
+        docs_dir = __import__("pathlib").Path(temp_dir) / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        (docs_dir / "conf.py").write_text("extensions = []\n", encoding="utf-8")
+        (docs_dir / "index.rst").write_text("Project\n=======\n", encoding="utf-8")
+        return True
+
+    def fake_run_with_filters(temp_dir, conf_py_path, low_content_min_meaningful_lines):
+        build_dir = __import__("pathlib").Path(temp_dir) / "docs" / "build" / "html"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        (build_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
+        return type("Result", (), {"returncode": 0, "stderr": "", "stdout": "build ok"})()
+
+    monkeypatch.setattr("services.sphinx_services.ensure_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.configure_github_pages", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.download_github_branch_snapshot", fake_download_snapshot)
+    monkeypatch.setattr("services.sphinx_services._run_sphinx_build_with_autoapi_filters", fake_run_with_filters)
+    monkeypatch.setattr("services.sphinx_services.publish_local_directory_to_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr(
+        "services.sphinx_services.request_github_pages_build",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            GitHubApiError("GitHub Pages rebuild request failed for 'example/project': denied", status_code=403)
+        ),
+    )
+    monkeypatch.setattr("services.sphinx_services.get_run_log_dir", lambda: str(tmp_path))
+
+    with __import__("pytest").raises(PublishPagesError, match="GitHub Pages rebuild request failed"):
+        publish_github_pages("example/project", "main", "secret")
 
 
 def test_create_sphinx_setup_mirrors_all_analyzed_python_files(tmp_path, monkeypatch):

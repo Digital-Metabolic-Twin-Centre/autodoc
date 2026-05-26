@@ -1076,8 +1076,12 @@ def request_github_pages_build(repo_url: str, token: str) -> bool:
     api_url = f"{GITHUB_API_URL}/repos/{repo_url}/pages/builds"
     resp = requests.post(api_url, headers=_github_headers(token))
     if resp.status_code not in (201,):
-        logger.warning(f"GitHub Pages build request failed: {resp.text}")
-        return False
+        message = _parse_response_message(resp)
+        logger.error(f"GitHub Pages build request failed: {resp.text}")
+        raise GitHubApiError(
+            f"GitHub Pages rebuild request failed for '{repo_url}': {message}",
+            status_code=resp.status_code,
+        )
     return True
 
 

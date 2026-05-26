@@ -11,6 +11,7 @@ from utils.git_utils import (
     fetch_content_from_github,
     fetch_repo_tree,
     publish_local_directory_to_github_branch,
+    request_github_pages_build,
     should_ignore,
 )
 from utils.update_conf_content import _append_extension
@@ -104,6 +105,20 @@ def test_configure_github_pages_raises_exact_github_error(monkeypatch):
 
     with pytest.raises(GitHubApiError, match="Resource not accessible by personal access token"):
         configure_github_pages("example/project", "gh-pages", "secret")
+
+
+def test_request_github_pages_build_raises_exact_github_error(monkeypatch):
+    def fake_post(url, headers=None):
+        return DummyResponse(
+            403,
+            {"message": "Resource not accessible by personal access token"},
+            text='{"message":"Resource not accessible by personal access token"}',
+        )
+
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+
+    with pytest.raises(GitHubApiError, match="Resource not accessible by personal access token"):
+        request_github_pages_build("example/project", "secret")
 
 
 def test_publish_local_directory_to_github_branch_raises_non_fast_forward_error(monkeypatch, tmp_path):
