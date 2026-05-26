@@ -253,4 +253,6 @@ build/
 node_modules/
 
 
+temp/
+
 .structurizr/

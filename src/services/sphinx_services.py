@@ -1111,7 +1111,7 @@ def _build_sample_index(project_name: str) -> str:
 
 def _build_sample_api_reference() -> str:
     """
-    Builds a curated API reference page that exposes useful AutoAPI pages in the sidebar.
+    Builds a baseline API reference page.
 
     Returns:
         str: The API reference page content.
@@ -1120,12 +1120,108 @@ def _build_sample_api_reference() -> str:
     return (
         "API Reference\n"
         "=============\n\n"
-        "Browse the generated API pages directly from the sidebar.\n\n"
-        ".. toctree::\n"
-        "   :hidden:\n"
-        "   :maxdepth: 4\n\n"
-        "   autoapi/src/index\n"
+        "Generated API entries will appear here after the mirrored Python tree is analysed.\n"
     )
+
+
+def _discover_autoapi_reference_entries(root_dir: str) -> list[str]:
+    """
+    Discovers the top-level AutoAPI entry pages that should appear in the API reference.
+
+    Args:
+        root_dir (str): Repository root containing ``autoapi_include/``.
+
+    Returns:
+        list[str]: Sorted AutoAPI doc paths such as ``autoapi/models/index``.
+    """
+    autoapi_root = Path(root_dir) / AUTOAPI_DIRECTORY
+    if not autoapi_root.exists():
+        return []
+
+    entries: list[str] = []
+
+    def _collect_entries(base_dir: Path, prefix: str = "") -> None:
+        for child in sorted(base_dir.iterdir(), key=lambda item: item.name):
+            entry_name = f"{prefix}/{child.name}" if prefix else child.name
+            if child.name.startswith("."):
+                continue
+            if child.is_file() and child.suffix in {".py", ".pyw"} and child.name != "__init__.py":
+                entries.append(f"autoapi/{prefix}/{child.stem}/index" if prefix else f"autoapi/{child.stem}/index")
+                continue
+            if not child.is_dir():
+                continue
+            has_python_content = any(
+                path.suffix in {".py", ".pyw"} for path in child.rglob("*") if path.is_file()
+            )
+            if not has_python_content:
+                continue
+            if (child / "__init__.py").exists():
+                entries.append(f"autoapi/{entry_name}/index")
+            else:
+                _collect_entries(child, prefix)
+
+    _collect_entries(autoapi_root)
+
+    deduped_entries: list[str] = []
+    seen = set()
+    for entry in entries:
+        if entry in seen:
+            continue
+        seen.add(entry)
+        deduped_entries.append(entry)
+    return deduped_entries
+
+
+def _build_api_reference(entries: list[str]) -> str:
+    """
+    Builds the API reference page for the discovered AutoAPI entries.
+
+    Args:
+        entries (list[str]): AutoAPI doc paths to surface in the reference page.
+
+    Returns:
+        str: The API reference page content.
+    """
+    heading = (
+        "Browse the generated API pages below.\n\n"
+        ".. toctree::\n"
+        "   :maxdepth: 2\n\n"
+    )
+    if not entries:
+        return _build_sample_api_reference()
+    return (
+        "API Reference\n"
+        "=============\n\n"
+        + heading
+        + "".join(f"   {entry}\n" for entry in entries)
+    )
+
+
+def _ensure_api_reference(api_reference_path: str, root_dir: str) -> None:
+    """
+    Ensures ``api_reference.rst`` points at the actual generated AutoAPI entry pages.
+
+    Args:
+        api_reference_path (str): Path to ``api_reference.rst``.
+        root_dir (str): Repository root containing ``autoapi_include/``.
+    """
+    api_reference = Path(api_reference_path)
+    entries = _discover_autoapi_reference_entries(root_dir)
+    updated_text = _build_api_reference(entries)
+
+    if not api_reference.exists():
+        api_reference.parent.mkdir(parents=True, exist_ok=True)
+        api_reference.write_text(updated_text, encoding="utf-8")
+        return
+
+    existing_text = api_reference.read_text(encoding="utf-8")
+    generated_markers = (
+        "Browse the generated API pages directly from the sidebar.",
+        "Generated API entries will appear here after the mirrored Python tree is analysed.",
+        "autoapi/src/index",
+    )
+    if any(marker in existing_text for marker in generated_markers):
+        api_reference.write_text(updated_text, encoding="utf-8")
 
 
 def _build_sample_overview(project_name: str) -> str:
@@ -1332,6 +1428,7 @@ def _write_sample_sphinx_scaffold(root_dir: str, project_name: str) -> None:
         destination = Path(root_dir) / file_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(content)
+    _ensure_api_reference(str(Path(root_dir) / DOCS_SRC / "api_reference.rst"), root_dir)
 
 
 def _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None:
@@ -1637,6 +1734,7 @@ def publish_github_pages(
 
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
+        _ensure_api_reference(os.path.join(docs_source_dir, "api_reference.rst"), temp_dir)
 
         build_result = _run_sphinx_build_with_autoapi_filters(
             temp_dir,

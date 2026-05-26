@@ -9,8 +9,10 @@ from services.sphinx_services import (
     AUTOAPI_DOCSTRING_THRESHOLD,
     PublishPagesError,
     _apply_autoapi_runtime_settings,
+    _ensure_api_reference,
     _classify_autoapi_file,
     _collect_prebuild_autoapi_ignores,
+    _discover_autoapi_reference_entries,
     _ensure_api_index,
     _ensure_sphinx_project_name,
     _extract_autoapi_module_names,
@@ -542,6 +544,37 @@ def test_ensure_api_index_replaces_sphinx_quickstart_homepage(tmp_path):
     assert "api_reference" in index_text
     assert "Add your content" not in index_text
     assert (index_path.parent / "api_reference.rst").exists()
+
+
+def test_discover_autoapi_reference_entries_uses_actual_mirrored_top_level_modules(tmp_path):
+    autoapi_root = tmp_path / "autoapi_include" / "api"
+    autoapi_root.mkdir(parents=True)
+    (autoapi_root / "models.py").write_text("class Model:\n    pass\n", encoding="utf-8")
+    (autoapi_root / "services").mkdir()
+    (autoapi_root / "services" / "job_service.py").write_text("def run():\n    return 1\n", encoding="utf-8")
+
+    entries = _discover_autoapi_reference_entries(str(tmp_path))
+
+    assert entries == ["autoapi/models/index", "autoapi/job_service/index"]
+
+
+def test_ensure_api_reference_rewrites_default_scaffold_to_actual_entries(tmp_path):
+    docs_dir = tmp_path / "docs"
+    autoapi_root = tmp_path / "autoapi_include" / "api"
+    docs_dir.mkdir(parents=True)
+    autoapi_root.mkdir(parents=True)
+    (autoapi_root / "models.py").write_text("class Model:\n    pass\n", encoding="utf-8")
+    (docs_dir / "api_reference.rst").write_text(
+        "API Reference\n=============\n\nBrowse the generated API pages directly from the sidebar.\n\n"
+        ".. toctree::\n   :hidden:\n   :maxdepth: 4\n\n   autoapi/src/index\n",
+        encoding="utf-8",
+    )
+
+    _ensure_api_reference(str(docs_dir / "api_reference.rst"), str(tmp_path))
+
+    api_reference_text = (docs_dir / "api_reference.rst").read_text(encoding="utf-8")
+    assert "autoapi/models/index" in api_reference_text
+    assert ":hidden:" not in api_reference_text
 
 
 def test_ensure_sphinx_project_name_replaces_placeholder(tmp_path):
