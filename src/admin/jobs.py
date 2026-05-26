@@ -101,9 +101,7 @@ def reconcile_interrupted_runs() -> int:
             run.progress_message = "Failed"
             run.completed_at = recovered_at
             run.duration_seconds = _duration_seconds(run.started_at, recovered_at)
-            run.error_message = (
-                RESTART_EXIT_MESSAGE if previous_status == "running" else RESTART_QUEUE_MESSAGE
-            )
+            run.error_message = RESTART_EXIT_MESSAGE if previous_status == "running" else RESTART_QUEUE_MESSAGE
             session.add(run)
         session.commit()
         return len(interrupted_runs)

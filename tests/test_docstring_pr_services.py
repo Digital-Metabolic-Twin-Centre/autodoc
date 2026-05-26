@@ -209,9 +209,7 @@ def test_run_ruff_on_patched_files_returns_cleaned_content(monkeypatch):
     assert cleaned["src/example.py"].content == "def run():\n    return True\n"
 
 
-def test_run_ruff_on_patched_files_gracefully_handles_e402_from_analyzed_project(
-    monkeypatch, caplog
-):
+def test_run_ruff_on_patched_files_gracefully_handles_e402_from_analyzed_project(monkeypatch, caplog):
     calls = {"count": 0}
 
     def fake_run(command, cwd, capture_output, text, timeout):
@@ -225,8 +223,7 @@ def test_run_ruff_on_patched_files_gracefully_handles_e402_from_analyzed_project
             command,
             1,
             stdout=(
-                "api/prediction_engines/kinform.py:19:1: E402 Module level import not at top of file\n"
-                "Found 1 error.\n"
+                "api/prediction_engines/kinform.py:19:1: E402 Module level import not at top of file\nFound 1 error.\n"
             ),
             stderr="",
         )

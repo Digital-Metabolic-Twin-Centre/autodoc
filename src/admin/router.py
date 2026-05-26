@@ -1,8 +1,8 @@
 import json
 import os
 import re
-from html import escape
 from datetime import UTC, datetime
+from html import escape
 from pathlib import Path
 from typing import Any
 
@@ -914,6 +914,6 @@ async def preview_artifact(
         f'class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium '
         f'text-slate-700 dark:border-slate-700 dark:text-slate-200">Download</a></div>'
         f'<div class="mt-4 rounded-xl bg-slate-950 p-4 text-xs text-slate-100">'
-        f"{truncated_note}<pre class=\"overflow-x-auto whitespace-pre-wrap\">{escaped_content}</pre></div>"
+        f'{truncated_note}<pre class="overflow-x-auto whitespace-pre-wrap">{escaped_content}</pre></div>'
     )
     return HTMLResponse(content=html)

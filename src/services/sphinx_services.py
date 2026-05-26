@@ -1150,9 +1150,7 @@ def _discover_autoapi_reference_entries(root_dir: str) -> list[str]:
                 continue
             if not child.is_dir():
                 continue
-            has_python_content = any(
-                path.suffix in {".py", ".pyw"} for path in child.rglob("*") if path.is_file()
-            )
+            has_python_content = any(path.suffix in {".py", ".pyw"} for path in child.rglob("*") if path.is_file())
             if not has_python_content:
                 continue
             if (child / "__init__.py").exists():
@@ -1182,19 +1180,10 @@ def _build_api_reference(entries: list[str]) -> str:
     Returns:
         str: The API reference page content.
     """
-    heading = (
-        "Browse the generated API pages below.\n\n"
-        ".. toctree::\n"
-        "   :maxdepth: 2\n\n"
-    )
+    heading = "Browse the generated API pages below.\n\n.. toctree::\n   :maxdepth: 2\n\n"
     if not entries:
         return _build_sample_api_reference()
-    return (
-        "API Reference\n"
-        "=============\n\n"
-        + heading
-        + "".join(f"   {entry}\n" for entry in entries)
-    )
+    return "API Reference\n=============\n\n" + heading + "".join(f"   {entry}\n" for entry in entries)
 
 
 def _ensure_api_reference(api_reference_path: str, root_dir: str) -> None:

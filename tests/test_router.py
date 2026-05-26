@@ -1,7 +1,6 @@
 from asyncio import run
 
 import httpx
-from utils.git_utils import GitHubApiError
 
 from main import app
 from services.doc_services import RepoAnalysisError
@@ -9,11 +8,11 @@ from services.sphinx_services import (
     AUTOAPI_DOCSTRING_THRESHOLD,
     PublishPagesError,
     _apply_autoapi_runtime_settings,
-    _ensure_api_reference,
     _classify_autoapi_file,
     _collect_prebuild_autoapi_ignores,
     _discover_autoapi_reference_entries,
     _ensure_api_index,
+    _ensure_api_reference,
     _ensure_sphinx_project_name,
     _extract_autoapi_module_names,
     _extract_module_name_from_autoapi_path,
@@ -25,6 +24,7 @@ from services.sphinx_services import (
     create_sphinx_setup,
     publish_github_pages,
 )
+from utils.git_utils import GitHubApiError
 
 
 def request(method, url, **kwargs):
@@ -389,11 +389,10 @@ def test_publish_github_pages_degrades_when_autoapi_build_still_fails(monkeypatc
     captured = {}
 
     def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
-        docs_dir = tmp_dir = __import__("pathlib").Path(temp_dir) / "docs"
+        docs_dir = __import__("pathlib").Path(temp_dir) / "docs"
         docs_dir.mkdir(parents=True, exist_ok=True)
         (docs_dir / "conf.py").write_text(
-            'extensions = ["sphinx.ext.autodoc", "autoapi.extension"]\n'
-            'autoapi_dirs = ["../autoapi_include"]\n',
+            'extensions = ["sphinx.ext.autodoc", "autoapi.extension"]\nautoapi_dirs = ["../autoapi_include"]\n',
             encoding="utf-8",
         )
         (docs_dir / "index.rst").write_text("Project\n=======\n", encoding="utf-8")
@@ -454,7 +453,9 @@ def test_publish_github_pages_raises_when_pages_rebuild_request_fails(monkeypatc
     monkeypatch.setattr("services.sphinx_services.configure_github_pages", lambda *args, **kwargs: True)
     monkeypatch.setattr("services.sphinx_services.download_github_branch_snapshot", fake_download_snapshot)
     monkeypatch.setattr("services.sphinx_services._run_sphinx_build_with_autoapi_filters", fake_run_with_filters)
-    monkeypatch.setattr("services.sphinx_services.publish_local_directory_to_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr(
+        "services.sphinx_services.publish_local_directory_to_github_branch", lambda *args, **kwargs: True
+    )
     monkeypatch.setattr(
         "services.sphinx_services.request_github_pages_build",
         lambda *args, **kwargs: (_ for _ in ()).throw(
@@ -610,7 +611,8 @@ def test_extract_autoapi_module_names_reads_modules_from_docutils_errors():
 def test_extract_autoapi_module_names_uses_last_autoapi_read_file_when_traceback_omits_module():
     build_output = (
         "Traceback ... AttributeError: 'NoneType' object has no attribute 'rsplit'\n"
-        "[AutoAPI] Reading files... [ 98%] /tmp/autodoc-pages/autoapi_include/api/management/commands/benchmark_methods.py\n"
+        "[AutoAPI] Reading files... [ 98%] "
+        "/tmp/autodoc-pages/autoapi_include/api/management/commands/benchmark_methods.py\n"
         "[AutoAPI] Reading files... [100%] /tmp/autodoc-pages/autoapi_include/api/embeddings/registry.py\n"
     )
 
@@ -839,10 +841,7 @@ def test_run_sphinx_build_with_autoapi_filters_writes_full_sphinx_build_log(tmp_
     conf_path.parent.mkdir(parents=True)
     build_path.mkdir(parents=True)
     broken_module.write_text(
-        "def broken():\n    return 1\n"
-        "def x():\n    return 1\n"
-        "def y():\n    return 2\n"
-        "def z():\n    return 3\n",
+        "def broken():\n    return 1\ndef x():\n    return 1\ndef y():\n    return 2\ndef z():\n    return 3\n",
         encoding="utf-8",
     )
     conf_path.write_text("project = 'X'\n", encoding="utf-8")

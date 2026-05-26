@@ -44,9 +44,7 @@ def test_clear_repo_output_history_removes_repo_folder(monkeypatch, tmp_path):
     assert not repo_dir.exists()
 
 
-def test_bind_repo_run_log_dir_copies_previous_text_json_and_csv_artifacts(
-    monkeypatch, tmp_path
-):
+def test_bind_repo_run_log_dir_copies_previous_text_json_and_csv_artifacts(monkeypatch, tmp_path):
     monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
     repo_dir = tmp_path / "github" / "octo-org__example-repo"
     previous_run = repo_dir / "app_20260428_100000"

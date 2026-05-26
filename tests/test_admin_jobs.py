@@ -75,10 +75,7 @@ def test_reconcile_interrupted_runs_marks_stale_running_run_failed():
         assert stored_run.status == "failed"
         assert stored_run.progress_percent == 100.0
         assert stored_run.progress_message == "Failed"
-        assert (
-            stored_run.error_message
-            == "Run was interrupted because the server stopped before the job could finish."
-        )
+        assert stored_run.error_message == "Run was interrupted because the server stopped before the job could finish."
         assert stored_run.completed_at is not None
 
 

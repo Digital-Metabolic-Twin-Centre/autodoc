@@ -1325,7 +1325,9 @@ def publish_local_directory_to_github_branch(
             with open(local_path, "rb") as file_handle:
                 blob_sha = create_github_blob(repo_url, token, file_handle.read())
             if not blob_sha:
-                raise GitHubApiError(f"GitHub publish failed for '{repo_url}': could not create blob for {target_path}.")
+                raise GitHubApiError(
+                    f"GitHub publish failed for '{repo_url}': could not create blob for {target_path}."
+                )
             tree.append(
                 {
                     "path": target_path,
@@ -1498,7 +1500,7 @@ def create_github_pull_request(
         raise GitHubApiError(
             f"GitHub pull request creation failed: {resp.text}",
             status_code=resp.status_code,
-    )
+        )
     return resp.json().get("html_url")
 
 

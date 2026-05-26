@@ -12,7 +12,10 @@ def test_sample_docs_files_follow_shared_template_with_autoapi():
     assert 'autoapi_dirs = ["../autoapi_include"]' in files["docs/conf.py"]
     assert "autoapi_add_toctree_entry = False" in files["docs/conf.py"]
     assert "api_reference" in files["docs/index.rst"]
-    assert "Generated API entries will appear here after the mirrored Python tree is analysed." in files["docs/api_reference.rst"]
+    assert (
+        "Generated API entries will appear here after the mirrored Python tree is analysed."
+        in files["docs/api_reference.rst"]
+    )
     assert "project/overview" in files["docs/index.rst"]
     assert "cd docs" in files["docs/README.rst"]
     assert "docs/build/html/index.html" in files["docs/README.rst"]
