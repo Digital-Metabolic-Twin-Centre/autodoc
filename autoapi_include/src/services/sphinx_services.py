@@ -1744,6 +1744,13 @@ def publish_github_pages(
                 status_code=422,
             )
 
+        source_readme_path = os.path.join(temp_dir, "README.md")
+        published_readme_path = os.path.join(build_dir, "README.md")
+        if os.path.isfile(source_readme_path):
+            with open(source_readme_path, "rb") as source_readme:
+                with open(published_readme_path, "wb") as published_readme:
+                    published_readme.write(source_readme.read())
+
         try:
             published = publish_local_directory_to_github_branch(
                 repo_path,

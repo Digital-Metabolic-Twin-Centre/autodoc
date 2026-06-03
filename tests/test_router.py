@@ -435,6 +435,43 @@ def test_publish_github_pages_degrades_when_autoapi_build_still_fails(monkeypatc
     assert "=== degraded-publish-retry ===" in log_text
 
 
+def test_publish_github_pages_copies_project_readme_into_build_output(monkeypatch):
+    captured = {}
+
+    def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
+        temp_path = __import__("pathlib").Path(temp_dir)
+        docs_dir = temp_path / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        (temp_path / "README.md").write_text("# Actual Project Readme\n", encoding="utf-8")
+        (docs_dir / "conf.py").write_text("extensions = []\n", encoding="utf-8")
+        (docs_dir / "index.rst").write_text("Project\n=======\n", encoding="utf-8")
+        return True
+
+    def fake_run_with_filters(temp_dir, conf_py_path, low_content_min_meaningful_lines):
+        build_dir = __import__("pathlib").Path(temp_dir) / "docs" / "build" / "html"
+        build_dir.mkdir(parents=True, exist_ok=True)
+        (build_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
+        return type("Result", (), {"returncode": 0, "stderr": "", "stdout": "build ok"})()
+
+    def fake_publish_local(repo_path, build_dir, target_branch, token, source_branch_for_seed):
+        captured["published_readme"] = (__import__("pathlib").Path(build_dir) / "README.md").read_text(
+            encoding="utf-8"
+        )
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.ensure_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.configure_github_pages", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.download_github_branch_snapshot", fake_download_snapshot)
+    monkeypatch.setattr("services.sphinx_services._run_sphinx_build_with_autoapi_filters", fake_run_with_filters)
+    monkeypatch.setattr("services.sphinx_services.publish_local_directory_to_github_branch", fake_publish_local)
+    monkeypatch.setattr("services.sphinx_services.request_github_pages_build", lambda *args, **kwargs: True)
+
+    result = publish_github_pages("example/project", "main", "secret")
+
+    assert result is True
+    assert captured["published_readme"] == "# Actual Project Readme\n"
+
+
 def test_publish_github_pages_raises_when_pages_rebuild_request_fails(monkeypatch, tmp_path):
     def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
         docs_dir = __import__("pathlib").Path(temp_dir) / "docs"
