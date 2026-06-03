@@ -1,14 +1,20 @@
 import base64
 import fnmatch
 import os
+import shutil
+import subprocess
+import tempfile
 import urllib.parse
-from typing import Dict, List, Optional, Tuple
+from contextlib import contextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, Generator, List, Optional, Tuple
 
 import gitlab
 import requests
 
 from config.config import GITHUB_API_URL, GITLAB_API_URL
-from config.log_config import get_logger
+from config.log_config import LOG_DIR, get_logger
 from utils.code_block_extraction import GenericCodeBlockExtractor
 from utils.docstring_validation import analyse_docstring_in_blocks
 
@@ -53,9 +59,7 @@ class RepositoryAccessError(RuntimeError):
         self.status_code = status_code
 
 
-def _github_headers(
-    token: str, accept: str = "application/vnd.github+json"
-) -> Dict[str, str]:
+def _github_headers(token: str, accept: str = "application/vnd.github+json") -> Dict[str, str]:
     """
     Generate headers for GitHub API requests.
 
@@ -94,9 +98,7 @@ def _parse_response_message(response) -> str:
     return response.text.strip() or "Unknown error"
 
 
-def _raise_github_repository_access_error(
-    response, repo_path: str, branch: str, path: str = ""
-) -> None:
+def _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = "") -> None:
     """
     Raises a RepositoryAccessError based on the GitHub API response for a repository access attempt.
 
@@ -154,27 +156,233 @@ def extract_repo_path(repo_url: str, provider: str = "github") -> str:
     return repo_url
 
 
+@contextmanager
+def clone_repository(
+    repo_url: str, token: str, branch: str = "main", provider: str = "github"
+) -> Generator[str, None, None]:
+    """
+    Clone a repository to logs/.clones/ directory and yield the path.
+
+    Automatically cleans up the temporary directory when done.
+
+    Args:
+        repo_url (str): Repository URL or path (e.g., 'user/repo' or 'https://github.com/user/repo').
+        token (str): Authentication token (GitHub or GitLab).
+        branch (str): Branch to clone. Defaults to 'main'.
+        provider (str): Git provider ('github' or 'gitlab'). Defaults to 'github'.
+
+    Yields:
+        str: Path to the cloned repository directory.
+
+    Raises:
+        RepositoryAccessError: If clone fails.
+    """
+    # Convert repo path/URL to full clone URL
+    if repo_url.startswith(("http://", "https://")):
+        clone_url = repo_url
+    else:
+        if provider.lower() == "github":
+            clone_url = f"https://github.com/{repo_url}.git"
+        elif provider.lower() == "gitlab":
+            clone_url = f"https://gitlab.com/{repo_url}.git"
+        else:
+            raise ValueError(f"Unsupported provider: {provider}")
+
+    # Use logs directory for clones instead of /tmp
+    clones_dir = os.path.join(LOG_DIR, ".clones")
+    os.makedirs(clones_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+    temp_dir = os.path.join(clones_dir, f"clone_{timestamp}")
+
+    try:
+        logger.info(f"Cloning {clone_url} to {temp_dir}")
+
+        # Clone with token authentication
+        if provider.lower() == "github":
+            git_url_with_token = clone_url.replace("https://", f"https://x-access-token:{token}@")
+        elif provider.lower() == "gitlab":
+            git_url_with_token = clone_url.replace("https://", f"https://oauth2:{token}@")
+        else:
+            git_url_with_token = clone_url
+
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "--branch", branch, git_url_with_token, temp_dir],
+            check=True,
+            timeout=300,
+            capture_output=True,
+        )
+        logger.info(f"Successfully cloned repository to {temp_dir}")
+        yield temp_dir
+    except subprocess.TimeoutExpired as e:
+        raise RepositoryAccessError(
+            f"Clone operation timed out after 300 seconds for {repo_url}",
+            status_code=408,
+        ) from e
+    except subprocess.CalledProcessError as e:
+        error_msg = e.stderr.decode("utf-8", errors="replace") if e.stderr else str(e)
+        if "Repository not found" in error_msg or "not found" in error_msg.lower():
+            raise RepositoryAccessError(
+                f"Repository '{repo_url}' not found or is not accessible with provided token.",
+                status_code=404,
+            ) from e
+        elif "authentication" in error_msg.lower() or "permission" in error_msg.lower():
+            raise RepositoryAccessError(
+                f"Authentication failed for repository '{repo_url}'. Check your token.",
+                status_code=401,
+            ) from e
+        else:
+            raise RepositoryAccessError(
+                f"Failed to clone repository '{repo_url}': {error_msg}",
+                status_code=400,
+            ) from e
+    except Exception as e:
+        raise RepositoryAccessError(
+            f"Unexpected error cloning repository '{repo_url}': {str(e)}",
+            status_code=500,
+        ) from e
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            logger.info(f"Cleaned up temporary directory {temp_dir}")
+        _cleanup_old_clones()
+
+
+def _cleanup_old_clones(keep_count: int = 10) -> None:
+    """
+    Clean up old clone directories, keeping only the most recent ones.
+
+    Args:
+       keep_count (int): Number of clones to keep. Defaults to 10.
+    """
+    clones_dir = os.path.join(LOG_DIR, ".clones")
+    if not os.path.isdir(clones_dir):
+        return
+
+    try:
+        clones = []
+        for entry in os.listdir(clones_dir):
+            if entry.startswith("clone_"):
+                full_path = os.path.join(clones_dir, entry)
+                if os.path.isdir(full_path):
+                    clones.append((entry, full_path))
+
+        # Sort by name (timestamp-based)
+        clones.sort()
+
+        # Remove old clones
+        if len(clones) > keep_count:
+            for _, old_clone in clones[:-keep_count]:
+                try:
+                    shutil.rmtree(old_clone, ignore_errors=True)
+                    logger.debug(f"Cleaned up old clone directory: {old_clone}")
+                except Exception:
+                    pass
+    except Exception as e:
+        logger.warning(f"Error during clone cleanup: {e}")
+
+
+def list_repository_files(repo_path: str, branch: str = "main", provider: str = "github") -> List[Dict]:
+    """
+    List all files in a local repository using filesystem traversal.
+
+    Args:
+        repo_path (str): Path to the local cloned repository.
+        branch (str): Branch name (unused for local repos, kept for compatibility).
+        provider (str): Git provider (unused for local repos, kept for compatibility).
+
+    Returns:
+        List[Dict]: List of file dicts with 'name', 'path', and 'type' keys.
+    """
+    repo_root = Path(repo_path)
+    gitignore_patterns = _get_gitignore_patterns_from_local(repo_path)
+    logger.info(f"Gitignore patterns: {gitignore_patterns}")
+
+    files = []
+    for local_path in repo_root.rglob("*"):
+        rel_path = local_path.relative_to(repo_root)
+        rel_path_str = str(rel_path).replace("\\", "/")
+
+        # Skip .git directory
+        if ".git" in rel_path.parts:
+            continue
+
+        # Check gitignore patterns
+        if should_ignore(rel_path.name, gitignore_patterns):
+            continue
+
+        if local_path.is_file():
+            files.append(
+                {
+                    "name": local_path.name,
+                    "path": rel_path_str,
+                    "type": "file",
+                }
+            )
+        elif local_path.is_dir():
+            files.append(
+                {
+                    "name": local_path.name,
+                    "path": rel_path_str,
+                    "type": "dir",
+                }
+            )
+
+    return files
+
+
+def _get_gitignore_patterns_from_local(repo_path: str) -> List[str]:
+    """
+    Read .gitignore patterns from a local repository.
+
+    Args:
+        repo_path (str): Path to the local repository.
+
+    Returns:
+        List[str]: List of gitignore patterns.
+    """
+    gitignore_path = Path(repo_path) / ".gitignore"
+    if not gitignore_path.exists():
+        return []
+
+    try:
+        patterns = []
+        with open(gitignore_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    patterns.append(line)
+        return patterns
+    except Exception as e:
+        logger.warning(f"Failed to read .gitignore: {e}")
+        return []
+
+
 def get_gitignore_patterns(
     repo_path: str, access_token: str, branch: str = "main", provider: str = "github"
 ) -> List[str]:
     """
+    DEPRECATED: Use _get_gitignore_patterns_from_local() instead.
+
+    This function is kept for backwards compatibility.
     Fetches .gitignore file from the repository and returns a list of patterns to ignore.
+
     Args:
-        repo_path (str): Repository path (e.g., 'user/repo').
-        access_token (str): Authentication token.
+        repo_path (str): Repository path (e.g., 'user/repo') or local path.
+        access_token (str): Authentication token (unused if repo_path is local).
         branch (str, optional): Branch name. Defaults to "main".
         provider (str, optional): Git provider ("github" or "gitlab"). Defaults to "github".
     Returns:
         List[str]: List of ignore patterns from .gitignore.
     """
+    # If repo_path is a local path, read from local
+    if os.path.isdir(repo_path):
+        return _get_gitignore_patterns_from_local(repo_path)
+
+    # Otherwise, try API access (legacy fallback)
     if provider == "github":
-        content = fetch_content_from_github(
-            repo_path, branch, ".gitignore", access_token
-        )
+        content = fetch_content_from_github(repo_path, branch, ".gitignore", access_token)
     elif provider == "gitlab":
-        content = fetch_content_from_gitlab(
-            repo_path, branch, ".gitignore", access_token
-        )
+        content = fetch_content_from_gitlab(repo_path, branch, ".gitignore", access_token)
     else:
         return []
     if not content:
@@ -202,9 +410,52 @@ def should_ignore(name: str, patterns: List[str]) -> bool:
     return False
 
 
-def fetch_content_from_github(
-    repo_path: str, branch: str, file_path: str, access_token: str
-) -> Optional[str]:
+def read_file_content_from_local(repo_path: str, file_path: str) -> Optional[str]:
+    """
+    Read file content from a local cloned repository.
+
+    Args:
+        repo_path (str): Path to the local cloned repository.
+        file_path (str): Relative path to the file within the repository.
+
+    Returns:
+        Optional[str]: File content if successful, None otherwise.
+    """
+    try:
+        full_path = Path(repo_path) / file_path
+        if not full_path.exists() or not full_path.is_file():
+            logger.warning(f"File not found: {full_path}")
+            return None
+        with open(full_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"Error reading file {file_path}: {e}")
+        return None
+
+
+def read_file_bytes_from_local(repo_path: str, file_path: str) -> Optional[bytes]:
+    """
+    Read file bytes from a local cloned repository.
+
+    Args:
+        repo_path (str): Path to the local cloned repository.
+        file_path (str): Relative path to the file within the repository.
+
+    Returns:
+        Optional[bytes]: File bytes if successful, None otherwise.
+    """
+    try:
+        full_path = Path(repo_path) / file_path
+        if not full_path.exists() or not full_path.is_file():
+            logger.warning(f"File not found: {full_path}")
+            return None
+        return full_path.read_bytes()
+    except Exception as e:
+        logger.error(f"Error reading file {file_path}: {e}")
+        return None
+
+
+def fetch_content_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitHub repository.
     Args:
@@ -233,9 +484,7 @@ def fetch_content_from_github(
     return None
 
 
-def fetch_content_bytes_from_github(
-    repo_path: str, branch: str, file_path: str, access_token: str
-) -> Optional[bytes]:
+def fetch_content_bytes_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[bytes]:
     """
     Fetches the raw bytes of a file from a GitHub repository.
     """
@@ -257,9 +506,7 @@ def fetch_content_bytes_from_github(
     return None
 
 
-def fetch_content_from_gitlab(
-    repo_path: str, branch: str, file_path: str, private_token: str
-) -> Optional[str]:
+def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, private_token: str) -> Optional[str]:
     """
     Fetches the raw content of a file from a GitLab repository.
     Args:
@@ -288,84 +535,96 @@ def fetch_content_from_gitlab(
 
 
 def fetch_repo_tree(
-    repo_path: str, access_token: str, branch: str = "main", provider: str = "github"
+    repo_url: str,
+    access_token: str,
+    branch: str = "main",
+    provider: str = "github",
+    local_repo_path: Optional[str] = None,
 ) -> List[Dict]:
     """
-    Recursively fetches the file and directory tree for a given repository and branch.
+    Get the file tree from a repository.
+
+    If local_repo_path is provided, reads from that local directory (for already-cloned repos).
+    Otherwise, clones the repository temporarily and reads the tree (caller must clean up).
+
     Args:
-        repo_path (str): Repository path.
+        repo_url (str): Repository URL or path (e.g., 'user/repo' or full URL).
         access_token (str): Authentication token.
         branch (str, optional): Branch name. Defaults to "main".
-        provider (str, optional): Git provider ("github" or "gitlab"). Defaults to "github".
+        provider (str, optional): Git provider ('github' or 'gitlab'). Defaults to 'github'.
+        local_repo_path (str, optional): Path to a pre-cloned local repository. If provided,
+                                         reads from this directory instead of cloning.
+
     Returns:
         List[Dict]: List of files and directories in the repository.
+
+    Raises:
+        RepositoryAccessError: If clone or traversal fails.
     """
-    repository_files = []
-    gitignore_patterns = get_gitignore_patterns(
-        repo_path, access_token, branch, provider
-    )
-    logger.info(f"Gitignore patterns: {gitignore_patterns}")
-
-    def _fetch_tree(path: str = "") -> List[Dict]:
-        """
-        Fetches the repository tree from GitHub or GitLab.
-
-            Args:
-                path (str): The path to the directory in the repository.
-
-            Returns:
-                List[Dict]: A list of files and directories in the specified path.
-
-        """
-        if provider == "github":
-            url = f"{GITHUB_API_URL}/repos/{repo_path}/contents/{path}"
-            headers = {
-                "Authorization": f"Bearer {access_token}",
-                "Accept": "application/vnd.github.v3+json",
-            }
-            params = {"ref": branch}
-            try:
-                response = requests.get(url, headers=headers, params=params, timeout=10)
-                if response.status_code >= 400:
-                    _raise_github_repository_access_error(response, repo_path, branch)
-                items = response.json()
-                if isinstance(items, dict):
-                    items = [items]
-            except RepositoryAccessError:
-                raise
-            except Exception as e:
-                logger.error(f"GitHub tree fetch error: {e}")
-                return []
-        elif provider == "gitlab":
-            gl = gitlab.Gitlab(GITLAB_API_URL, private_token=access_token)
-            try:
-                project = gl.projects.get(repo_path)
-                items = project.repository_tree(path=path, ref=branch)
-            except Exception as e:
-                logger.error(f"GitLab tree fetch error: {e}")
-                return []
-        else:
-            return []
-        all_files = []
-        for item in items:
-            if should_ignore(item["name"], gitignore_patterns):
-                continue
-            if item.get("type") in ["dir", "tree"]:
-                sub_items = _fetch_tree(
-                    os.path.join(path, item["name"]) if path else item["name"]
-                )
-                all_files.extend(sub_items)
-            elif item.get("type") in ["file", "blob"]:
-                all_files.append(item)
-        return all_files
-
     try:
-        repository_files = _fetch_tree()
+        if local_repo_path:
+            # Use pre-cloned repo
+            files = list_repository_files(local_repo_path, branch, provider)
+            logger.info(f"Fetched repo tree from local path, {len(files)} files found.")
+            return files
+        else:
+            # Clone and fetch (caller is responsible for cleanup)
+            temp_dir = tempfile.mkdtemp(prefix="autodoc_repo_")
+            try:
+                clone_url = (
+                    repo_url
+                    if repo_url.startswith(("http://", "https://"))
+                    else (
+                        f"https://github.com/{repo_url}.git"
+                        if provider.lower() == "github"
+                        else f"https://gitlab.com/{repo_url}.git"
+                    )
+                )
+
+                if provider.lower() == "github":
+                    clone_url = clone_url.replace("https://", f"https://x-access-token:{access_token}@")
+                elif provider.lower() == "gitlab":
+                    clone_url = clone_url.replace("https://", f"https://oauth2:{access_token}@")
+
+                subprocess.run(
+                    ["git", "clone", "--depth", "1", "--branch", branch, clone_url, temp_dir],
+                    check=True,
+                    timeout=300,
+                    capture_output=True,
+                )
+                logger.info(f"Successfully cloned repository to {temp_dir}")
+                files = list_repository_files(temp_dir, branch, provider)
+                logger.info(f"Fetched repo tree, {len(files)} files found.")
+                return files
+            except subprocess.TimeoutExpired as e:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                raise RepositoryAccessError(
+                    f"Clone operation timed out after 300 seconds for {repo_url}",
+                    status_code=408,
+                ) from e
+            except subprocess.CalledProcessError as e:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+                error_msg = e.stderr.decode("utf-8", errors="replace") if e.stderr else str(e)
+                if "Repository not found" in error_msg or "not found" in error_msg.lower():
+                    raise RepositoryAccessError(
+                        f"Repository '{repo_url}' not found or is not accessible with provided token.",
+                        status_code=404,
+                    ) from e
+                elif "authentication" in error_msg.lower():
+                    raise RepositoryAccessError(
+                        f"Authentication failed for repository '{repo_url}'. Check your token.",
+                        status_code=401,
+                    ) from e
+                else:
+                    raise RepositoryAccessError(
+                        f"Failed to clone repository '{repo_url}': {error_msg}",
+                        status_code=400,
+                    ) from e
     except RepositoryAccessError:
         raise
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}")
-    return repository_files
+        logger.error(f"Error fetching repo tree: {e}")
+        raise RepositoryAccessError(f"Failed to fetch repository tree: {str(e)}", status_code=500) from e
 
 
 def validate_docstring(
@@ -576,16 +835,12 @@ def create_directory_and_add_files(
             pass
 
         if not gitkeep_exists:
-            actions.append(
-                {"action": "create", "file_path": gitkeep_path, "content": ""}
-            )
+            actions.append({"action": "create", "file_path": gitkeep_path, "content": ""})
 
         try:
             gl = gitlab.Gitlab(GITLAB_API_URL, private_token=token)
             project = gl.projects.get(repo_url)
-            tree_items = project.repository_tree(
-                path=dir_path, ref=branch, recursive=True
-            )
+            tree_items = project.repository_tree(path=dir_path, ref=branch, recursive=True)
             stale_paths = sorted(
                 item.get("path", "")
                 for item in tree_items
@@ -623,12 +878,8 @@ def create_directory_and_add_files(
                 pass
 
             action_type = "update" if file_exists else "create"
-            logger.info(
-                f"{'Updating' if file_exists else 'Adding'} file {target_path} to commit actions."
-            )
-            actions.append(
-                {"action": action_type, "file_path": target_path, "content": content}
-            )
+            logger.info(f"{'Updating' if file_exists else 'Adding'} file {target_path} to commit actions.")
+            actions.append({"action": action_type, "file_path": target_path, "content": content})
 
         if not actions:
             logger.warning("No actions to commit.")
@@ -651,10 +902,7 @@ def create_directory_and_add_files(
                     "includes 'write_repository' scope in addition to "
                     "'api' and 'read_api'."
                 )
-            elif (
-                "not allowed to push" in error_msg.lower()
-                or "protected" in error_msg.lower()
-            ):
+            elif "not allowed to push" in error_msg.lower() or "protected" in error_msg.lower():
                 logger.error(
                     f"Branch '{branch}' is protected. Either use a different "
                     "branch, unprotect the branch, or add yourself as an "
@@ -752,9 +1000,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         return False
 
 
-def ensure_github_branch(
-    repo_url: str, source_branch: str, new_branch: str, token: str
-) -> bool:
+def ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, token: str) -> bool:
     """
     Ensures a GitHub branch exists by creating it from another branch when needed.
     """
@@ -784,9 +1030,7 @@ def ensure_github_branch(
     return True
 
 
-def configure_github_pages(
-    repo_url: str, pages_branch: str, token: str, path: str = "/"
-) -> bool:
+def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: str = "/") -> bool:
     """
     Configures GitHub Pages to publish from a branch without GitHub Actions.
     """
@@ -799,13 +1043,8 @@ def configure_github_pages(
     if get_resp.status_code == 200:
         pages_config = get_resp.json()
         current_source = pages_config.get("source") or {}
-        if (
-            current_source.get("branch") == pages_branch
-            and current_source.get("path") == path
-        ):
-            logger.info(
-                "GitHub Pages is already configured for %s%s.", pages_branch, path
-            )
+        if current_source.get("branch") == pages_branch and current_source.get("path") == path:
+            logger.info("GitHub Pages is already configured for %s%s.", pages_branch, path)
             return True
         resp = requests.put(api_url, headers=_github_headers(token), json=payload)
         success_codes = (204,)
@@ -813,12 +1052,20 @@ def configure_github_pages(
         resp = requests.post(api_url, headers=_github_headers(token), json=payload)
         success_codes = (201,)
     else:
+        message = _parse_response_message(get_resp)
         logger.error(f"Failed to inspect GitHub Pages settings: {get_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub Pages inspection failed for '{repo_url}': {message}",
+            status_code=get_resp.status_code,
+        )
 
     if resp.status_code not in success_codes:
+        message = _parse_response_message(resp)
         logger.error(f"Failed to configure GitHub Pages: {resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub Pages configuration failed for '{repo_url}': {message}",
+            status_code=resp.status_code,
+        )
     return True
 
 
@@ -829,14 +1076,16 @@ def request_github_pages_build(repo_url: str, token: str) -> bool:
     api_url = f"{GITHUB_API_URL}/repos/{repo_url}/pages/builds"
     resp = requests.post(api_url, headers=_github_headers(token))
     if resp.status_code not in (201,):
-        logger.warning(f"GitHub Pages build request failed: {resp.text}")
-        return False
+        message = _parse_response_message(resp)
+        logger.error(f"GitHub Pages build request failed: {resp.text}")
+        raise GitHubApiError(
+            f"GitHub Pages rebuild request failed for '{repo_url}': {message}",
+            status_code=resp.status_code,
+        )
     return True
 
 
-def list_github_tree(
-    repo_url: str, ref: str, token: str, recursive: bool = True
-) -> List[Dict]:
+def list_github_tree(repo_url: str, ref: str, token: str, recursive: bool = True) -> List[Dict]:
     """
     Lists files in a GitHub tree for the given ref.
     """
@@ -850,9 +1099,7 @@ def list_github_tree(
     return data.get("tree", [])
 
 
-def download_github_branch_snapshot(
-    repo_url: str, branch: str, token: str, destination_dir: str
-) -> bool:
+def download_github_branch_snapshot(repo_url: str, branch: str, token: str, destination_dir: str) -> bool:
     """
     Downloads a GitHub branch snapshot into a local directory.
     """
@@ -919,8 +1166,7 @@ def publish_github_directory_to_branch(
     source_files = [
         item
         for item in source_items
-        if item.get("type") == "blob"
-        and item.get("path", "").startswith(f"{source_prefix}/")
+        if item.get("type") == "blob" and item.get("path", "").startswith(f"{source_prefix}/")
     ]
     if not source_files:
         logger.warning(
@@ -957,14 +1203,10 @@ def publish_github_directory_to_branch(
     for item in source_files:
         source_path = item["path"]
         relative_path = source_path[len(source_prefix) + 1 :]
-        target_path = (
-            f"{target_prefix}/{relative_path}" if target_prefix else relative_path
-        )
+        target_path = f"{target_prefix}/{relative_path}" if target_prefix else relative_path
         content = fetch_content_from_github(repo_url, source_branch, source_path, token)
         if content is None:
-            logger.warning(
-                f"Could not fetch built documentation file {source_path}, skipping."
-            )
+            logger.warning(f"Could not fetch built documentation file {source_path}, skipping.")
             continue
         tree.append(
             {
@@ -1039,13 +1281,18 @@ def publish_local_directory_to_github_branch(
     Publishes a local directory to a GitHub branch in a single commit.
     """
     if not ensure_github_branch(repo_url, source_branch_for_seed, target_branch, token):
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': could not create or access branch '{target_branch}'."
+        )
 
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{target_branch}"
     ref_resp = requests.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
         logger.error(f"Failed to get target branch ref: {ref_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(ref_resp)}",
+            status_code=ref_resp.status_code,
+        )
     latest_commit_sha = ref_resp.json()["object"]["sha"]
 
     commit_resp = requests.get(
@@ -1054,7 +1301,10 @@ def publish_local_directory_to_github_branch(
     )
     if commit_resp.status_code != 200:
         logger.error(f"Failed to get target branch commit: {commit_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(commit_resp)}",
+            status_code=commit_resp.status_code,
+        )
     base_tree_sha = commit_resp.json()["tree"]["sha"]
 
     target_items = list_github_tree(repo_url, target_branch, token, recursive=True)
@@ -1071,13 +1321,13 @@ def publish_local_directory_to_github_branch(
         for file_name in files:
             local_path = os.path.join(root, file_name)
             relative_path = os.path.relpath(local_path, local_dir).replace(os.sep, "/")
-            target_path = (
-                f"{target_prefix}/{relative_path}" if target_prefix else relative_path
-            )
+            target_path = f"{target_prefix}/{relative_path}" if target_prefix else relative_path
             with open(local_path, "rb") as file_handle:
                 blob_sha = create_github_blob(repo_url, token, file_handle.read())
             if not blob_sha:
-                return False
+                raise GitHubApiError(
+                    f"GitHub publish failed for '{repo_url}': could not create blob for {target_path}."
+                )
             tree.append(
                 {
                     "path": target_path,
@@ -1090,10 +1340,8 @@ def publish_local_directory_to_github_branch(
 
     nojekyll_sha = create_github_blob(repo_url, token, b"")
     if not nojekyll_sha:
-        return False
-    tree.append(
-        {"path": ".nojekyll", "mode": "100644", "type": "blob", "sha": nojekyll_sha}
-    )
+        raise GitHubApiError(f"GitHub publish failed for '{repo_url}': could not create blob for .nojekyll.")
+    tree.append({"path": ".nojekyll", "mode": "100644", "type": "blob", "sha": nojekyll_sha})
     published_paths.add(".nojekyll")
 
     stale_paths = sorted(target_paths - published_paths)
@@ -1107,7 +1355,10 @@ def publish_local_directory_to_github_branch(
     )
     if tree_resp.status_code not in (200, 201):
         logger.error(f"Failed to create publish tree: {tree_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(tree_resp)}",
+            status_code=tree_resp.status_code,
+        )
     new_tree_sha = tree_resp.json()["sha"]
 
     new_commit_resp = requests.post(
@@ -1121,7 +1372,10 @@ def publish_local_directory_to_github_branch(
     )
     if new_commit_resp.status_code not in (200, 201):
         logger.error(f"Failed to create publish commit: {new_commit_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(new_commit_resp)}",
+            status_code=new_commit_resp.status_code,
+        )
     new_commit_sha = new_commit_resp.json()["sha"]
 
     update_resp = requests.patch(
@@ -1131,7 +1385,10 @@ def publish_local_directory_to_github_branch(
     )
     if update_resp.status_code not in (200, 201):
         logger.error(f"Failed to update publish branch ref: {update_resp.text}")
-        return False
+        raise GitHubApiError(
+            f"GitHub publish failed for '{repo_url}': {_parse_response_message(update_resp)}",
+            status_code=update_resp.status_code,
+        )
 
     return True
 
@@ -1245,3 +1502,35 @@ def create_github_pull_request(
             status_code=resp.status_code,
         )
     return resp.json().get("html_url")
+
+
+def list_open_github_pull_requests(repo_url: str, base_branch: str, token: str) -> List[Dict]:
+    """
+    Lists open GitHub pull requests targeting the provided base branch.
+    """
+    resp = requests.get(
+        f"{GITHUB_API_URL}/repos/{repo_url}/pulls",
+        headers=_github_headers(token),
+        params={"state": "open", "base": base_branch, "per_page": 100},
+    )
+    if resp.status_code != 200:
+        logger.error(f"Failed to list GitHub pull requests: {resp.text}")
+        return []
+    payload = resp.json()
+    return payload if isinstance(payload, list) else []
+
+
+def list_github_pull_request_files(repo_url: str, pull_number: int, token: str) -> List[Dict]:
+    """
+    Lists files changed in a GitHub pull request.
+    """
+    resp = requests.get(
+        f"{GITHUB_API_URL}/repos/{repo_url}/pulls/{pull_number}/files",
+        headers=_github_headers(token),
+        params={"per_page": 100},
+    )
+    if resp.status_code != 200:
+        logger.error(f"Failed to list GitHub pull request files: {resp.text}")
+        return []
+    payload = resp.json()
+    return payload if isinstance(payload, list) else []
