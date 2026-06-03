@@ -40,6 +40,7 @@ from utils.generate_yml_content import (
     generate_gitlab_ci_file,
 )
 from utils.git_utils import (
+    GitHubApiError,
     configure_github_pages,
     create_a_file,
     create_directory_and_add_files,
@@ -69,7 +70,34 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         'html_theme = "sphinx_rtd_theme"\n'
         'html_static_path = ["_static"]\n'
         'html_css_files = ["custom-wide.css"]\n'
-        'html_favicon = "_static/img/favicon.ico"\n'
+        'html_favicon = "_static/img/favicon.ico"\n\n'
+        "def setup(app):\n"
+        '    """Setup Sphinx to handle AutoAPI import errors gracefully."""\n'
+        "    try:\n"
+        "        from autoapi import _astroid_utils\n"
+        "        original_get_full_import_name = _astroid_utils.get_full_import_name\n\n"
+        "        def safe_get_full_import_name(module_node, level):\n"
+        '            """Safely get full import name, handling TooManyLevelsError."""\n'
+        "            try:\n"
+        "                return original_get_full_import_name(module_node, level)\n"
+        "            except Exception as e:\n"
+        "                if 'TooManyLevels' in type(e).__name__:\n"
+        "                    partial_name = None\n"
+        "                    if isinstance(level, str):\n"
+        "                        partial_name = level\n"
+        '                    elif hasattr(module_node, "names"):\n'
+        "                        for import_name, imported_as in module_node.names:\n"
+        "                            partial_name = imported_as or import_name\n"
+        "                            if partial_name:\n"
+        "                                break\n"
+        '                    module_name = getattr(module_node, "modname", "") or ""\n'
+        "                    if module_name and partial_name:\n"
+        '                        return f"{module_name}.{partial_name}"\n'
+        '                    return partial_name or module_name or "__autoapi_unresolved__"\n'
+        "                raise\n\n"
+        "        _astroid_utils.get_full_import_name = safe_get_full_import_name\n"
+        "    except (ImportError, AttributeError):\n"
+        "        pass\n"
     ),
     "index.rst": (
         "Auto Doc\n"
@@ -475,6 +503,16 @@ def _extract_autoapi_module_names(build_output: str) -> list[str]:
     module_names.extend(
         match.replace("/", ".") for match in re.findall(r"autoapi/([A-Za-z0-9_./-]+)/index\.rst", build_output or "")
     )
+    mirrored_source_matches = re.findall(
+        r"(?:^|\s)(?:\[AutoAPI\] Reading files\.\.\.\s+\[\s*\d+%\]\s+)?[^\s]*autoapi_include/([A-Za-z0-9_./-]+)\.py",
+        build_output or "",
+        flags=re.MULTILINE,
+    )
+    if mirrored_source_matches:
+        # AutoAPI may crash before it names the failing module directly. In that
+        # case, the last mirrored Python file it reported reading is the best
+        # available signal for a targeted skip-and-retry fallback.
+        module_names.append(mirrored_source_matches[-1].replace("/", "."))
     unique_module_names = []
     seen = set()
     for module_name in module_names:
@@ -735,6 +773,41 @@ def _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess:
     )
 
 
+def _write_sphinx_build_log(
+    attempt_name: str,
+    result: subprocess.CompletedProcess,
+    ignore_patterns: list[str],
+    temp_dir: str,
+) -> None:
+    """
+    Appends detailed Sphinx build activity to a persistent run log artifact.
+    """
+    run_log_dir = get_run_log_dir()
+    if not run_log_dir:
+        return
+
+    log_path = Path(run_log_dir) / "sphinx_build.log"
+    with open(log_path, "a", encoding="utf-8") as log_file:
+        log_file.write(f"=== {attempt_name} ===\n")
+        log_file.write(f"temp_dir: {temp_dir}\n")
+        log_file.write(f"returncode: {result.returncode}\n")
+        log_file.write(f"command: {sys.executable} -m sphinx -b html {DOCS_SRC} {BUILD_DIR}\n")
+        log_file.write("autoapi_ignore:\n")
+        if ignore_patterns:
+            for pattern in sorted(set(ignore_patterns)):
+                log_file.write(f"- {pattern}\n")
+        else:
+            log_file.write("- <none>\n")
+
+        log_file.write("\n[stdout]\n")
+        stdout = (result.stdout or "").strip()
+        log_file.write(stdout if stdout else "<empty>")
+        log_file.write("\n\n[stderr]\n")
+        stderr = (result.stderr or "").strip()
+        log_file.write(stderr if stderr else "<empty>")
+        log_file.write("\n\n")
+
+
 def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
     """
     Generates a report of skipped AutoAPI files and writes it to a text file.
@@ -759,6 +832,95 @@ def _write_skipped_autoapi_report(skipped_files: list[dict]) -> None:
             report_file.write(f"- file: {item['file']}\n")
             report_file.write(f"  module: {item['module']}\n")
             report_file.write(f"  reason: {item['reason']}\n\n")
+
+
+def _write_publish_fallback_report(reason: str) -> None:
+    """
+    Records that GitHub Pages publish degraded gracefully after Sphinx/AutoAPI failed.
+    """
+    run_log_dir = get_run_log_dir()
+    if not run_log_dir:
+        return
+    report_path = Path(run_log_dir) / "sphinx_publish_fallback.txt"
+    with open(report_path, "w", encoding="utf-8") as report_file:
+        report_file.write("Sphinx Publish Fallback\n")
+        report_file.write("=======================\n\n")
+        report_file.write(f"{reason}\n")
+
+
+def _summarize_publish_fallback_reason(reason: str) -> str:
+    """
+    Compresses verbose Sphinx/AutoAPI output into a short publish-safe summary.
+    """
+    reason_text = (reason or "").strip()
+    if not reason_text:
+        return "AutoAPI build failure"
+
+    extension_match = re.search(r"Extension error \(autoapi\.extension\)!", reason_text)
+    attribute_match = re.search(r"AttributeError:\s*([^\n]+)", reason_text)
+    if extension_match and attribute_match:
+        return f"AutoAPI extension failure: {attribute_match.group(1).strip()}"
+    if attribute_match:
+        return f"AutoAPI failure: {attribute_match.group(1).strip()}"
+
+    lines = [line.strip() for line in reason_text.splitlines() if line.strip()]
+    for line in lines:
+        if not line.startswith("[AutoAPI] Reading files"):
+            return line[:240]
+    return lines[0][:240] if lines else "AutoAPI build failure"
+
+
+def _disable_autoapi_in_conf(conf_py_path: str) -> None:
+    """
+    Removes AutoAPI extension and config from the generated Sphinx config for fallback builds.
+    """
+    conf_path = Path(conf_py_path)
+    if not conf_path.exists():
+        return
+
+    conf_text = conf_path.read_text(encoding="utf-8")
+    conf_text = re.sub(
+        r'^\s*["\']autoapi\.extension["\'],?\n',
+        "",
+        conf_text,
+        flags=re.MULTILINE,
+    )
+    conf_text = re.sub(r"^\s*autoapi_[A-Za-z0-9_]+\s*=.*\n?", "", conf_text, flags=re.MULTILINE)
+    marker_pattern = re.compile(
+        rf"{re.escape(AUTOAPI_CONF_MARKER_START)}.*?{re.escape(AUTOAPI_CONF_MARKER_END)}\n?",
+        flags=re.DOTALL,
+    )
+    conf_text = marker_pattern.sub("", conf_text).rstrip() + "\n"
+    conf_path.write_text(conf_text, encoding="utf-8")
+
+
+def _build_degraded_api_reference(reason: str) -> str:
+    """
+    Builds a publish-safe API reference page when AutoAPI output cannot be generated.
+    """
+    return (
+        "API Reference\n"
+        "=============\n\n"
+        "The rest of this documentation set was published successfully, but the "
+        "generated API reference is unavailable for this run.\n\n"
+        f"Reason: {_summarize_publish_fallback_reason(reason)}\n\n"
+        "See the run artifacts for `sphinx_build.log`, `skipped_autoapi_files.txt`, "
+        "and `sphinx_publish_fallback.txt` for the full failure details.\n"
+    )
+
+
+def _degrade_sphinx_publish_after_autoapi_failure(
+    conf_py_path: str,
+    docs_source_dir: str,
+    failure_reason: str,
+) -> None:
+    """
+    Prepares a fallback Sphinx build that publishes non-AutoAPI pages only.
+    """
+    _disable_autoapi_in_conf(conf_py_path)
+    api_reference_path = Path(docs_source_dir) / "api_reference.rst"
+    api_reference_path.write_text(_build_degraded_api_reference(failure_reason), encoding="utf-8")
+    _write_publish_fallback_report(failure_reason)
 
 
 def _run_sphinx_build_with_autoapi_filters(
@@ -792,6 +954,7 @@ def _run_sphinx_build_with_autoapi_filters(
     )
     _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
     build_result = _build_sphinx_once(temp_dir)
+    _write_sphinx_build_log("initial-build", build_result, active_ignore_patterns, temp_dir)
     if build_result.returncode == 0:
         _write_skipped_autoapi_report(skipped_files)
         return build_result
@@ -816,6 +979,7 @@ def _run_sphinx_build_with_autoapi_filters(
     )
     _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
     retry_result = _build_sphinx_once(temp_dir)
+    _write_sphinx_build_log("fallback-retry", retry_result, active_ignore_patterns, temp_dir)
     _write_skipped_autoapi_report(skipped_files)
     return retry_result
 
@@ -947,7 +1111,7 @@ def _build_sample_index(project_name: str) -> str:
 
 def _build_sample_api_reference() -> str:
     """
-    Builds a curated API reference page that exposes useful AutoAPI pages in the sidebar.
+    Builds a baseline API reference page.
 
     Returns:
         str: The API reference page content.
@@ -956,12 +1120,97 @@ def _build_sample_api_reference() -> str:
     return (
         "API Reference\n"
         "=============\n\n"
-        "Browse the generated API pages directly from the sidebar.\n\n"
-        ".. toctree::\n"
-        "   :hidden:\n"
-        "   :maxdepth: 4\n\n"
-        "   autoapi/src/index\n"
+        "Generated API entries will appear here after the mirrored Python tree is analysed.\n"
     )
+
+
+def _discover_autoapi_reference_entries(root_dir: str) -> list[str]:
+    """
+    Discovers the top-level AutoAPI entry pages that should appear in the API reference.
+
+    Args:
+        root_dir (str): Repository root containing ``autoapi_include/``.
+
+    Returns:
+        list[str]: Sorted AutoAPI doc paths such as ``autoapi/models/index``.
+    """
+    autoapi_root = Path(root_dir) / AUTOAPI_DIRECTORY
+    if not autoapi_root.exists():
+        return []
+
+    entries: list[str] = []
+
+    def _collect_entries(base_dir: Path, prefix: str = "") -> None:
+        for child in sorted(base_dir.iterdir(), key=lambda item: item.name):
+            entry_name = f"{prefix}/{child.name}" if prefix else child.name
+            if child.name.startswith("."):
+                continue
+            if child.is_file() and child.suffix in {".py", ".pyw"} and child.name != "__init__.py":
+                entries.append(f"autoapi/{prefix}/{child.stem}/index" if prefix else f"autoapi/{child.stem}/index")
+                continue
+            if not child.is_dir():
+                continue
+            has_python_content = any(path.suffix in {".py", ".pyw"} for path in child.rglob("*") if path.is_file())
+            if not has_python_content:
+                continue
+            if (child / "__init__.py").exists():
+                entries.append(f"autoapi/{entry_name}/index")
+            else:
+                _collect_entries(child, prefix)
+
+    _collect_entries(autoapi_root)
+
+    deduped_entries: list[str] = []
+    seen = set()
+    for entry in entries:
+        if entry in seen:
+            continue
+        seen.add(entry)
+        deduped_entries.append(entry)
+    return deduped_entries
+
+
+def _build_api_reference(entries: list[str]) -> str:
+    """
+    Builds the API reference page for the discovered AutoAPI entries.
+
+    Args:
+        entries (list[str]): AutoAPI doc paths to surface in the reference page.
+
+    Returns:
+        str: The API reference page content.
+    """
+    heading = "Browse the generated API pages below.\n\n.. toctree::\n   :maxdepth: 2\n\n"
+    if not entries:
+        return _build_sample_api_reference()
+    return "API Reference\n=============\n\n" + heading + "".join(f"   {entry}\n" for entry in entries)
+
+
+def _ensure_api_reference(api_reference_path: str, root_dir: str) -> None:
+    """
+    Ensures ``api_reference.rst`` points at the actual generated AutoAPI entry pages.
+
+    Args:
+        api_reference_path (str): Path to ``api_reference.rst``.
+        root_dir (str): Repository root containing ``autoapi_include/``.
+    """
+    api_reference = Path(api_reference_path)
+    entries = _discover_autoapi_reference_entries(root_dir)
+    updated_text = _build_api_reference(entries)
+
+    if not api_reference.exists():
+        api_reference.parent.mkdir(parents=True, exist_ok=True)
+        api_reference.write_text(updated_text, encoding="utf-8")
+        return
+
+    existing_text = api_reference.read_text(encoding="utf-8")
+    generated_markers = (
+        "Browse the generated API pages directly from the sidebar.",
+        "Generated API entries will appear here after the mirrored Python tree is analysed.",
+        "autoapi/src/index",
+    )
+    if any(marker in existing_text for marker in generated_markers):
+        api_reference.write_text(updated_text, encoding="utf-8")
 
 
 def _build_sample_overview(project_name: str) -> str:
@@ -1168,6 +1417,7 @@ def _write_sample_sphinx_scaffold(root_dir: str, project_name: str) -> None:
         destination = Path(root_dir) / file_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(content)
+    _ensure_api_reference(str(Path(root_dir) / DOCS_SRC / "api_reference.rst"), root_dir)
 
 
 def _ensure_sphinx_project_name(conf_py_path: str, project_name: str) -> None:
@@ -1423,21 +1673,19 @@ def publish_github_pages(
     repo_path = extract_repo_path(repo_url, "github")
     project_name = _project_name_from_repo_path(repo_path)
 
-    pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
-    if not pages_branch_ready:
-        _raise_publish_error(
-            "GitHub Pages branch setup failed. Check that the source branch exists and "
-            "the token can read and write repository contents."
-        )
+    try:
+        pages_branch_ready = ensure_github_branch(repo_path, source_branch, GITHUB_PAGES_BRANCH, token)
+        if not pages_branch_ready:
+            _raise_publish_error(
+                "GitHub Pages branch setup failed. Check that the source branch exists and "
+                "the token can read and write repository contents."
+            )
 
-    pages_configured = configure_github_pages(repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH)
-    if not pages_configured:
-        _raise_publish_error(
-            "GitHub Pages configuration failed. GitHub usually returns this when the "
-            "token is missing Pages read/write access, the repository does not allow "
-            "Pages configuration by that token, or the token owner lacks admin access "
-            "to the repository."
-        )
+        pages_configured = configure_github_pages(repo_path, GITHUB_PAGES_BRANCH, token, path=GITHUB_PAGES_PATH)
+        if not pages_configured:
+            _raise_publish_error("GitHub Pages configuration failed.")
+    except GitHubApiError as error:
+        _raise_publish_error(str(error), status_code=error.status_code or 403)
 
     with tempfile.TemporaryDirectory(prefix="autodoc-pages-") as temp_dir:
         snapshot_downloaded = download_github_branch_snapshot(repo_path, source_branch, token, temp_dir)
@@ -1475,6 +1723,7 @@ def publish_github_pages(
 
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)
+        _ensure_api_reference(os.path.join(docs_source_dir, "api_reference.rst"), temp_dir)
 
         build_result = _run_sphinx_build_with_autoapi_filters(
             temp_dir,
@@ -1485,11 +1734,23 @@ def publish_github_pages(
             build_output = "\n".join(
                 part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
             )
-            logger.error("Sphinx build failed: %s", build_output)
-            _raise_publish_error(
-                f"Sphinx build failed: {build_output}",
-                status_code=422,
+            logger.warning("Sphinx AutoAPI build failed; attempting degraded publish: %s", build_output)
+            _degrade_sphinx_publish_after_autoapi_failure(
+                conf_py_path,
+                docs_source_dir,
+                build_output or "AutoAPI build failure",
             )
+            build_result = _build_sphinx_once(temp_dir)
+            _write_sphinx_build_log("degraded-publish-retry", build_result, [], temp_dir)
+            if build_result.returncode != 0:
+                degraded_output = "\n".join(
+                    part for part in [build_result.stderr.strip(), build_result.stdout.strip()] if part
+                )
+                logger.error("Sphinx build failed even after degraded fallback: %s", degraded_output)
+                _raise_publish_error(
+                    f"Sphinx build failed: {degraded_output}",
+                    status_code=422,
+                )
 
         if not os.path.isdir(build_dir):
             _raise_publish_error(
@@ -1497,20 +1758,23 @@ def publish_github_pages(
                 status_code=422,
             )
 
-        published = publish_local_directory_to_github_branch(
-            repo_path,
-            build_dir,
-            GITHUB_PAGES_BRANCH,
-            token,
-            source_branch_for_seed=source_branch,
-        )
-        if not published:
-            _raise_publish_error(
-                "Publishing built docs to the GitHub Pages branch failed. Check that "
-                "the token can write repository contents and the gh-pages branch is not protected."
+        try:
+            published = publish_local_directory_to_github_branch(
+                repo_path,
+                build_dir,
+                GITHUB_PAGES_BRANCH,
+                token,
+                source_branch_for_seed=source_branch,
             )
+            if not published:
+                _raise_publish_error("Publishing built docs to the GitHub Pages branch failed.")
+        except GitHubApiError as error:
+            _raise_publish_error(str(error), status_code=error.status_code or 403)
 
-    request_github_pages_build(repo_path, token)
+    try:
+        request_github_pages_build(repo_path, token)
+    except GitHubApiError as error:
+        _raise_publish_error(str(error), status_code=error.status_code or 403)
     logger.info("Published reviewed docs from %s to %s.", source_branch, GITHUB_PAGES_BRANCH)
     return True
 

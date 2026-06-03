@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -11,12 +12,17 @@ from typing import Callable, Dict, List, Optional, Union
 from config.log_config import get_logger
 from utils.git_utils import (
     GitHubApiError,
+    RepositoryAccessError,
+    clone_repository,
     commit_files_to_github_branch,
     create_github_pull_request,
     ensure_github_branch,
     extract_repo_path,
     fetch_content_from_github,
     fetch_repo_tree,
+    list_github_pull_request_files,
+    list_open_github_pull_requests,
+    read_file_content_from_local,
 )
 from utils.output_paths import build_repo_output_file, find_latest_repo_run_dir
 
@@ -340,6 +346,29 @@ def _run_ruff_on_patched_files(
     if not files:
         return files
 
+    def _read_cleaned_files(
+        path_map: Dict[str, str],
+        original_files: Dict[str, PatchedPythonFile],
+    ) -> Dict[str, PatchedPythonFile]:
+        cleaned_files = {}
+        for local_path, file_path in path_map.items():
+            with open(local_path, "r", encoding="utf-8") as file_handle:
+                cleaned_files[file_path] = PatchedPythonFile(
+                    content=file_handle.read(),
+                    inserted=original_files[file_path].inserted,
+                )
+        return cleaned_files
+
+    def _summarize_ruff_output(output: str) -> str:
+        lines = [line.strip() for line in output.splitlines() if line.strip()]
+        if not lines:
+            return "unknown Ruff error"
+        first_issue = next((line for line in lines if ":" in line and "Found " not in line), lines[0])
+        e402_count = len(re.findall(r"\bE402\b", output))
+        if e402_count:
+            return f"{first_issue} ({e402_count} E402 issue(s) in analyzed project)"
+        return first_issue
+
     with tempfile.TemporaryDirectory(prefix="autodoc-ruff-") as temp_dir:
         local_paths = []
         path_map = {}
@@ -363,23 +392,28 @@ def _run_ruff_on_patched_files(
                 timeout=120,
             )
             if result.returncode != 0:
-                logger.warning("Ruff cleanup failed: %s", result.stderr.strip() or result.stdout)
-                return files
-
-        cleaned_files = {}
-        for local_path, file_path in path_map.items():
-            with open(local_path, "r", encoding="utf-8") as file_handle:
-                cleaned_files[file_path] = PatchedPythonFile(
-                    content=file_handle.read(),
-                    inserted=files[file_path].inserted,
+                output = result.stderr.strip() or result.stdout.strip()
+                summary = _summarize_ruff_output(output)
+                if " E402" in output or "\nE402" in output or "E402 " in output:
+                    logger.info(
+                        "Ruff cleanup skipped import-order lint from the analyzed project: %s",
+                        summary,
+                    )
+                    return _read_cleaned_files(path_map, files)
+                logger.warning(
+                    "Ruff cleanup skipped due to non-docstring lint in the analyzed project: %s",
+                    summary,
                 )
-        return cleaned_files
+                return _read_cleaned_files(path_map, files)
+
+        return _read_cleaned_files(path_map, files)
 
 
 def _build_no_changes_response(
     base_branch: str,
     suggestion_branch: str,
     reason: str,
+    existing_pull_request_url: Optional[str] = None,
 ) -> dict:
     """
     Constructs a response indicating no changes between branches.
@@ -404,7 +438,63 @@ def _build_no_changes_response(
         "changed_files": [],
         "message": reason,
         "detail": reason,
+        "existing_pull_request_url": existing_pull_request_url,
     }
+
+
+def _filter_changed_files_against_base(
+    patched_files: Dict[str, PatchedPythonFile],
+    original_contents: Dict[str, str],
+) -> Dict[str, PatchedPythonFile]:
+    """
+    Keeps only files whose patched content actually differs from the base branch source.
+    """
+    return {
+        file_path: patched
+        for file_path, patched in patched_files.items()
+        if patched.content != original_contents.get(file_path, "")
+    }
+
+
+def _find_matching_open_pull_request(
+    repo_path: str,
+    base_branch: str,
+    patched_files: Dict[str, PatchedPythonFile],
+    token: str,
+) -> Optional[dict]:
+    """
+    Returns an open GitHub pull request whose proposed file contents already match the patch set.
+    """
+    expected_paths = set(patched_files)
+    if not expected_paths:
+        return None
+
+    for pull_request in list_open_github_pull_requests(repo_path, base_branch, token):
+        pull_number = pull_request.get("number")
+        head_ref = (pull_request.get("head") or {}).get("ref")
+        if not pull_number or not head_ref:
+            continue
+
+        changed_paths = {
+            item.get("filename", "")
+            for item in list_github_pull_request_files(repo_path, pull_number, token)
+            if item.get("filename")
+        }
+        if changed_paths != expected_paths:
+            continue
+
+        matches_existing_pr = True
+        for file_path, patched in patched_files.items():
+            if fetch_content_from_github(repo_path, head_ref, file_path, token) != patched.content:
+                matches_existing_pr = False
+                break
+
+        if matches_existing_pr:
+            return {
+                "url": pull_request.get("html_url"),
+                "head_ref": head_ref,
+            }
+    return None
 
 
 def create_python_docstring_pull_request(
@@ -427,95 +517,130 @@ def create_python_docstring_pull_request(
     if not suggestions_by_file:
         raise DocstringPullRequestError("No generated Python docstring suggestions were found. Run /generate first.")
 
-    files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
-    python_files = [
-        item.get("path", "")
-        for item in files
-        if item.get("type") == "file" and item.get("path", "").endswith((".py", ".pyw"))
-    ]
-    if not python_files:
-        raise DocstringPullRequestError("No Python files found on the selected branch.")
-
-    remaining = max_docstrings
-    patched_files: Dict[str, PatchedPythonFile] = {}
-    for file_path in python_files:
-        if remaining <= 0:
-            break
-        content = fetch_content_from_github(repo_path, base_branch, file_path, token)
-        if not content:
-            continue
-        suggestions = suggestions_by_file.get(file_path)
-        if not suggestions:
-            continue
-        try:
-            patched = patch_python_docstrings(
-                content,
-                generator=_suggestion_generator(suggestions),
-                max_docstrings=remaining,
-            )
-        except SyntaxError:
-            logger.warning("Skipping %s because Python parsing failed.", file_path)
-            continue
-        if patched.inserted:
-            patched_files[file_path] = patched
-            remaining -= len(patched.inserted)
-
-    if not patched_files:
-        return _build_no_changes_response(
-            base_branch,
-            suggestion_branch,
-            "No new Python docstring suggestions are available for this branch.",
-        )
-
-    patched_files = _run_ruff_on_patched_files(patched_files)
-
-    branch_ready = ensure_github_branch(repo_path, base_branch, suggestion_branch, token)
-    if not branch_ready:
-        raise DocstringPullRequestError("Could not create or access the suggestion branch.")
-
-    changed_files = {
-        file_path: patched
-        for file_path, patched in patched_files.items()
-        if fetch_content_from_github(repo_path, suggestion_branch, file_path, token) != patched.content
-    }
-    if not changed_files:
-        return _build_no_changes_response(
-            base_branch,
-            suggestion_branch,
-            "No new Python docstring suggestions are available for this branch.",
-        )
-
-    committed = commit_files_to_github_branch(
-        repo_path,
-        suggestion_branch,
-        {file_path: patched.content for file_path, patched in changed_files.items()},
-        token,
-        "Add generated Python docstring suggestions",
-    )
-    if not committed:
-        raise DocstringPullRequestError("Could not commit docstring suggestions to the suggestion branch.")
-
+    # Clone repository once for efficient local file reading
     try:
-        pr_url = create_github_pull_request(
+        with clone_repository(repo_url, token, base_branch, "github") as temp_dir:
+            files = fetch_repo_tree(repo_path, token, branch=base_branch, provider="github")
+            python_files = [
+                item.get("path", "")
+                for item in files
+                if item.get("type") == "file" and item.get("path", "").endswith((".py", ".pyw"))
+            ]
+            if not python_files:
+                raise DocstringPullRequestError("No Python files found on the selected branch.")
+
+            remaining = max_docstrings
+            patched_files: Dict[str, PatchedPythonFile] = {}
+            original_contents: Dict[str, str] = {}
+            for file_path in python_files:
+                if remaining <= 0:
+                    break
+                # Read file locally from cloned repository instead of GitHub API
+                content = read_file_content_from_local(temp_dir, file_path)
+                if not content:
+                    continue
+                suggestions = suggestions_by_file.get(file_path)
+                if not suggestions:
+                    continue
+                original_contents[file_path] = content
+                try:
+                    patched = patch_python_docstrings(
+                        content,
+                        generator=_suggestion_generator(suggestions),
+                        max_docstrings=remaining,
+                    )
+                except SyntaxError:
+                    logger.warning("Skipping %s because Python parsing failed.", file_path)
+                    continue
+                if patched.inserted:
+                    patched_files[file_path] = patched
+                    remaining -= len(patched.inserted)
+
+        if not patched_files:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "No new Python docstring suggestions are available for this branch.",
+            )
+
+        patched_files = _run_ruff_on_patched_files(patched_files)
+        patched_files = _filter_changed_files_against_base(patched_files, original_contents)
+
+        if not patched_files:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "No new Python docstring suggestions are available for this branch.",
+            )
+
+        existing_pr = _find_matching_open_pull_request(repo_path, base_branch, patched_files, token)
+        if existing_pr:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "A matching Python docstring suggestion pull request is already open for this branch.",
+                existing_pull_request_url=existing_pr.get("url"),
+            )
+
+        branch_ready = ensure_github_branch(repo_path, base_branch, suggestion_branch, token)
+        if not branch_ready:
+            raise DocstringPullRequestError("Could not create or access the suggestion branch.")
+
+        # Filter to only files that actually differ from suggestion_branch
+        changed_files = {}
+        for file_path, patched in patched_files.items():
+            try:
+                suggestion_content = fetch_content_from_github(repo_path, suggestion_branch, file_path, token)
+                if suggestion_content != patched.content:
+                    changed_files[file_path] = patched
+            except Exception:
+                # If we can't fetch from suggestion_branch, include the file (new or error)
+                changed_files[file_path] = patched
+
+        if not changed_files:
+            return _build_no_changes_response(
+                base_branch,
+                suggestion_branch,
+                "No new Python docstring suggestions are available for this branch.",
+            )
+
+        committed = commit_files_to_github_branch(
             repo_path,
             suggestion_branch,
-            base_branch,
-            title,
-            _build_pull_request_body(base_branch, changed_files),
+            {file_path: patched.content for file_path, patched in changed_files.items()},
             token,
+            "Add generated Python docstring suggestions",
         )
-    except GitHubApiError as error:
-        raise DocstringPullRequestError(str(error)) from error
-    if not pr_url:
-        raise DocstringPullRequestError("Could not create the GitHub pull request.")
+        if not committed:
+            raise DocstringPullRequestError("Could not commit docstring suggestions to the suggestion branch.")
 
-    return {
-        "status": "success",
-        "provider": "github",
-        "base_branch": base_branch,
-        "suggestion_branch": suggestion_branch,
-        "pull_request_url": pr_url,
-        "files_changed": len(changed_files),
-        "docstrings_added": sum(len(patched.inserted) for patched in changed_files.values()),
-        "changed_files": sorted(changed_files.keys()),
-    }
+        try:
+            pr_url = create_github_pull_request(
+                repo_path,
+                suggestion_branch,
+                base_branch,
+                title,
+                _build_pull_request_body(base_branch, changed_files),
+                token,
+            )
+        except GitHubApiError as error:
+            raise DocstringPullRequestError(str(error)) from error
+        if not pr_url:
+            raise DocstringPullRequestError("Could not create the GitHub pull request.")
+
+        return {
+            "status": "success",
+            "provider": "github",
+            "base_branch": base_branch,
+            "suggestion_branch": suggestion_branch,
+            "pull_request_url": pr_url,
+            "files_changed": len(changed_files),
+            "docstrings_added": sum(len(patched.inserted) for patched in changed_files.values()),
+            "changed_files": sorted(changed_files.keys()),
+        }
+    except RepositoryAccessError as exc:
+        logger.error("Repository access failed: %s", exc)
+        raise DocstringPullRequestError(str(exc)) from exc
+    except Exception as e:
+        logger.error(f"Error creating docstring PR: {e}")
+        raise

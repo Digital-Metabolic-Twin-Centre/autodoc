@@ -198,9 +198,7 @@ def analyse_docstring_in_blocks(
 
         # Look for docstring
         for docstring_pattern in lang_patterns["docstring"]:
-            docstring_match = re.search(
-                docstring_pattern, clean_code, re.DOTALL | re.MULTILINE
-            )
+            docstring_match = re.search(docstring_pattern, clean_code, re.DOTALL | re.MULTILINE)
             if docstring_match:
                 analysis["docstring_content"] = docstring_match.group(1).strip()
                 analysis["missing_docstring"] = False
@@ -236,9 +234,7 @@ def analyse_docstring_in_blocks(
 
         block_analysis["block_number"] = i
         block_analysis["language"] = language
-        block_analysis["line_number"] = (
-            start_line_number if start_line_number is not None else 0
-        )
+        block_analysis["line_number"] = start_line_number if start_line_number is not None else 0
 
         # Update counters
         if not block_analysis["missing_docstring"]:
@@ -263,9 +259,7 @@ def analyse_docstring_in_blocks(
             if generated_docstring:
                 docstring_source = "exact-cache"
             if not generated_docstring:
-                generated_docstring = existing_suggestions["fuzzy"].get(
-                    fuzzy_suggestion_key
-                )
+                generated_docstring = existing_suggestions["fuzzy"].get(fuzzy_suggestion_key)
                 if generated_docstring:
                     docstring_source = "fuzzy-cache"
             if not generated_docstring:
@@ -284,9 +278,7 @@ def analyse_docstring_in_blocks(
                     logger.info("Reused cached docstring (exact match):")
                 else:
                     logger.info("Reused cached docstring (line number changed):")
-                logger.info(
-                    format_docstring_for_language(generated_docstring, language)
-                )
+                logger.info(format_docstring_for_language(generated_docstring, language))
                 target_suggested_file = suggested_file or build_repo_output_file(
                     "unknown", "unknown", "suggested_docstring.txt"
                 )
@@ -298,9 +290,7 @@ def analyse_docstring_in_blocks(
                         f"{block_analysis['function_name']}, Line: "
                         f"{block_analysis['line_number']}\n"
                     )
-                    f.write(
-                        f"\n{format_docstring_for_language(generated_docstring, language)}\n"
-                    )
+                    f.write(f"\n{format_docstring_for_language(generated_docstring, language)}\n")
                     f.write(f"\n{'-' * 100}\n")
             else:
                 logger.warning("Docstring generation failed.")
@@ -310,9 +300,7 @@ def analyse_docstring_in_blocks(
     return results
 
 
-def analyse_docstring_in_module(
-    content: str, language: str | None = None
-) -> Optional[str]:
+def analyse_docstring_in_module(content: str, language: str | None = None) -> Optional[str]:
     """
     Extract module-level docstring from file content.
 

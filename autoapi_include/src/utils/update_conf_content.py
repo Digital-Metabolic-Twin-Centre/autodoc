@@ -63,12 +63,7 @@ def _replace_extensions_block(text: str) -> str:
                     end = node.end_lineno
                     updated = lines[:start] + [replacement + "\n"] + lines[end:]
                     return "".join(updated)
-    return (
-        text.rstrip()
-        + "\n\n"
-        + _format_extension_block(list(REQUIRED_EXTENSIONS))
-        + "\n"
-    )
+    return text.rstrip() + "\n\n" + _format_extension_block(list(REQUIRED_EXTENSIONS)) + "\n"
 
 
 def update_conf(conf_py: str) -> None:
