@@ -26,7 +26,6 @@ from config.config import (
     GITHUB_API_URL,
     GITHUB_PAGES_BRANCH,
     GITHUB_PAGES_PATH,
-    GITHUB_PAGES_README_FILE,
     GITLAB_API_URL,
     GITLAB_YML_FILE,
     PIPELINE_EMAIL,
@@ -36,7 +35,6 @@ from config.config import (
 )
 from config.log_config import get_logger, get_run_log_dir
 from utils.generate_yml_content import (
-    generate_github_pages_readme,
     generate_gitlab_ci_file,
 )
 from utils.git_utils import (
@@ -1389,18 +1387,6 @@ def create_sphinx_setup(
         return True
 
     if provider == "github":
-        pages_readme_created = create_a_file(
-            repo_path,
-            branch,
-            GITHUB_PAGES_README_FILE,
-            generate_github_pages_readme(branch, GITHUB_PAGES_BRANCH),
-            token,
-            provider,
-        )
-        if not pages_readme_created:
-            logger.error("GitHub Pages publish guide creation failed.")
-            return False
-
         logger.info(
             "GitHub repository prepared for manual review. Publish to %s after build review.",
             GITHUB_PAGES_BRANCH,

@@ -1,14 +1,9 @@
-def generate_gitlab_ci_file() -> bool:
+def generate_gitlab_ci_file() -> str:
     """
-    Generates a .gitlab-ci.yml file in the specified remote GitLab repository.
-
-    Args:
-        repo_path (str): Repository path (e.g., 'user/repo').
-        access_token (str): GitLab private token.
-        branch (str, optional): Branch name. Defaults to "main".
+    Generates the contents of a `.gitlab-ci.yml` file for building docs.
 
     Returns:
-        bool: True if the file was created successfully, False otherwise.
+        str: GitLab CI configuration content.
     """
     gitlab_ci_content = """stages:
   - docs
@@ -218,30 +213,4 @@ def generate_github_pages_index(project_name: str = "API Documentation") -> str:
     </main>
   </body>
 </html>
-"""
-
-
-def generate_github_pages_readme(source_branch: str, pages_branch: str) -> str:
-    """
-    Generates a short README for the GitHub Pages deployment branch.
-
-    Args:
-        source_branch (str): The branch where the source repository content lives.
-        pages_branch (str): The branch GitHub Pages serves.
-
-    Returns:
-        str: Markdown content.
-    """
-    return f"""# GitHub Pages Deployment Branch
-
-This branch is configured as the GitHub Pages publishing source for this repository.
-
-- Source branch for documentation changes: `{source_branch}`
-- Deployment branch served by GitHub Pages: `{pages_branch}`
-
-To publish updated docs without GitHub Actions:
-
-1. Build the Sphinx HTML locally.
-2. Copy the generated static site into this branch.
-3. Commit and push the updated HTML files.
 """

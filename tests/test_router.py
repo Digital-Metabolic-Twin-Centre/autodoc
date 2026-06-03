@@ -498,10 +498,13 @@ def test_create_sphinx_setup_mirrors_all_analyzed_python_files(tmp_path, monkeyp
         "services.sphinx_services._create_sample_sphinx_scaffold",
         lambda repo_path, branch, token, provider, project_name: True,
     )
-    monkeypatch.setattr(
-        "services.sphinx_services.create_a_file",
-        lambda repo_path, branch, file_path, content, token, provider: True,
-    )
+    created_files = []
+
+    def fake_create_a_file(repo_path, branch, file_path, content, token, provider):
+        created_files.append(file_path)
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.create_a_file", fake_create_a_file)
 
     result = create_sphinx_setup(
         "github",
@@ -519,6 +522,7 @@ def test_create_sphinx_setup_mirrors_all_analyzed_python_files(tmp_path, monkeyp
         "src/router/router.py",
         "src/services/doc_services.py",
     ]
+    assert created_files == ["update_conf.py"]
 
 
 def test_project_name_from_repo_path_humanizes_repo_name():
