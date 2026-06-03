@@ -1,10 +1,15 @@
 API Reference
 =============
 
-Browse the generated API pages directly from the sidebar.
+Browse the generated API pages below.
 
 .. toctree::
-   :hidden:
-   :maxdepth: 4
+   :maxdepth: 2
 
    autoapi/src/index
+   autoapi/src/config/index
+   autoapi/src/main/index
+   autoapi/src/models/index
+   autoapi/src/router/index
+   autoapi/src/services/index
+   autoapi/src/utils/index

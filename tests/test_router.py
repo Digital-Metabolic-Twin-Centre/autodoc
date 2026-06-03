@@ -597,7 +597,10 @@ def test_discover_autoapi_reference_entries_uses_actual_mirrored_top_level_modul
 
     entries = _discover_autoapi_reference_entries(str(tmp_path))
 
-    assert entries == ["autoapi/models/index", "autoapi/job_service/index"]
+    assert entries == [
+        "autoapi/api/models/index",
+        "autoapi/api/services/job_service/index",
+    ]
 
 
 def test_ensure_api_reference_rewrites_default_scaffold_to_actual_entries(tmp_path):
@@ -615,8 +618,27 @@ def test_ensure_api_reference_rewrites_default_scaffold_to_actual_entries(tmp_pa
     _ensure_api_reference(str(docs_dir / "api_reference.rst"), str(tmp_path))
 
     api_reference_text = (docs_dir / "api_reference.rst").read_text(encoding="utf-8")
-    assert "autoapi/models/index" in api_reference_text
+    assert "autoapi/api/models/index" in api_reference_text
     assert ":hidden:" not in api_reference_text
+
+
+def test_ensure_api_reference_rewrites_visible_placeholder_text(tmp_path):
+    docs_dir = tmp_path / "docs"
+    autoapi_root = tmp_path / "autoapi_include" / "src"
+    docs_dir.mkdir(parents=True)
+    autoapi_root.mkdir(parents=True)
+    (autoapi_root / "__init__.py").write_text("", encoding="utf-8")
+    (autoapi_root / "main.py").write_text("def run():\n    return True\n", encoding="utf-8")
+    (docs_dir / "api_reference.rst").write_text(
+        "API Reference\n=============\n\nBrowse the generated API pages below.\n\n",
+        encoding="utf-8",
+    )
+
+    _ensure_api_reference(str(docs_dir / "api_reference.rst"), str(tmp_path))
+
+    api_reference_text = (docs_dir / "api_reference.rst").read_text(encoding="utf-8")
+    assert "autoapi/src/index" in api_reference_text
+    assert "autoapi/src/main/index" in api_reference_text
 
 
 def test_ensure_sphinx_project_name_replaces_placeholder(tmp_path):

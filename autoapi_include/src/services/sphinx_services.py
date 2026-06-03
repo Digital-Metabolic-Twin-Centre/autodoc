@@ -1144,7 +1144,7 @@ def _discover_autoapi_reference_entries(root_dir: str) -> list[str]:
             if child.name.startswith("."):
                 continue
             if child.is_file() and child.suffix in {".py", ".pyw"} and child.name != "__init__.py":
-                entries.append(f"autoapi/{prefix}/{child.stem}/index" if prefix else f"autoapi/{child.stem}/index")
+                entries.append(f"autoapi/{entry_name.rsplit('.', 1)[0]}/index")
                 continue
             if not child.is_dir():
                 continue
@@ -1153,8 +1153,7 @@ def _discover_autoapi_reference_entries(root_dir: str) -> list[str]:
                 continue
             if (child / "__init__.py").exists():
                 entries.append(f"autoapi/{entry_name}/index")
-            else:
-                _collect_entries(child, prefix)
+            _collect_entries(child, entry_name)
 
     _collect_entries(autoapi_root)
 
@@ -1204,6 +1203,7 @@ def _ensure_api_reference(api_reference_path: str, root_dir: str) -> None:
     existing_text = api_reference.read_text(encoding="utf-8")
     generated_markers = (
         "Browse the generated API pages directly from the sidebar.",
+        "Browse the generated API pages below.",
         "Generated API entries will appear here after the mirrored Python tree is analysed.",
         "autoapi/src/index",
     )
