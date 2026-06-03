@@ -14,7 +14,11 @@ from services.docstring_pr_services import (
     DocstringPullRequestError,
     create_python_docstring_pull_request,
 )
-from services.sphinx_services import PublishPagesError, create_sphinx_setup, publish_github_pages
+from services.sphinx_services import (
+    PublishPagesError,
+    create_sphinx_setup,
+    publish_github_pages,
+)
 from utils.docstring_generation import DEFAULT_OPENAI_MODEL
 from utils.git_utils import extract_repo_path
 from utils.output_paths import bind_repo_run_log_dir
@@ -22,6 +26,20 @@ from utils.output_paths import bind_repo_run_log_dir
 
 @dataclass
 class WorkflowRunResult:
+    """
+    Represents the result of a workflow run with various output metrics.
+
+        Args:
+            response (dict): The response data from the workflow run.
+            summary_output (str): Summary output of the workflow run.
+            artifact_dir (str | None): Directory for artifacts, if any.
+            log_path (str | None): Path to the log file, if available.
+
+        Returns:
+            None: This class does not return a value.
+
+    """
+
     response: dict
     summary_output: str
     artifact_dir: str | None = None
@@ -35,19 +53,48 @@ class WorkflowRunResult:
 
 
 def _notify_progress(progress_callback, percent: float, message: str) -> None:
+    """
+    Notifies progress through a callback function.
+
+        Args:
+            progress_callback (callable): A function to call with progress updates.
+            percent (float): The current progress percentage.
+            message (str): A message describing the progress.
+
+        Returns:
+            None
+
+    """
     if progress_callback is not None:
         progress_callback(percent, message)
 
 
 def _summarize_generate(docstring_analysis: list[dict]) -> tuple[int, int, int]:
+    """
+    Summarizes the analysis of generated docstrings from a list of file summaries.
+
+        Args:
+            docstring_analysis (list[dict]): A list of dictionaries containing docstring analysis
+            data.
+
+        Returns:
+            tuple[int, int, int]: A tuple with the total files analyzed, docstrings generated, and
+            skipped files.
+
+    """
     files_analyzed = len(docstring_analysis)
     docstrings_generated = 0
     skipped_files = 0
     for file_summary in docstring_analysis:
-        generated_for_file = any(item.get("generated_docstring") for item in file_summary.get("docstring_analysis", []))
+        generated_for_file = any(
+            item.get("generated_docstring")
+            for item in file_summary.get("docstring_analysis", [])
+        )
         if generated_for_file:
             docstrings_generated += sum(
-                1 for item in file_summary.get("docstring_analysis", []) if item.get("generated_docstring")
+                1
+                for item in file_summary.get("docstring_analysis", [])
+                if item.get("generated_docstring")
             )
         else:
             skipped_files += 1
@@ -55,6 +102,16 @@ def _summarize_generate(docstring_analysis: list[dict]) -> tuple[int, int, int]:
 
 
 def _github_pages_url(repo_url: str) -> str | None:
+    """
+    Generate the GitHub Pages URL for a given repository.
+
+    Args:
+        repo_url (str): The URL of the GitHub repository.
+
+    Returns:
+        str | None: The GitHub Pages URL or None if the repository path is invalid.
+
+    """
     repo_path = extract_repo_path(repo_url, "github")
     if "/" not in repo_path:
         return None
@@ -62,9 +119,24 @@ def _github_pages_url(repo_url: str) -> str | None:
     return f"https://{owner}.github.io/{repo_name}/"
 
 
-def execute_generate_request(req: RepoRequest, progress_callback=None) -> WorkflowRunResult:
+def execute_generate_request(
+    req: RepoRequest, progress_callback=None
+) -> WorkflowRunResult:
+    """
+    Execute a request to generate documentation for a repository.
+
+    Args:
+        req (RepoRequest): The request object containing repository details.
+        progress_callback (callable, optional): A callback function for progress updates.
+
+    Returns:
+        WorkflowRunResult: The result of the workflow execution including status and metrics.
+
+    """
     if not req.repo_url or not req.token or not req.branch or not req.provider:
-        raise ValueError("Missing required parameters: repo_url, token, branch, or provider.")
+        raise ValueError(
+            "Missing required parameters: repo_url, token, branch, or provider."
+        )
 
     _notify_progress(progress_callback, 25.0, "Analyzing repository")
     analysis_file, docstring_analysis = analyse_repo(
@@ -92,7 +164,9 @@ def execute_generate_request(req: RepoRequest, progress_callback=None) -> Workfl
             f"or branch '{req.branch}' is protected."
         )
     _notify_progress(progress_callback, 90.0, "Finalizing results")
-    files_analyzed, docstrings_generated, skipped_files = _summarize_generate(docstring_analysis)
+    files_analyzed, docstrings_generated, skipped_files = _summarize_generate(
+        docstring_analysis
+    )
     response = {
         "status": "success",
         "sphinx_setup_created": sphinx_setup_created,
@@ -118,7 +192,21 @@ def execute_generate_request(req: RepoRequest, progress_callback=None) -> Workfl
     )
 
 
-def execute_docstring_pr_request(req: DocstringPullRequestRequest, progress_callback=None) -> WorkflowRunResult:
+def execute_docstring_pr_request(
+    req: DocstringPullRequestRequest, progress_callback=None
+) -> WorkflowRunResult:
+    """
+    Execute a request to create a pull request for Python docstring suggestions.
+
+    Args:
+        req (DocstringPullRequestRequest): The request object containing repository and suggestion
+        details.
+        progress_callback (Optional[Callable]): A callback function to report progress.
+
+    Returns:
+        WorkflowRunResult: The result of the workflow run including response and metrics.
+
+    """
     _notify_progress(progress_callback, 25.0, "Preparing docstring suggestions")
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
     suggestion_branch = req.suggestion_branch or (
@@ -155,7 +243,20 @@ def execute_docstring_pr_request(req: DocstringPullRequestRequest, progress_call
     )
 
 
-def execute_publish_request(req: PublishPagesRequest, progress_callback=None) -> WorkflowRunResult:
+def execute_publish_request(
+    req: PublishPagesRequest, progress_callback=None
+) -> WorkflowRunResult:
+    """
+    Executes a request to publish GitHub Pages and tracks progress.
+
+        Args:
+            req (PublishPagesRequest): The request object containing repository details.
+            progress_callback (callable, optional): A callback function to report progress.
+
+        Returns:
+            WorkflowRunResult: The result of the publish operation including status and log paths.
+
+    """
     _notify_progress(progress_callback, 25.0, "Preparing publish job")
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
     _notify_progress(progress_callback, 70.0, "Publishing GitHub Pages")

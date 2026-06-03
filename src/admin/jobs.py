@@ -11,7 +11,11 @@ from typing import Any
 
 from admin.database import SessionLocal
 from admin.models import RunRecord
-from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
+from models.repo_request import (
+    DocstringPullRequestRequest,
+    PublishPagesRequest,
+    RepoRequest,
+)
 from services.workflow_service import (
     WorkflowRunResult,
     execute_docstring_pr_request,
@@ -22,6 +26,19 @@ from services.workflow_service import (
 
 @dataclass
 class QueuedJob:
+    """
+    Represents a job in a queue with associated metadata.
+
+        Args:
+            run_id (int): Unique identifier for the job.
+            endpoint (str): The endpoint to which the job is sent.
+            payload (dict[str, Any]): The data to be processed by the job.
+
+        Returns:
+            None
+
+    """
+
     run_id: int
     endpoint: str
     payload: dict[str, Any]
@@ -35,12 +52,27 @@ CURRENT_PROCESS: Process | None = None
 CURRENT_RUN_ID: int | None = None
 PROCESS_LOCK = Lock()
 UNEXPECTED_EXIT_MESSAGE = "Job process exited unexpectedly before the run could finish."
-RESTART_EXIT_MESSAGE = "Run was interrupted because the server stopped before the job could finish."
-RESTART_QUEUE_MESSAGE = "Run was interrupted because the server stopped before the queued job could start."
+RESTART_EXIT_MESSAGE = (
+    "Run was interrupted because the server stopped before the job could finish."
+)
+RESTART_QUEUE_MESSAGE = (
+    "Run was interrupted because the server stopped before the queued job could start."
+)
 CANCEL_GRACE_SECONDS = 10.0
 
 
 def _update_run(run_id: int, updater) -> None:
+    """
+    Update a run record in the database with the given updater function.
+
+    Args:
+        run_id (int): The ID of the run record to update.
+        updater (callable): A function that modifies the run record.
+
+    Returns:
+        None: This function does not return a value.
+
+    """
     with SessionLocal() as session:
         run = session.get(RunRecord, run_id)
         if run is None:
@@ -51,9 +83,31 @@ def _update_run(run_id: int, updater) -> None:
 
 
 def _set_run_progress(run_id: int, percent: float, message: str) -> None:
+    """
+    Updates the progress of a run with a given percentage and message.
+
+        Args:
+            run_id (int): The identifier of the run to update.
+            percent (float): The progress percentage (0 to 100).
+            message (str): A message describing the progress.
+
+        Returns:
+            None: This function does not return a value.
+
+    """
     normalized_percent = max(0.0, min(100.0, percent))
 
     def apply(run: RunRecord) -> None:
+        """
+        Cancels a given run by updating its status and progress details.
+
+        Args:
+            run (RunRecord): The run record to be cancelled.
+
+        Returns:
+            None
+
+        """
         run.progress_percent = normalized_percent
         run.progress_message = message
 
@@ -64,21 +118,59 @@ def _duration_seconds(
     started_at: datetime | None,
     finished_at: datetime | None,
 ) -> float:
+    """
+    Calculate the duration in seconds between two datetime objects.
+
+    Args:
+        started_at (datetime | None): The start time.
+        finished_at (datetime | None): The end time.
+
+    Returns:
+        float: The duration in seconds, or 0.0 if either time is None.
+
+    """
     if started_at is None or finished_at is None:
         return 0.0
     normalized_started_at = started_at
     normalized_finished_at = finished_at
-    if normalized_started_at.tzinfo is None and normalized_finished_at.tzinfo is not None:
+    if (
+        normalized_started_at.tzinfo is None
+        and normalized_finished_at.tzinfo is not None
+    ):
         normalized_finished_at = normalized_finished_at.replace(tzinfo=None)
-    elif normalized_started_at.tzinfo is not None and normalized_finished_at.tzinfo is None:
+    elif (
+        normalized_started_at.tzinfo is not None
+        and normalized_finished_at.tzinfo is None
+    ):
         normalized_started_at = normalized_started_at.replace(tzinfo=None)
     return (normalized_finished_at - normalized_started_at).total_seconds()
 
 
 def _mark_cancelled(run_id: int, message: str) -> None:
+    """
+    Marks a run as cancelled with a specified message.
+
+        Args:
+            run_id (int): The ID of the run to be cancelled.
+            message (str): The cancellation message to be recorded.
+
+        Returns:
+            None: This function does not return a value.
+
+    """
     cancelled_at = datetime.now(UTC)
 
     def apply(run: RunRecord) -> None:
+        """
+        Updates the progress of a given run record.
+
+            Args:
+                run (RunRecord): The run record to update.
+
+            Returns:
+                None
+
+        """
         run.status = "cancelled"
         run.progress_percent = 100.0
         run.progress_message = "Cancelled"
@@ -90,10 +182,24 @@ def _mark_cancelled(run_id: int, message: str) -> None:
 
 
 def reconcile_interrupted_runs() -> int:
+    """
+    Reconcile and update the status of interrupted run records.
+
+        Args:
+            None
+
+        Returns:
+            int: The number of run records that were updated to 'failed'.
+
+    """
     recovered_at = datetime.now(UTC)
 
     with SessionLocal() as session:
-        interrupted_runs = session.query(RunRecord).filter(RunRecord.status.in_(("queued", "running"))).all()
+        interrupted_runs = (
+            session.query(RunRecord)
+            .filter(RunRecord.status.in_(("queued", "running")))
+            .all()
+        )
         for run in interrupted_runs:
             previous_status = run.status
             run.status = "failed"
@@ -101,13 +207,27 @@ def reconcile_interrupted_runs() -> int:
             run.progress_message = "Failed"
             run.completed_at = recovered_at
             run.duration_seconds = _duration_seconds(run.started_at, recovered_at)
-            run.error_message = RESTART_EXIT_MESSAGE if previous_status == "running" else RESTART_QUEUE_MESSAGE
+            run.error_message = (
+                RESTART_EXIT_MESSAGE
+                if previous_status == "running"
+                else RESTART_QUEUE_MESSAGE
+            )
             session.add(run)
         session.commit()
         return len(interrupted_runs)
 
 
 def _terminate_process_tree(process: Process) -> bool:
+    """
+    Terminates a process and its child processes gracefully, then forcefully if needed.
+
+        Args:
+            process (Process): The process to terminate.
+
+        Returns:
+            bool: True if the process was successfully terminated, False otherwise.
+
+    """
     if not process.pid:
         return False
     try:
@@ -138,6 +258,11 @@ def _terminate_process_tree(process: Process) -> bool:
 
 
 def _ensure_dispatcher() -> None:
+    """
+    Ensures the dispatcher thread is running.\n\n    This function checks if the dispatcher thread
+    is alive and starts it if not.\n\n    Returns:\n        None: This function does not return any
+    value.\n
+    """
     global DISPATCHER_THREAD
     with DISPATCHER_LOCK:
         if DISPATCHER_THREAD and DISPATCHER_THREAD.is_alive():
@@ -151,6 +276,18 @@ def _ensure_dispatcher() -> None:
 
 
 def enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
+    """
+    Enqueues a job with the specified run ID, endpoint, and payload.
+
+        Args:
+            run_id (int): The identifier for the job to enqueue.
+            endpoint (str): The endpoint to which the job is associated.
+            payload (dict[str, Any]): The data to be processed by the job.
+
+        Returns:
+            None: This function does not return a value.
+
+    """
     with QUEUE_CONDITION:
         JOB_QUEUE.append(QueuedJob(run_id=run_id, endpoint=endpoint, payload=payload))
         QUEUE_CONDITION.notify()
@@ -158,6 +295,16 @@ def enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
 
 
 def _dispatch_loop() -> None:
+    """
+    Continuously processes jobs from a queue, executing them in separate processes.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    """
     global CURRENT_PROCESS, CURRENT_RUN_ID
 
     while True:
@@ -196,13 +343,25 @@ def _dispatch_loop() -> None:
                 run.progress_percent = 100.0
                 run.progress_message = "Failed"
                 run.completed_at = datetime.now(UTC)
-                run.duration_seconds = _duration_seconds(run.started_at, run.completed_at)
+                run.duration_seconds = _duration_seconds(
+                    run.started_at, run.completed_at
+                )
                 run.error_message = UNEXPECTED_EXIT_MESSAGE
                 session.add(run)
                 session.commit()
 
 
 def request_run_cancellation(run_id: int) -> str:
+    """
+    Cancels a running or queued job based on the provided run ID.
+
+    Args:
+        run_id (int): The ID of the run to be cancelled.
+
+    Returns:
+        str: A message indicating the cancellation status.
+
+    """
     with QUEUE_CONDITION:
         for index, job in enumerate(JOB_QUEUE):
             if job.run_id == run_id:
@@ -214,10 +373,16 @@ def request_run_cancellation(run_id: int) -> str:
         active_process = CURRENT_PROCESS
         active_run_id = CURRENT_RUN_ID
 
-    if active_run_id == run_id and active_process is not None and active_process.is_alive():
+    if (
+        active_run_id == run_id
+        and active_process is not None
+        and active_process.is_alive()
+    ):
         terminated = _terminate_process_tree(active_process)
         if terminated:
-            _mark_cancelled(run_id, "Run was cancelled while execution was in progress.")
+            _mark_cancelled(
+                run_id, "Run was cancelled while execution was in progress."
+            )
             return "cancelled"
         return "running"
 
@@ -237,6 +402,18 @@ def request_run_cancellation(run_id: int) -> str:
 
 
 def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
+    """
+    Executes a run process by updating its status and handling the execution result.
+
+        Args:
+            run_id (int): The ID of the run to execute.
+            endpoint (str): The endpoint to call during the run.
+            payload (dict[str, Any]): The data to send with the request.
+
+        Returns:
+            None: Updates the run status and progress in the database.
+
+    """
     os.setsid()
     started_at = datetime.now(UTC)
 
@@ -255,7 +432,9 @@ def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) ->
         result = _execute_endpoint(
             endpoint,
             payload,
-            progress_callback=lambda percent, message: _set_run_progress(run_id, percent, message),
+            progress_callback=lambda percent, message: _set_run_progress(
+                run_id, percent, message
+            ),
         )
         completed_at = datetime.now(UTC)
 
@@ -299,10 +478,28 @@ def _execute_endpoint(
     payload: dict[str, Any],
     progress_callback=None,
 ) -> WorkflowRunResult:
+    """
+    Executes a request to a specified API endpoint with the given payload.
+
+        Args:
+            endpoint (str): The API endpoint to execute.
+            payload (dict[str, Any]): The data to send with the request.
+            progress_callback (Optional[Callable]): A callback for progress updates.
+
+        Returns:
+            WorkflowRunResult: The result of the executed request.
+
+    """
     if endpoint == "/generate":
-        return execute_generate_request(RepoRequest(**payload), progress_callback=progress_callback)
+        return execute_generate_request(
+            RepoRequest(**payload), progress_callback=progress_callback
+        )
     if endpoint == "/publish-pages":
-        return execute_publish_request(PublishPagesRequest(**payload), progress_callback=progress_callback)
+        return execute_publish_request(
+            PublishPagesRequest(**payload), progress_callback=progress_callback
+        )
     if endpoint == "/suggest-python-docstrings-pr":
-        return execute_docstring_pr_request(DocstringPullRequestRequest(**payload), progress_callback=progress_callback)
+        return execute_docstring_pr_request(
+            DocstringPullRequestRequest(**payload), progress_callback=progress_callback
+        )
     raise ValueError(f"Unsupported endpoint for queued execution: {endpoint}")

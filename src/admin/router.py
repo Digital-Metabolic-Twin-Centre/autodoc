@@ -35,7 +35,11 @@ from admin.settings import (
     MAX_ACTIVITY_ITEMS,
     TEMPLATES_DIR,
 )
-from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
+from models.repo_request import (
+    DocstringPullRequestRequest,
+    PublishPagesRequest,
+    RepoRequest,
+)
 from utils.git_utils import extract_repo_path
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -139,7 +143,9 @@ async def login_submit(
             "page_title": "Admin Sign In",
             "error_message": "The username or password was not recognized.",
         }
-        response = _template_response(request, "admin/login.html", context, status_code=401)
+        response = _template_response(
+            request, "admin/login.html", context, status_code=401
+        )
         clear_admin_session(response)
         return response
     except HTTPException as exc:
@@ -147,7 +153,9 @@ async def login_submit(
             "page_title": "Admin Sign In",
             "error_message": str(exc.detail),
         }
-        response = _template_response(request, "admin/login.html", context, status_code=exc.status_code)
+        response = _template_response(
+            request, "admin/login.html", context, status_code=exc.status_code
+        )
         clear_admin_session(response)
         return response
 
@@ -171,7 +179,9 @@ def _parse_target_folders(raw_value: str) -> list[str]:
         if not normalized:
             continue
         if normalized.startswith("..") or "/../" in f"/{normalized}/":
-            raise HTTPException(status_code=422, detail="Target folders cannot contain '..'.")
+            raise HTTPException(
+                status_code=422, detail="Target folders cannot contain '..'."
+            )
         values.append(normalized)
     return values
 
@@ -179,7 +189,9 @@ def _parse_target_folders(raw_value: str) -> list[str]:
 def _validate_provider(provider: str) -> str:
     normalized = provider.strip().lower()
     if normalized not in {"github", "gitlab"}:
-        raise HTTPException(status_code=422, detail="Provider must be github or gitlab.")
+        raise HTTPException(
+            status_code=422, detail="Provider must be github or gitlab."
+        )
     return normalized
 
 
@@ -203,9 +215,13 @@ def _validate_repo_form(
     normalized_provider = _validate_provider(provider)
     repo_path = extract_repo_path(repo_url.strip(), normalized_provider)
     if docstring_threshold < 0 or docstring_threshold > 1:
-        raise HTTPException(status_code=422, detail="Docstring threshold must be between 0 and 1.")
+        raise HTTPException(
+            status_code=422, detail="Docstring threshold must be between 0 and 1."
+        )
     if low_content_min_lines < 0:
-        raise HTTPException(status_code=422, detail="Low content minimum lines must be 0 or greater.")
+        raise HTTPException(
+            status_code=422, detail="Low content minimum lines must be 0 or greater."
+        )
     return {
         "name": name.strip(),
         "provider": normalized_provider,
@@ -234,12 +250,18 @@ def _build_repo_run_request(
         repo_url=repository.repo_url,
         token=decrypt_token(repository.encrypted_token),
         branch=branch or repository.default_branch,
-        target_folders=_parse_target_folders(target_folders or ",".join(repository.target_folders)),
+        target_folders=_parse_target_folders(
+            target_folders or ",".join(repository.target_folders)
+        ),
         model=(model or repository.preferred_model or DEFAULT_OPENAI_MODEL),
         reuse_doc=repository.reuse_doc if reuse_doc is None else reuse_doc,
-        docstring_threshold=repository.docstring_threshold if docstring_threshold is None else docstring_threshold,
+        docstring_threshold=repository.docstring_threshold
+        if docstring_threshold is None
+        else docstring_threshold,
         low_content_min_lines=(
-            repository.low_content_min_lines if low_content_min_lines is None else low_content_min_lines
+            repository.low_content_min_lines
+            if low_content_min_lines is None
+            else low_content_min_lines
         ),
     )
 
@@ -249,17 +271,39 @@ def _build_publish_request(
     branch: str | None = None,
     low_content_min_lines: int | None = None,
 ) -> PublishPagesRequest:
+    """
+    Constructs a publish request for a repository.
+
+        Args:
+            repository (RepositoryConfig): Configuration of the repository.
+            branch (str | None): Optional branch name; defaults to the repository's default branch.
+            low_content_min_lines (int | None): Optional minimum lines of low content; defaults to
+            repository's setting.
+
+        Returns:
+            PublishPagesRequest: The constructed publish request object.
+
+    """
     return PublishPagesRequest(
         repo_url=repository.repo_url,
         token=decrypt_token(repository.encrypted_token),
         branch=branch or repository.default_branch,
         low_content_min_lines=(
-            repository.low_content_min_lines if low_content_min_lines is None else low_content_min_lines
+            repository.low_content_min_lines
+            if low_content_min_lines is None
+            else low_content_min_lines
         ),
     )
 
 
 def _default_suggestion_branch() -> str:
+    """
+    Generate a default suggestion branch name based on the current UTC time.
+
+    Returns:
+        str: A formatted string representing the suggestion branch name.
+
+    """
     return f"autodocs-docstring-suggestions-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"
 
 
@@ -270,6 +314,20 @@ def _build_pr_request(
     title: str | None,
     max_docstrings: int,
 ) -> DocstringPullRequestRequest:
+    """
+    Constructs a pull request request for adding suggested docstrings.
+
+        Args:
+            repository (RepositoryConfig): Configuration of the repository.
+            base_branch (str | None): The base branch for the PR.
+            suggestion_branch (str | None): The branch for suggestions.
+            title (str | None): Title of the PR.
+            max_docstrings (int): Maximum number of docstrings to suggest.
+
+        Returns:
+            DocstringPullRequestRequest: The constructed pull request request object.
+
+    """
     return DocstringPullRequestRequest(
         provider=repository.provider,
         repo_url=repository.repo_url,
@@ -282,6 +340,11 @@ def _build_pr_request(
 
 
 def _artifact_entries(run: RunRecord) -> list[dict[str, str]]:
+    """
+    Retrieve a list of artifact entries from a specified run directory.\n\n    Args:\n        run
+    (RunRecord): The run record containing the artifact directory path.\n\n    Returns:\n
+    list[dict[str, str]]: A list of dictionaries with artifact names and their sizes as strings.\n
+    """
     artifact_dir = run.artifact_dir
     if not artifact_dir or not os.path.isdir(artifact_dir):
         return []
@@ -299,6 +362,16 @@ def _artifact_entries(run: RunRecord) -> list[dict[str, str]]:
 
 
 def _run_log_entries(run: RunRecord) -> list[dict[str, str]]:
+    """
+    Retrieve and order log entries from a given run record.
+
+    Args:
+        run (RunRecord): The run record containing log information.
+
+    Returns:
+        list[dict[str, str]]: A list of ordered log entries with their details.
+
+    """
     artifact_entries = _artifact_entries(run)
     entries_by_name = {entry["name"]: dict(entry) for entry in artifact_entries}
     prioritized_names = [
@@ -336,6 +409,18 @@ def _run_log_entries(run: RunRecord) -> list[dict[str, str]]:
 
 
 def _log_snippet(log_path: str | None, limit: int = 80) -> str:
+    """
+    Retrieve the last 'limit' lines from a log file.
+
+        Args:
+            log_path (str | None): The path to the log file.
+            limit (int): The number of lines to retrieve (default is 80).
+
+        Returns:
+            str: The last 'limit' lines of the log file, or an empty string if the file does not
+            exist.
+
+    """
     if not log_path or not os.path.exists(log_path):
         return ""
     with open(log_path, "r", encoding="utf-8", errors="replace") as file_handle:
@@ -343,7 +428,21 @@ def _log_snippet(log_path: str | None, limit: int = 80) -> str:
     return "".join(lines[-limit:])
 
 
-def _read_artifact_preview(artifact_path: Path, max_chars: int = 120_000) -> tuple[str, bool]:
+def _read_artifact_preview(
+    artifact_path: Path, max_chars: int = 120_000
+) -> tuple[str, bool]:
+    """
+    Read a preview of an artifact from a file.
+
+    Args:
+        artifact_path (Path): The path to the artifact file.
+        max_chars (int): The maximum number of characters to read (default is 120000).
+
+    Returns:
+        tuple[str, bool]: A tuple containing the content preview and a flag indicating if it was
+        truncated.
+
+    """
     with open(artifact_path, "r", encoding="utf-8", errors="replace") as file_handle:
         content = file_handle.read(max_chars + 1)
     truncated = len(content) > max_chars
@@ -353,18 +452,40 @@ def _read_artifact_preview(artifact_path: Path, max_chars: int = 120_000) -> tup
 
 
 def _dashboard_context() -> dict[str, Any]:
+    """
+    Retrieve dashboard context including repository and run statistics.
+
+        Returns:
+            dict[str, Any]: A dictionary containing total repositories, run statistics, recent runs,
+            and repository configurations.
+
+    """
     with SessionLocal() as session:
-        total_repositories = session.scalar(select(func.count(RepositoryConfig.id))) or 0
+        total_repositories = (
+            session.scalar(select(func.count(RepositoryConfig.id))) or 0
+        )
         total_runs = session.scalar(select(func.count(RunRecord.id))) or 0
-        successful_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "completed")) or 0
-        failed_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "failed")) or 0
+        successful_runs = (
+            session.scalar(
+                select(func.count(RunRecord.id)).where(RunRecord.status == "completed")
+            )
+            or 0
+        )
+        failed_runs = (
+            session.scalar(
+                select(func.count(RunRecord.id)).where(RunRecord.status == "failed")
+            )
+            or 0
+        )
         recent_runs = session.scalars(
             select(RunRecord)
             .order_by(RunRecord.created_at.desc())
             .options(selectinload(RunRecord.repository))
             .limit(MAX_ACTIVITY_ITEMS)
         ).all()
-        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())).all()
+        repositories = session.scalars(
+            select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())
+        ).all()
     return {
         "stats": {
             "total_repositories": total_repositories,
@@ -379,7 +500,9 @@ def _dashboard_context() -> dict[str, Any]:
 
 
 @router.get("", response_class=HTMLResponse)
-async def dashboard(request: Request, admin_user: str = Depends(require_admin)) -> Response:
+async def dashboard(
+    request: Request, admin_user: str = Depends(require_admin)
+) -> Response:
     context = _dashboard_context()
     context["admin_user"] = admin_user
     return _template_response(request, "admin/dashboard.html", context)
@@ -396,9 +519,13 @@ async def recent_activity_fragment(
 
 
 @router.get("/repositories", response_class=HTMLResponse)
-async def repositories_page(request: Request, admin_user: str = Depends(require_admin)) -> Response:
+async def repositories_page(
+    request: Request, admin_user: str = Depends(require_admin)
+) -> Response:
     with SessionLocal() as session:
-        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())).all()
+        repositories = session.scalars(
+            select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())
+        ).all()
     context = {
         "repositories": repositories,
         "admin_user": admin_user,
@@ -408,7 +535,9 @@ async def repositories_page(request: Request, admin_user: str = Depends(require_
 
 
 @router.get("/repositories/new", response_class=HTMLResponse)
-async def repository_new_form(request: Request, admin_user: str = Depends(require_admin)) -> Response:
+async def repository_new_form(
+    request: Request, admin_user: str = Depends(require_admin)
+) -> Response:
     context = {
         "admin_user": admin_user,
         "repository": None,
@@ -447,9 +576,13 @@ async def create_repository(
         raise HTTPException(status_code=422, detail="Access token is required.")
 
     with SessionLocal() as session:
-        existing = session.scalar(select(RepositoryConfig).where(RepositoryConfig.name == data["name"]))
+        existing = session.scalar(
+            select(RepositoryConfig).where(RepositoryConfig.name == data["name"])
+        )
         if existing:
-            raise HTTPException(status_code=409, detail="Repository name already exists.")
+            raise HTTPException(
+                status_code=409, detail="Repository name already exists."
+            )
         repository = RepositoryConfig(
             name=data["name"],
             provider=data["provider"],
@@ -585,6 +718,19 @@ def _create_run_record(
     admin_user: str,
     payload: dict[str, Any],
 ) -> int:
+    """
+    Creates and stores a run record in the database.
+
+        Args:
+            repository_id (int | None): The ID of the repository.
+            endpoint (str): The API endpoint being called.
+            admin_user (str): The username of the admin triggering the run.
+            payload (dict[str, Any]): The request payload data.
+
+        Returns:
+            int: The ID of the created run record.
+
+    """
     with SessionLocal() as session:
         run = RunRecord(
             repository_id=repository_id,
@@ -627,7 +773,9 @@ async def trigger_generate(
             docstring_threshold=docstring_threshold,
             low_content_min_lines=low_content_min_lines,
         )
-    run_id = _create_run_record(repository_id, "/generate", admin_user, repo_request.model_dump())
+    run_id = _create_run_record(
+        repository_id, "/generate", admin_user, repo_request.model_dump()
+    )
     enqueue_run(run_id, "/generate", repo_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
@@ -650,7 +798,9 @@ async def trigger_publish(
             branch=branch or repository.default_branch,
             low_content_min_lines=low_content_min_lines,
         )
-    run_id = _create_run_record(repository_id, "/publish-pages", admin_user, publish_request.model_dump())
+    run_id = _create_run_record(
+        repository_id, "/publish-pages", admin_user, publish_request.model_dump()
+    )
     enqueue_run(run_id, "/publish-pages", publish_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
@@ -671,7 +821,10 @@ async def trigger_suggest_pr(
         if repository is None:
             raise HTTPException(status_code=404, detail="Repository not found.")
         if repository.provider != "github":
-            raise HTTPException(status_code=422, detail="Docstring suggestion PRs currently support GitHub only.")
+            raise HTTPException(
+                status_code=422,
+                detail="Docstring suggestion PRs currently support GitHub only.",
+            )
         pr_request = _build_pr_request(
             repository,
             base_branch=base_branch,
@@ -679,7 +832,12 @@ async def trigger_suggest_pr(
             title=title,
             max_docstrings=max_docstrings,
         )
-    run_id = _create_run_record(repository_id, "/suggest-python-docstrings-pr", admin_user, pr_request.model_dump())
+    run_id = _create_run_record(
+        repository_id,
+        "/suggest-python-docstrings-pr",
+        admin_user,
+        pr_request.model_dump(),
+    )
     enqueue_run(run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
@@ -691,8 +849,14 @@ async def runs_page(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.name.asc())).all()
-        query = select(RunRecord).order_by(RunRecord.created_at.desc()).options(selectinload(RunRecord.repository))
+        repositories = session.scalars(
+            select(RepositoryConfig).order_by(RepositoryConfig.name.asc())
+        ).all()
+        query = (
+            select(RunRecord)
+            .order_by(RunRecord.created_at.desc())
+            .options(selectinload(RunRecord.repository))
+        )
         if repository_id:
             query = query.where(RunRecord.repository_id == repository_id)
         runs = session.scalars(query.limit(100)).all()
@@ -736,7 +900,11 @@ async def run_detail(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -758,7 +926,11 @@ async def run_status_fragment(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -777,7 +949,11 @@ async def run_row_fragment(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -797,7 +973,11 @@ async def retry_run(
     _: None = Depends(verify_csrf),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -815,7 +995,9 @@ async def retry_run(
         enqueue_run(new_run_id, "/publish-pages", publish_request.model_dump())
     elif endpoint == "/suggest-python-docstrings-pr":
         pr_request = DocstringPullRequestRequest(**payload)
-        enqueue_run(new_run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
+        enqueue_run(
+            new_run_id, "/suggest-python-docstrings-pr", pr_request.model_dump()
+        )
     else:
         raise HTTPException(status_code=422, detail="Run type is not retryable.")
     return _redirect(f"/admin/runs/{new_run_id}", request)
@@ -836,11 +1018,17 @@ async def cancel_run(
         raise HTTPException(status_code=404, detail="Run not found.")
 
     if outcome not in {"queued", "running", "cancelled"}:
-        raise HTTPException(status_code=422, detail="Only queued or running runs can be cancelled.")
+        raise HTTPException(
+            status_code=422, detail="Only queued or running runs can be cancelled."
+        )
 
     if _is_htmx(request):
         with SessionLocal() as session:
-            stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+            stmt = (
+                select(RunRecord)
+                .where(RunRecord.id == run_id)
+                .options(selectinload(RunRecord.repository))
+            )
             run = session.scalars(stmt).first()
             if run is None:
                 raise HTTPException(status_code=404, detail="Run not found.")
@@ -877,7 +1065,9 @@ async def download_artifact(
     return FileResponse(path=str(target), filename=artifact_name)
 
 
-@router.get("/runs/{run_id}/artifacts/{artifact_name}/preview", response_class=HTMLResponse)
+@router.get(
+    "/runs/{run_id}/artifacts/{artifact_name}/preview", response_class=HTMLResponse
+)
 async def preview_artifact(
     run_id: int,
     artifact_name: str,
