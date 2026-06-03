@@ -7,3 +7,31 @@ Browse the generated API pages below.
    :maxdepth: 2
 
    autoapi/src/index
+   autoapi/src/admin/index
+   autoapi/src/admin/database/index
+   autoapi/src/admin/jobs/index
+   autoapi/src/admin/models/index
+   autoapi/src/admin/router/index
+   autoapi/src/admin/security/index
+   autoapi/src/admin/settings/index
+   autoapi/src/config/index
+   autoapi/src/config/config/index
+   autoapi/src/config/log_config/index
+   autoapi/src/main/index
+   autoapi/src/models/index
+   autoapi/src/models/repo_request/index
+   autoapi/src/router/index
+   autoapi/src/router/router/index
+   autoapi/src/services/index
+   autoapi/src/services/doc_services/index
+   autoapi/src/services/docstring_pr_services/index
+   autoapi/src/services/sphinx_services/index
+   autoapi/src/services/workflow_service/index
+   autoapi/src/utils/index
+   autoapi/src/utils/code_block_extraction/index
+   autoapi/src/utils/docstring_generation/index
+   autoapi/src/utils/docstring_validation/index
+   autoapi/src/utils/generate_yml_content/index
+   autoapi/src/utils/git_utils/index
+   autoapi/src/utils/output_paths/index
+   autoapi/src/utils/update_conf_content/index
