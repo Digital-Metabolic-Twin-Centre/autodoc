@@ -111,81 +111,12 @@
              
   <section id="module-src.utils.docstring_validation">
 <span id="src-utils-docstring-validation"></span><h1>src.utils.docstring_validation<a class="headerlink" href="#module-src.utils.docstring_validation" title="Link to this heading"></a></h1>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_validation.logger" title="src.utils.docstring_validation.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_validation._suggestion_key" title="src.utils.docstring_validation._suggestion_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_suggestion_key</span></code></a>(file_path, function_name, block_type, ...)</p></td>
-<td><p>Generate a unique suggestion key based on provided parameters.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_validation._suggestion_fuzzy_key" title="src.utils.docstring_validation._suggestion_fuzzy_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_suggestion_fuzzy_key</span></code></a>(file_path, function_name, ...)</p></td>
-<td><p>Generate a tuple containing file path, function name, block type, and language.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_validation.analyse_docstring_in_blocks" title="src.utils.docstring_validation.analyse_docstring_in_blocks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyse_docstring_in_blocks</span></code></a>(→ dict)</p></td>
-<td><p>Analyses code blocks to find docstring and identify missing ones.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_validation.analyse_docstring_in_module" title="src.utils.docstring_validation.analyse_docstring_in_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyse_docstring_in_module</span></code></a>(→ Optional[str])</p></td>
-<td><p>Extract module-level docstring from file content.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
 <dl class="py data">
 <dt class="sig sig-object py" id="src.utils.docstring_validation.logger">
 <span class="sig-prename descclassname"><span class="pre">src.utils.docstring_validation.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#src.utils.docstring_validation.logger" title="Link to this definition"></a></dt>
 <dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="src.utils.docstring_validation._suggestion_key">
-<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_validation.</span></span><span class="sig-name descname"><span class="pre">_suggestion_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line_number</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.utils.docstring_validation._suggestion_key" title="Link to this definition"></a></dt>
-<dd><p>Generate a unique suggestion key based on provided parameters.</p>
-<blockquote>
-<div><dl class="simple">
-<dt>Args:</dt><dd><p>file_path (str): The path to the file.
-function_name (str): The name of the function.
-block_type (str): The type of code block.
-line_number (int): The line number in the file.
-language (str | None): The programming language, or None if unspecified.</p>
-</dd>
-<dt>Returns:</dt><dd><p>tuple: A tuple containing the suggestion key components.</p>
-</dd>
-</dl>
-</div></blockquote>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="src.utils.docstring_validation._suggestion_fuzzy_key">
-<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_validation.</span></span><span class="sig-name descname"><span class="pre">_suggestion_fuzzy_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">function_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.utils.docstring_validation._suggestion_fuzzy_key" title="Link to this definition"></a></dt>
-<dd><p>Generate a tuple containing file path, function name, block type, and language.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<em>str</em>) – The path to the file.</p></li>
-<li><p><strong>function_name</strong> (<em>str</em>) – The name of the function.</p></li>
-<li><p><strong>block_type</strong> (<em>str</em>) – The type of block.</p></li>
-<li><p><strong>language</strong> (<em>str</em><em> | </em><em>None</em>) – The programming language, or None if unspecified.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple with the provided parameters.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple</p>
-</dd>
-</dl>
-</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.docstring_validation.analyse_docstring_in_blocks">

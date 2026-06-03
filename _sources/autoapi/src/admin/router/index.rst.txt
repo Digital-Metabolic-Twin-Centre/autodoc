@@ -1,0 +1,115 @@
+src.admin.router
+================
+
+.. py:module:: src.admin.router
+
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:data:: templates
+
+.. py:data:: router
+
+.. py:data:: ENDPOINT_LABELS
+
+.. py:function:: login_page(request: fastapi.Request) -> fastapi.Response
+   :async:
+
+
+.. py:function:: login_submit(request: fastapi.Request, _: None = Depends(verify_csrf), username: str = Form(...), password: str = Form(...)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: logout(request: fastapi.Request, _: None = Depends(verify_csrf)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: dashboard(request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: recent_activity_fragment(request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: repositories_page(request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: repository_new_form(request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: create_repository(request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), name: str = Form(...), provider: str = Form(...), repo_url: str = Form(...), default_branch: str = Form(...), target_folders: str = Form(default=''), preferred_model: str = Form(default=DEFAULT_OPENAI_MODEL), reuse_doc: bool = Form(default=False), docstring_threshold: float = Form(default=0.5), low_content_min_lines: int = Form(default=4), token: str = Form(...)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: repository_detail(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: repository_edit_form(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: update_repository(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), name: str = Form(...), provider: str = Form(...), repo_url: str = Form(...), default_branch: str = Form(...), target_folders: str = Form(default=''), preferred_model: str = Form(default=DEFAULT_OPENAI_MODEL), reuse_doc: bool = Form(default=False), docstring_threshold: float = Form(default=0.5), low_content_min_lines: int = Form(default=4), token: str = Form(default='')) -> fastapi.Response
+   :async:
+
+
+.. py:function:: delete_repository(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: trigger_generate(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), branch: str = Form(default=''), target_folders: str = Form(default=''), preferred_model: str = Form(default=''), reuse_doc: bool = Form(default=False), docstring_threshold: float = Form(default=0.5), low_content_min_lines: int = Form(default=4)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: trigger_publish(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), branch: str = Form(default=''), low_content_min_lines: int = Form(default=4)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: trigger_suggest_pr(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), base_branch: str = Form(default=''), suggestion_branch: str = Form(default=''), title: str = Form(default='Add suggested docstrings'), max_docstrings: int = Form(default=50)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: runs_page(request: fastapi.Request, repository_id: int | None = Query(default=None), admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: clear_runs(request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), repository_id: int | None = Form(default=None)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: run_detail(run_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: run_status_fragment(run_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: run_row_fragment(run_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: retry_run(run_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: cancel_run(run_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), fragment: str = Form(default='redirect')) -> fastapi.Response
+   :async:
+
+
+.. py:function:: download_artifact(run_id: int, artifact_name: str, request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: preview_artifact(run_id: int, artifact_name: str, request: fastapi.Request, admin_user: str = Depends(require_admin)) -> fastapi.Response
+   :async:
+
+

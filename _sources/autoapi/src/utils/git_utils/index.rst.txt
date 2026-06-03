@@ -4,51 +4,10 @@ src.utils.git_utils
 .. py:module:: src.utils.git_utils
 
 
-Attributes
-----------
-
-.. autoapisummary::
-
-   src.utils.git_utils.logger
 
 
-Exceptions
-----------
-
-.. autoapisummary::
-
-   src.utils.git_utils.GitHubApiError
-   src.utils.git_utils.RepositoryAccessError
 
 
-Functions
----------
-
-.. autoapisummary::
-
-   src.utils.git_utils._github_headers
-   src.utils.git_utils._parse_response_message
-   src.utils.git_utils._raise_github_repository_access_error
-   src.utils.git_utils.extract_repo_path
-   src.utils.git_utils.get_gitignore_patterns
-   src.utils.git_utils.should_ignore
-   src.utils.git_utils.fetch_content_from_github
-   src.utils.git_utils.fetch_content_bytes_from_github
-   src.utils.git_utils.fetch_content_from_gitlab
-   src.utils.git_utils.fetch_repo_tree
-   src.utils.git_utils.validate_docstring
-   src.utils.git_utils.create_directory_and_add_files
-   src.utils.git_utils.create_a_file
-   src.utils.git_utils.ensure_github_branch
-   src.utils.git_utils.configure_github_pages
-   src.utils.git_utils.request_github_pages_build
-   src.utils.git_utils.list_github_tree
-   src.utils.git_utils.download_github_branch_snapshot
-   src.utils.git_utils.create_github_blob
-   src.utils.git_utils.publish_github_directory_to_branch
-   src.utils.git_utils.publish_local_directory_to_github_branch
-   src.utils.git_utils.commit_files_to_github_branch
-   src.utils.git_utils.create_github_pull_request
 
 
 Module Contents
@@ -82,46 +41,6 @@ Module Contents
 
 
 
-.. py:function:: _github_headers(token: str, accept: str = 'application/vnd.github+json') -> Dict[str, str]
-
-   Generate headers for GitHub API requests.
-
-   :param token: The authentication token for GitHub API.
-   :type token: str
-   :param accept: The media type to accept (default is 'application/vnd.github+json').
-   :type accept: str
-
-   :returns: A dictionary containing the necessary headers for the request.
-   :rtype: Dict[str, str]
-
-
-.. py:function:: _parse_response_message(response) -> str
-
-   Parse the response message from an HTTP response.
-
-       Args:
-           response (Response): The HTTP response object to parse.
-
-       Returns:
-           str: The parsed message or 'Unknown error' if not found.
-
-
-
-.. py:function:: _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = '') -> None
-
-   Raises a RepositoryAccessError based on the GitHub API response for a repository access attempt.
-
-       Args:
-           response: The API response object from GitHub.
-           repo_path (str): The path of the GitHub repository.
-           branch (str): The branch name to check.
-           path (str, optional): The specific path in the repository.
-
-       Returns:
-           None: Raises an error if access is denied or repository is not found.
-
-
-
 .. py:function:: extract_repo_path(repo_url: str, provider: str = 'github') -> str
 
    Extracts the repository path from a full URL.
@@ -134,12 +53,51 @@ Module Contents
    :rtype: str
 
 
+.. py:function:: clone_repository(repo_url: str, token: str, branch: str = 'main', provider: str = 'github') -> Generator[str, None, None]
+
+   Clone a repository to logs/.clones/ directory and yield the path.
+
+   Automatically cleans up the temporary directory when done.
+
+   :param repo_url: Repository URL or path (e.g., 'user/repo' or 'https://github.com/user/repo').
+   :type repo_url: str
+   :param token: Authentication token (GitHub or GitLab).
+   :type token: str
+   :param branch: Branch to clone. Defaults to 'main'.
+   :type branch: str
+   :param provider: Git provider ('github' or 'gitlab'). Defaults to 'github'.
+   :type provider: str
+
+   :Yields: *str* -- Path to the cloned repository directory.
+
+   :raises RepositoryAccessError: If clone fails.
+
+
+.. py:function:: list_repository_files(repo_path: str, branch: str = 'main', provider: str = 'github') -> List[Dict]
+
+   List all files in a local repository using filesystem traversal.
+
+   :param repo_path: Path to the local cloned repository.
+   :type repo_path: str
+   :param branch: Branch name (unused for local repos, kept for compatibility).
+   :type branch: str
+   :param provider: Git provider (unused for local repos, kept for compatibility).
+   :type provider: str
+
+   :returns: List of file dicts with 'name', 'path', and 'type' keys.
+   :rtype: List[Dict]
+
+
 .. py:function:: get_gitignore_patterns(repo_path: str, access_token: str, branch: str = 'main', provider: str = 'github') -> List[str]
 
+   DEPRECATED: Use _get_gitignore_patterns_from_local() instead.
+
+   This function is kept for backwards compatibility.
    Fetches .gitignore file from the repository and returns a list of patterns to ignore.
-   :param repo_path: Repository path (e.g., 'user/repo').
+
+   :param repo_path: Repository path (e.g., 'user/repo') or local path.
    :type repo_path: str
-   :param access_token: Authentication token.
+   :param access_token: Authentication token (unused if repo_path is local).
    :type access_token: str
    :param branch: Branch name. Defaults to "main".
    :type branch: str, optional
@@ -160,6 +118,32 @@ Module Contents
 
    :returns: True if the name should be ignored, False otherwise.
    :rtype: bool
+
+
+.. py:function:: read_file_content_from_local(repo_path: str, file_path: str) -> Optional[str]
+
+   Read file content from a local cloned repository.
+
+   :param repo_path: Path to the local cloned repository.
+   :type repo_path: str
+   :param file_path: Relative path to the file within the repository.
+   :type file_path: str
+
+   :returns: File content if successful, None otherwise.
+   :rtype: Optional[str]
+
+
+.. py:function:: read_file_bytes_from_local(repo_path: str, file_path: str) -> Optional[bytes]
+
+   Read file bytes from a local cloned repository.
+
+   :param repo_path: Path to the local cloned repository.
+   :type repo_path: str
+   :param file_path: Relative path to the file within the repository.
+   :type file_path: str
+
+   :returns: File bytes if successful, None otherwise.
+   :rtype: Optional[bytes]
 
 
 .. py:function:: fetch_content_from_github(repo_path: str, branch: str, file_path: str, access_token: str) -> Optional[str]
@@ -199,20 +183,29 @@ Module Contents
    :rtype: Optional[str]
 
 
-.. py:function:: fetch_repo_tree(repo_path: str, access_token: str, branch: str = 'main', provider: str = 'github') -> List[Dict]
+.. py:function:: fetch_repo_tree(repo_url: str, access_token: str, branch: str = 'main', provider: str = 'github', local_repo_path: Optional[str] = None) -> List[Dict]
 
-   Recursively fetches the file and directory tree for a given repository and branch.
-   :param repo_path: Repository path.
-   :type repo_path: str
+   Get the file tree from a repository.
+
+   If local_repo_path is provided, reads from that local directory (for already-cloned repos).
+   Otherwise, clones the repository temporarily and reads the tree (caller must clean up).
+
+   :param repo_url: Repository URL or path (e.g., 'user/repo' or full URL).
+   :type repo_url: str
    :param access_token: Authentication token.
    :type access_token: str
    :param branch: Branch name. Defaults to "main".
    :type branch: str, optional
-   :param provider: Git provider ("github" or "gitlab"). Defaults to "github".
+   :param provider: Git provider ('github' or 'gitlab'). Defaults to 'github'.
    :type provider: str, optional
+   :param local_repo_path: Path to a pre-cloned local repository. If provided,
+                           reads from this directory instead of cloning.
+   :type local_repo_path: str, optional
 
    :returns: List of files and directories in the repository.
    :rtype: List[Dict]
+
+   :raises RepositoryAccessError: If clone or traversal fails.
 
 
 .. py:function:: validate_docstring(tech_stack: str, repo_path: str, branch: str, file_path: str, access_token: str, provider: str = 'github') -> Optional[Tuple[bool, List[Dict[str, str]], List[Dict[str, str]]]]
@@ -325,5 +318,15 @@ Module Contents
 .. py:function:: create_github_pull_request(repo_url: str, head_branch: str, base_branch: str, title: str, body: str, token: str) -> Optional[str]
 
    Opens a GitHub pull request and returns its URL.
+
+
+.. py:function:: list_open_github_pull_requests(repo_url: str, base_branch: str, token: str) -> List[Dict]
+
+   Lists open GitHub pull requests targeting the provided base branch.
+
+
+.. py:function:: list_github_pull_request_files(repo_url: str, pull_number: int, token: str) -> List[Dict]
+
+   Lists files changed in a GitHub pull request.
 
 

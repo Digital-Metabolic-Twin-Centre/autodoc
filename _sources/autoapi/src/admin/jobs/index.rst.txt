@@ -1,0 +1,75 @@
+src.admin.jobs
+==============
+
+.. py:module:: src.admin.jobs
+
+
+
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: QueuedJob
+
+   .. py:attribute:: run_id
+      :type:  int
+
+
+   .. py:attribute:: endpoint
+      :type:  str
+
+
+   .. py:attribute:: payload
+      :type:  dict[str, Any]
+
+
+.. py:data:: JOB_QUEUE
+   :type:  collections.deque[QueuedJob]
+
+.. py:data:: QUEUE_CONDITION
+
+.. py:data:: DISPATCHER_THREAD
+   :type:  threading.Thread | None
+   :value: None
+
+
+.. py:data:: DISPATCHER_LOCK
+
+.. py:data:: CURRENT_PROCESS
+   :type:  multiprocessing.Process | None
+   :value: None
+
+
+.. py:data:: CURRENT_RUN_ID
+   :type:  int | None
+   :value: None
+
+
+.. py:data:: PROCESS_LOCK
+
+.. py:data:: UNEXPECTED_EXIT_MESSAGE
+   :value: 'Job process exited unexpectedly before the run could finish.'
+
+
+.. py:data:: RESTART_EXIT_MESSAGE
+   :value: 'Run was interrupted because the server stopped before the job could finish.'
+
+
+.. py:data:: RESTART_QUEUE_MESSAGE
+   :value: 'Run was interrupted because the server stopped before the queued job could start.'
+
+
+.. py:data:: CANCEL_GRACE_SECONDS
+   :value: 10.0
+
+
+.. py:function:: reconcile_interrupted_runs() -> int
+
+.. py:function:: enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None
+
+.. py:function:: request_run_cancellation(run_id: int) -> str
+

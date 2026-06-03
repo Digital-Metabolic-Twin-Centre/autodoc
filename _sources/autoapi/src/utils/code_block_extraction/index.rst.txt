@@ -4,12 +4,6 @@ src.utils.code_block_extraction
 .. py:module:: src.utils.code_block_extraction
 
 
-Classes
--------
-
-.. autoapisummary::
-
-   src.utils.code_block_extraction.GenericCodeBlockExtractor
 
 
 Module Contents
@@ -45,115 +39,9 @@ Module Contents
 
 
 
-   .. py:method:: _detect_language()
-
-      Detects the programming language based on the file extension.
-
-          Returns:
-              str: The detected language or 'python' as default.
-
-
-
-
    .. py:method:: code_block_extractor() -> List[str]
 
       Extracts all code blocks (including nested) for the detected language.
-
-
-
-   .. py:method:: _extract_blocks_recursive(lines: List[str], start: int, end: int, blocks: List[str], base_indent: int)
-
-      Recursively extracts code blocks from a list of lines based on language-specific patterns.
-
-      :param lines: The lines of code to analyze.
-      :type lines: List[str]
-      :param start: The starting index for extraction.
-      :type start: int
-      :param end: The ending index for extraction.
-      :type end: int
-      :param blocks: The list to store extracted blocks.
-      :type blocks: List[str]
-      :param base_indent: The base indentation level for the blocks.
-      :type base_indent: int
-
-      :returns: None
-
-
-
-   .. py:method:: _extract_single_block(lines: List[str], start_idx: int, pattern: str) -> dict
-
-      Extracts a single code block starting from start_idx.
-      Returns dict with 'block' content and 'end_line' index.
-
-
-
-   .. py:method:: _extract_python_function_complete(lines: List[str], start_idx: int) -> dict
-
-      Extracts a complete Python function from a list of code lines.
-
-          Args:
-              lines (List[str]): The list of code lines.
-              start_idx (int): The starting index to search for the function.
-
-          Returns:
-              dict: A dictionary containing the function code block and the ending line index.
-
-
-
-
-   .. py:method:: _extract_python_class_complete(lines: List[str], start_idx: int) -> dict
-
-      Extracts a complete Python class code block from a list of lines.
-
-          Args:
-              lines (List[str]): The list of code lines.
-              start_idx (int): The starting index of the class.
-
-          Returns:
-              dict: A dictionary containing the class code block and the ending line index.
-
-
-
-
-   .. py:method:: _extract_matlab_function(lines: List[str], start_idx: int) -> dict
-
-      Extracts a MATLAB code block from a list of lines starting at a given index.
-
-          Args:
-              lines (List[str]): The list of code lines.
-              start_idx (int): The index to start extraction from.
-
-          Returns:
-              dict: A dictionary containing the extracted code block and the ending line index.
-
-
-
-
-   .. py:method:: _extract_matlab_class(lines: List[str], start_idx: int) -> dict
-
-      Extracts a MATLAB code block from a list of lines starting at a given index.
-
-          Args:
-              lines (List[str]): The list of code lines.
-              start_idx (int): The index to start extraction from.
-
-          Returns:
-              dict: A dictionary containing the extracted code block and the ending line index.
-
-
-
-
-   .. py:method:: _extract_curly_brace_block(lines: List[str], start_idx: int) -> dict
-
-      Extracts a block of code enclosed in curly braces from a list of lines.
-
-          Args:
-              lines (List[str]): The list of code lines.
-              start_idx (int): The starting index to search for the code block.
-
-          Returns:
-              dict: A dictionary containing the extracted code block and the ending line index.
-
 
 
 

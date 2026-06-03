@@ -4,47 +4,12 @@ src.services.docstring_pr_services
 .. py:module:: src.services.docstring_pr_services
 
 
-Attributes
-----------
-
-.. autoapisummary::
-
-   src.services.docstring_pr_services.logger
-   src.services.docstring_pr_services.DocstringNode
 
 
-Exceptions
-----------
-
-.. autoapisummary::
-
-   src.services.docstring_pr_services.DocstringPullRequestError
 
 
-Classes
--------
-
-.. autoapisummary::
-
-   src.services.docstring_pr_services.DocstringInsertion
-   src.services.docstring_pr_services.PatchedPythonFile
 
 
-Functions
----------
-
-.. autoapisummary::
-
-   src.services.docstring_pr_services._format_python_docstring
-   src.services.docstring_pr_services._node_insert_index
-   src.services.docstring_pr_services._find_missing_python_docstrings
-   src.services.docstring_pr_services.patch_python_docstrings
-   src.services.docstring_pr_services._load_generated_suggestions
-   src.services.docstring_pr_services._suggestion_generator
-   src.services.docstring_pr_services._build_pull_request_body
-   src.services.docstring_pr_services._run_ruff_on_patched_files
-   src.services.docstring_pr_services._build_no_changes_response
-   src.services.docstring_pr_services.create_python_docstring_pull_request
 
 
 Module Contents
@@ -127,106 +92,9 @@ Module Contents
    Raised when creating a docstring suggestion pull request fails.
 
 
-.. py:function:: _format_python_docstring(docstring: str, indent: str) -> List[str]
-
-   Formats a Python docstring by cleaning and wrapping its content.
-
-   :param docstring: The original docstring to format.
-   :type docstring: str
-   :param indent: The indentation to apply to each line.
-   :type indent: str
-
-   :returns: A list of formatted docstring lines.
-   :rtype: List[str]
-
-
-.. py:function:: _node_insert_index(node: DocstringNode) -> int
-
-   Insert index of the first body node in a DocstringNode.
-
-       Args:
-           node (DocstringNode): The node from which to extract the index.
-
-       Returns:
-           int: The index of the first body node.
-
-
-
-.. py:function:: _find_missing_python_docstrings(content: str) -> List[DocstringInsertion]
-
-   Identifies missing docstrings in Python functions and classes.
-
-       Args:
-           content (str): The source code content to analyze.
-
-       Returns:
-           List[DocstringInsertion]: A sorted list of insertions for missing docstrings.
-
-
-
 .. py:function:: patch_python_docstrings(content: str, generator: Callable[[DocstringInsertion], Optional[str]], max_docstrings: int = 50) -> PatchedPythonFile
 
    Inserts generated docstrings into Python code using AST-derived insertion points.
-
-
-.. py:function:: _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[dict]]
-
-   Load generated docstring suggestions from a repository.
-
-       Args:
-           repo_path (str): The path to the repository.
-           branch (str): The branch name to load suggestions for.
-
-       Returns:
-           Dict[str, List[dict]]: A dictionary mapping file paths to their respective suggestions.
-
-
-
-.. py:function:: _suggestion_generator(suggestions: List[dict]) -> Callable[[DocstringInsertion], Optional[str]]
-
-   Generates a suggestion function based on provided suggestions.
-
-       Args:
-           suggestions (List[dict]): A list of suggestion dictionaries containing function names
-           and docstrings.
-
-       Returns:
-           Callable[[DocstringInsertion], Optional[str]]: A function that returns a generated
-           docstring or None.
-
-
-
-.. py:function:: _build_pull_request_body(base_branch: str, files_changed: Dict[str, PatchedPythonFile]) -> str
-
-   Generates a pull request body summarizing docstring additions.
-
-   :param base_branch: The name of the base branch for the pull request.
-   :type base_branch: str
-   :param files_changed: A dictionary of files with their corresponding
-   :type files_changed: Dict[str, PatchedPythonFile]
-   :param docstring changes.:
-
-   :returns: A formatted string summarizing the changes and the base branch.
-   :rtype: str
-
-
-.. py:function:: _run_ruff_on_patched_files(files: Dict[str, PatchedPythonFile]) -> Dict[str, PatchedPythonFile]
-
-   Runs ruff formatting/fixes on patched Python files before they are committed.
-
-
-.. py:function:: _build_no_changes_response(base_branch: str, suggestion_branch: str, reason: str) -> dict
-
-   Constructs a response indicating no changes between branches.
-
-       Args:
-           base_branch (str): The name of the base branch.
-           suggestion_branch (str): The name of the suggestion branch.
-           reason (str): The reason for no changes.
-
-       Returns:
-           dict: A dictionary containing the response details.
-
 
 
 .. py:function:: create_python_docstring_pull_request(provider: str, repo_url: str, token: str, base_branch: str, suggestion_branch: str, title: str, max_docstrings: int = 50) -> dict

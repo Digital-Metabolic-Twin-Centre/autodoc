@@ -13,29 +13,8 @@ src.config.log_config
 
 
 
-Attributes
-----------
-
-.. autoapisummary::
-
-   src.config.log_config.LOG_LEVEL
-   src.config.log_config.LOG_FORMAT
-   src.config.log_config.LOG_DIR
-   src.config.log_config.RUN_TIMESTAMP
-   src.config.log_config.RUN_LOG_DIR
-   src.config.log_config.LOG_FILE
-   src.config.log_config._ROOT_LOGGER
 
 
-Functions
----------
-
-.. autoapisummary::
-
-   src.config.log_config._configure_root_logger
-   src.config.log_config.bind_repo_log_dir
-   src.config.log_config.get_logger
-   src.config.log_config.get_run_log_dir
 
 
 Module Contents
@@ -58,20 +37,6 @@ Module Contents
 .. py:data:: LOG_FILE
    :value: None
 
-
-.. py:function:: _configure_root_logger() -> logging.Logger
-
-   Configures the root logger with a specified log level and format.
-
-       Args:
-           None
-
-       Returns:
-           logging.Logger: The configured root logger instance.
-
-
-
-.. py:data:: _ROOT_LOGGER
 
 .. py:function:: bind_repo_log_dir(repo_log_dir: str) -> str
 

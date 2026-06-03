@@ -4,14 +4,6 @@ src.models.repo_request
 .. py:module:: src.models.repo_request
 
 
-Classes
--------
-
-.. autoapisummary::
-
-   src.models.repo_request.RepoRequest
-   src.models.repo_request.PublishPagesRequest
-   src.models.repo_request.DocstringPullRequestRequest
 
 
 Module Contents

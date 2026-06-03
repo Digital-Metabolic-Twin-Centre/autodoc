@@ -1,0 +1,77 @@
+src.services.workflow_service
+=============================
+
+.. py:module:: src.services.workflow_service
+
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: WorkflowRunResult
+
+   .. py:attribute:: response
+      :type:  dict
+
+
+   .. py:attribute:: summary_output
+      :type:  str
+
+
+   .. py:attribute:: artifact_dir
+      :type:  str | None
+      :value: None
+
+
+
+   .. py:attribute:: log_path
+      :type:  str | None
+      :value: None
+
+
+
+   .. py:attribute:: source_branch
+      :type:  str | None
+      :value: None
+
+
+
+   .. py:attribute:: published_branch
+      :type:  str | None
+      :value: None
+
+
+
+   .. py:attribute:: documentation_url
+      :type:  str | None
+      :value: None
+
+
+
+   .. py:attribute:: metrics_files_analyzed
+      :type:  int | None
+      :value: None
+
+
+
+   .. py:attribute:: metrics_docstrings_generated
+      :type:  int | None
+      :value: None
+
+
+
+   .. py:attribute:: metrics_skipped_files
+      :type:  int | None
+      :value: None
+
+
+
+.. py:function:: execute_generate_request(req: models.repo_request.RepoRequest, progress_callback=None) -> WorkflowRunResult
+
+.. py:function:: execute_docstring_pr_request(req: models.repo_request.DocstringPullRequestRequest, progress_callback=None) -> WorkflowRunResult
+
+.. py:function:: execute_publish_request(req: models.repo_request.PublishPagesRequest, progress_callback=None) -> WorkflowRunResult
+

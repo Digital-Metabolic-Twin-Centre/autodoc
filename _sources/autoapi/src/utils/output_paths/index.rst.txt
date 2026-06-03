@@ -4,33 +4,15 @@ src.utils.output_paths
 .. py:module:: src.utils.output_paths
 
 
-Functions
----------
 
-.. autoapisummary::
 
-   src.utils.output_paths._repo_base_dir
-   src.utils.output_paths.build_repo_output_dir
-   src.utils.output_paths.build_repo_output_file
-   src.utils.output_paths.bind_repo_run_log_dir
-   src.utils.output_paths.clear_repo_output_history
-   src.utils.output_paths.find_latest_repo_run_dir
 
 
 Module Contents
 ---------------
 
-.. py:function:: _repo_base_dir(repo_path: str, provider: str) -> str
-
-   Constructs a base directory path for a repository.
-
-       Args:
-           repo_path (str): The path of the repository.
-           provider (str): The provider name for the repository.
-
-       Returns:
-           str: The normalized base directory path for the repository.
-
+.. py:data:: LOG_RETENTION_COUNT
+   :value: 6
 
 
 .. py:function:: build_repo_output_dir(repo_path: str, provider: str) -> str

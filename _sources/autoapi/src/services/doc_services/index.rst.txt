@@ -4,22 +4,8 @@ src.services.doc_services
 .. py:module:: src.services.doc_services
 
 
-Exceptions
-----------
-
-.. autoapisummary::
-
-   src.services.doc_services.RepoAnalysisError
 
 
-Functions
----------
-
-.. autoapisummary::
-
-   src.services.doc_services._normalize_target_folders
-   src.services.doc_services._file_matches_target_folders
-   src.services.doc_services.analyse_repo
 
 
 Module Contents
@@ -36,30 +22,6 @@ Module Contents
    .. py:attribute:: status_code
       :value: 422
 
-
-
-.. py:function:: _normalize_target_folders(target_folders)
-
-   Normalize a list of target folder paths by stripping whitespace and leading/trailing slashes.
-
-   :param target_folders: A list of folder paths to normalize.
-   :type target_folders: list
-
-   :returns: A list of normalized folder paths.
-   :rtype: list
-
-
-.. py:function:: _file_matches_target_folders(file_path, target_folders)
-
-   Check if a file path matches any of the target folders.
-
-   :param file_path: The path of the file to check.
-   :type file_path: str
-   :param target_folders: A list of target folder paths.
-   :type target_folders: list
-
-   :returns: True if the file path matches any target folder, otherwise False.
-   :rtype: bool
 
 
 .. py:function:: analyse_repo(provider, repo_url, token, branch, target_folders=None, model=None, reuse_doc=False)

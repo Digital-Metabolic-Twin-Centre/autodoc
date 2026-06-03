@@ -4,25 +4,8 @@ src.utils.update_conf_content
 .. py:module:: src.utils.update_conf_content
 
 
-Attributes
-----------
-
-.. autoapisummary::
-
-   src.utils.update_conf_content.REQUIRED_EXTENSIONS
-   src.utils.update_conf_content.AUTOAPI_DIRS_LINE
-   src.utils.update_conf_content.AUTOAPI_ADD_TOCTREE_LINE
 
 
-Functions
----------
-
-.. autoapisummary::
-
-   src.utils.update_conf_content._append_extension
-   src.utils.update_conf_content._format_extension_block
-   src.utils.update_conf_content._replace_extensions_block
-   src.utils.update_conf_content.update_conf
 
 
 Module Contents
@@ -38,34 +21,6 @@ Module Contents
 
 .. py:data:: AUTOAPI_ADD_TOCTREE_LINE
    :value: 'autoapi_add_toctree_entry = False'
-
-
-.. py:function:: _append_extension(extensions: str, extension: str) -> str
-
-   Compatibility helper retained for existing tests and callers.
-
-
-.. py:function:: _format_extension_block(extensions: list[str]) -> str
-
-   Formats a list of extensions into a string representation.
-
-   :param extensions: A list of extension names as strings.
-   :type extensions: list[str]
-
-   :returns: A formatted string representing the list of extensions.
-   :rtype: str
-
-
-.. py:function:: _replace_extensions_block(text: str) -> str
-
-   Replace the 'extensions' assignment in a Python script with a merged list of required
-   extensions.
-
-   :param text: The input Python script as a string.
-   :type text: str
-
-   :returns: The modified script with updated 'extensions' assignment.
-   :rtype: str
 
 
 .. py:function:: update_conf(conf_py: str) -> None

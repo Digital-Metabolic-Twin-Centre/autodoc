@@ -111,47 +111,6 @@
              
   <section id="module-src.utils.docstring_generation">
 <span id="src-utils-docstring-generation"></span><h1>src.utils.docstring_generation<a class="headerlink" href="#module-src.utils.docstring_generation" title="Link to this heading"></a></h1>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.logger" title="src.utils.docstring_generation.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation.DEFAULT_OPENAI_MODEL" title="src.utils.docstring_generation.DEFAULT_OPENAI_MODEL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DEFAULT_OPENAI_MODEL</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.configure_openai" title="src.utils.docstring_generation.configure_openai"><code class="xref py py-obj docutils literal notranslate"><span class="pre">configure_openai</span></code></a>([api_key])</p></td>
-<td><p>Configure OpenAI API with the provided API key.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation._clean_json_block" title="src.utils.docstring_generation._clean_json_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_clean_json_block</span></code></a>(→ str)</p></td>
-<td><p>Clean JSON response from ChatGPT response.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.create_openai_docstring_prompt" title="src.utils.docstring_generation.create_openai_docstring_prompt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_openai_docstring_prompt</span></code></a>(→ str)</p></td>
-<td><p>Create a prompt for ChatGPT to generate a concise docstring.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation.generate_docstring_with_openai" title="src.utils.docstring_generation.generate_docstring_with_openai"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_docstring_with_openai</span></code></a>(→ Optional[str])</p></td>
-<td><p>Generate a concise docstring for the given code using OpenAI ChatGPT.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai" title="src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_docstrings_for_code_blocks_openai</span></code></a>(→ list)</p></td>
-<td><p>Generate docstrings for multiple code blocks using OpenAI ChatGPT.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.docstring_generation.format_docstring_for_language" title="src.utils.docstring_generation.format_docstring_for_language"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_docstring_for_language</span></code></a>(→ str)</p></td>
-<td><p>Format the generated docstring according to language conventions.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.docstring_generation._strip_docstring_wrapper" title="src.utils.docstring_generation._strip_docstring_wrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_strip_docstring_wrapper</span></code></a>(→ str)</p></td>
-<td><p>Remove surrounding quotes from a docstring.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
 <dl class="py data">
@@ -171,23 +130,6 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>api_key</strong> (<em>str</em><em>, </em><em>optional</em>) – OpenAI API key. If None, reads from environment.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="src.utils.docstring_generation._clean_json_block">
-<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">_clean_json_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.docstring_generation._clean_json_block" title="Link to this definition"></a></dt>
-<dd><p>Clean JSON response from ChatGPT response.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>response_text</strong> (<em>str</em>) – Raw response text from API.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Cleaned JSON string.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -268,23 +210,6 @@
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Formatted docstring.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="src.utils.docstring_generation._strip_docstring_wrapper">
-<span class="sig-prename descclassname"><span class="pre">src.utils.docstring_generation.</span></span><span class="sig-name descname"><span class="pre">_strip_docstring_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">docstring</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.docstring_generation._strip_docstring_wrapper" title="Link to this definition"></a></dt>
-<dd><p>Remove surrounding quotes from a docstring.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>docstring</strong> (<em>str</em>) – The docstring to clean.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The cleaned docstring without surrounding quotes.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>

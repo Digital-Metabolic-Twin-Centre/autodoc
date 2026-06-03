@@ -1,0 +1,31 @@
+src.admin.database
+==================
+
+.. py:module:: src.admin.database
+
+
+
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: Base
+
+   Bases: :py:obj:`sqlalchemy.orm.DeclarativeBase`
+
+
+   Base SQLAlchemy model class.
+
+
+.. py:data:: engine
+   :value: None
+
+
+.. py:data:: SessionLocal
+
+.. py:function:: init_db() -> None
+

@@ -1,0 +1,37 @@
+src.admin.security
+==================
+
+.. py:module:: src.admin.security
+
+
+
+
+Module Contents
+---------------
+
+.. py:function:: admin_auth_config_error() -> str | None
+
+.. py:function:: encrypt_token(token: str) -> str
+
+.. py:function:: decrypt_token(token: str) -> str
+
+.. py:function:: validate_admin_credentials(username: str, password: str) -> str
+
+.. py:function:: create_admin_session(username: str) -> str
+
+.. py:function:: read_admin_session(session_value: str | None) -> str | None
+
+.. py:function:: set_admin_session(response: fastapi.Response, username: str) -> None
+
+.. py:function:: clear_admin_session(response: fastapi.Response) -> None
+
+.. py:function:: require_admin(request: fastapi.Request) -> str
+
+.. py:function:: ensure_csrf_token(request: fastapi.Request, response: fastapi.Response) -> str
+
+.. py:function:: get_or_create_csrf_token(request: fastapi.Request) -> str
+
+.. py:function:: verify_csrf(request: fastapi.Request, csrf_token: str = Form(default='')) -> None
+   :async:
+
+

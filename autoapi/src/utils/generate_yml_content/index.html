@@ -111,44 +111,18 @@
              
   <section id="module-src.utils.generate_yml_content">
 <span id="src-utils-generate-yml-content"></span><h1>src.utils.generate_yml_content<a class="headerlink" href="#module-src.utils.generate_yml_content" title="Link to this heading"></a></h1>
-<section id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.generate_yml_content.generate_gitlab_ci_file" title="src.utils.generate_yml_content.generate_gitlab_ci_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_gitlab_ci_file</span></code></a>(→ bool)</p></td>
-<td><p>Generates a .gitlab-ci.yml file in the specified remote GitLab repository.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.generate_yml_content.generate_github_actions_file" title="src.utils.generate_yml_content.generate_github_actions_file"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_github_actions_file</span></code></a>(→ str)</p></td>
-<td><p>Generates a GitHub Actions workflow file for building Sphinx docs.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.utils.generate_yml_content.generate_github_pages_index" title="src.utils.generate_yml_content.generate_github_pages_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_github_pages_index</span></code></a>(→ str)</p></td>
-<td><p>Generates a small landing page for a branch-based GitHub Pages site.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.utils.generate_yml_content.generate_github_pages_readme" title="src.utils.generate_yml_content.generate_github_pages_readme"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_github_pages_readme</span></code></a>(→ str)</p></td>
-<td><p>Generates a short README for the GitHub Pages deployment branch.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="src.utils.generate_yml_content.generate_gitlab_ci_file">
-<span class="sig-prename descclassname"><span class="pre">src.utils.generate_yml_content.</span></span><span class="sig-name descname"><span class="pre">generate_gitlab_ci_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#src.utils.generate_yml_content.generate_gitlab_ci_file" title="Link to this definition"></a></dt>
-<dd><p>Generates a .gitlab-ci.yml file in the specified remote GitLab repository.</p>
+<span class="sig-prename descclassname"><span class="pre">src.utils.generate_yml_content.</span></span><span class="sig-name descname"><span class="pre">generate_gitlab_ci_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.generate_yml_content.generate_gitlab_ci_file" title="Link to this definition"></a></dt>
+<dd><p>Generates the contents of a <cite>.gitlab-ci.yml</cite> file for building docs.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>repo_path</strong> (<em>str</em>) – Repository path (e.g., ‘user/repo’).</p></li>
-<li><p><strong>access_token</strong> (<em>str</em>) – GitLab private token.</p></li>
-<li><p><strong>branch</strong> (<em>str</em><em>, </em><em>optional</em>) – Branch name. Defaults to “main”.</p></li>
-</ul>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>GitLab CI configuration content.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if the file was created successfully, False otherwise.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -177,26 +151,6 @@
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Static HTML content.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="src.utils.generate_yml_content.generate_github_pages_readme">
-<span class="sig-prename descclassname"><span class="pre">src.utils.generate_yml_content.</span></span><span class="sig-name descname"><span class="pre">generate_github_pages_readme</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pages_branch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#src.utils.generate_yml_content.generate_github_pages_readme" title="Link to this definition"></a></dt>
-<dd><p>Generates a short README for the GitHub Pages deployment branch.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>source_branch</strong> (<em>str</em>) – The branch where the source repository content lives.</p></li>
-<li><p><strong>pages_branch</strong> (<em>str</em>) – The branch GitHub Pages serves.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Markdown content.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>str</p>

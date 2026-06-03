@@ -111,32 +111,6 @@
              
   <section id="module-src.services.doc_services">
 <span id="src-services-doc-services"></span><h1>src.services.doc_services<a class="headerlink" href="#module-src.services.doc_services" title="Link to this heading"></a></h1>
-<section id="exceptions">
-<h2>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.doc_services.RepoAnalysisError" title="src.services.doc_services.RepoAnalysisError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RepoAnalysisError</span></code></a></p></td>
-<td><p>Raised when repository analysis cannot proceed or yields no usable files.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.doc_services._normalize_target_folders" title="src.services.doc_services._normalize_target_folders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_normalize_target_folders</span></code></a>(target_folders)</p></td>
-<td><p>Normalize a list of target folder paths by stripping whitespace and leading/trailing slashes.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#src.services.doc_services._file_matches_target_folders" title="src.services.doc_services._file_matches_target_folders"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_file_matches_target_folders</span></code></a>(file_path, target_folders)</p></td>
-<td><p>Check if a file path matches any of the target folders.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#src.services.doc_services.analyse_repo" title="src.services.doc_services.analyse_repo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">analyse_repo</span></code></a>(provider, repo_url, token, branch[, ...])</p></td>
-<td><p>Analyse a repository for source files missing docstring.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
 <dl class="py exception">
@@ -149,43 +123,6 @@
 <span class="sig-name descname"><span class="pre">status_code</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">422</span></em><a class="headerlink" href="#src.services.doc_services.RepoAnalysisError.status_code" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="src.services.doc_services._normalize_target_folders">
-<span class="sig-prename descclassname"><span class="pre">src.services.doc_services.</span></span><span class="sig-name descname"><span class="pre">_normalize_target_folders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_folders</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.services.doc_services._normalize_target_folders" title="Link to this definition"></a></dt>
-<dd><p>Normalize a list of target folder paths by stripping whitespace and leading/trailing slashes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>target_folders</strong> (<em>list</em>) – A list of folder paths to normalize.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list of normalized folder paths.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="src.services.doc_services._file_matches_target_folders">
-<span class="sig-prename descclassname"><span class="pre">src.services.doc_services.</span></span><span class="sig-name descname"><span class="pre">_file_matches_target_folders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_folders</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.services.doc_services._file_matches_target_folders" title="Link to this definition"></a></dt>
-<dd><p>Check if a file path matches any of the target folders.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> (<em>str</em>) – The path of the file to check.</p></li>
-<li><p><strong>target_folders</strong> (<em>list</em>) – A list of target folder paths.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if the file path matches any target folder, otherwise False.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">

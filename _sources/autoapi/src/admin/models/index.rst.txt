@@ -1,0 +1,186 @@
+src.admin.models
+================
+
+.. py:module:: src.admin.models
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: RepositoryConfig
+
+   Bases: :py:obj:`admin.database.Base`
+
+
+   .. py:attribute:: id
+      :type:  sqlalchemy.orm.Mapped[int]
+
+
+   .. py:attribute:: name
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: provider
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: repo_url
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: repo_path
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: default_branch
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: target_folders_json
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: preferred_model
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: reuse_doc
+      :type:  sqlalchemy.orm.Mapped[bool]
+
+
+   .. py:attribute:: docstring_threshold
+      :type:  sqlalchemy.orm.Mapped[float]
+
+
+   .. py:attribute:: low_content_min_lines
+      :type:  sqlalchemy.orm.Mapped[int]
+
+
+   .. py:attribute:: encrypted_token
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: token_last4
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: created_at
+      :type:  sqlalchemy.orm.Mapped[datetime.datetime]
+
+
+   .. py:attribute:: updated_at
+      :type:  sqlalchemy.orm.Mapped[datetime.datetime]
+
+
+   .. py:attribute:: runs
+      :type:  sqlalchemy.orm.Mapped[list[RunRecord]]
+
+
+   .. py:property:: target_folders
+      :type: list[str]
+
+
+
+.. py:class:: RunRecord
+
+   Bases: :py:obj:`admin.database.Base`
+
+
+   .. py:attribute:: id
+      :type:  sqlalchemy.orm.Mapped[int]
+
+
+   .. py:attribute:: repository_id
+      :type:  sqlalchemy.orm.Mapped[int | None]
+
+
+   .. py:attribute:: endpoint
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: status
+      :type:  sqlalchemy.orm.Mapped[str]
+
+
+   .. py:attribute:: progress_percent
+      :type:  sqlalchemy.orm.Mapped[float | None]
+
+
+   .. py:attribute:: progress_message
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: created_at
+      :type:  sqlalchemy.orm.Mapped[datetime.datetime]
+
+
+   .. py:attribute:: started_at
+      :type:  sqlalchemy.orm.Mapped[datetime.datetime | None]
+
+
+   .. py:attribute:: completed_at
+      :type:  sqlalchemy.orm.Mapped[datetime.datetime | None]
+
+
+   .. py:attribute:: duration_seconds
+      :type:  sqlalchemy.orm.Mapped[float | None]
+
+
+   .. py:attribute:: triggered_by
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: request_payload
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: result_payload
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: summary_output
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: error_message
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: artifact_dir
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: log_path
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: documentation_url
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: source_branch
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: published_branch
+      :type:  sqlalchemy.orm.Mapped[str | None]
+
+
+   .. py:attribute:: metrics_files_analyzed
+      :type:  sqlalchemy.orm.Mapped[int | None]
+
+
+   .. py:attribute:: metrics_docstrings_generated
+      :type:  sqlalchemy.orm.Mapped[int | None]
+
+
+   .. py:attribute:: metrics_skipped_files
+      :type:  sqlalchemy.orm.Mapped[int | None]
+
+
+   .. py:attribute:: repository
+      :type:  sqlalchemy.orm.Mapped[RepositoryConfig | None]
+
+
