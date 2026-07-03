@@ -35,7 +35,7 @@
 - [ ] T006 Add `ArchitectureGenerationRequest` and `ArchitectureApprovalRequest` Pydantic models in `src/models/repo_request.py`
 - [ ] T007 Add architecture workflow result fields to `WorkflowRunResult` in `src/services/workflow_service.py`
 - [ ] T008 Implement draft id and architecture artifact path helpers in `src/services/architecture_services.py`
-- [ ] T009 Add architecture artifact path tests in `tests/test_architecture_services.py`
+- [ ] T009 Add architecture artifact path tests in `tests/test_output_paths.py`
 - [ ] T010 Add safe architecture output path validation in `src/services/architecture_services.py`
 - [ ] T011 Add safe architecture output path validation tests in `tests/test_architecture_services.py`
 - [ ] T012 Add architecture endpoint names to admin job dispatch mapping in `src/admin/jobs.py`
@@ -54,7 +54,7 @@
 - [ ] T014 [P] [US1] Add contract tests for `POST /generate-architecture-docs` request/response in `tests/test_router.py`
 - [ ] T015 [P] [US1] Add architecture draft generation unit tests for required sections in `tests/test_architecture_services.py`
 - [ ] T016 [P] [US1] Add Sphinx hierarchy/template integration tests in `tests/test_sphinx_template.py`
-- [ ] T017 [P] [US1] Add workflow no-commit generation tests in `tests/test_doc_services.py`
+- [ ] T017 [P] [US1] Add workflow no-commit generation and provider read/access failure tests in `tests/test_doc_services.py`
 
 ### Implementation for User Story 1
 
@@ -80,15 +80,15 @@
 ### Tests for User Story 2
 
 - [ ] T026 [P] [US2] Add confidence classification tests for observed and inferred findings in `tests/test_architecture_services.py`
-- [ ] T027 [P] [US2] Add analysis gap rendering tests for missing entry points, ambiguous dependencies, and incomplete auth/data flow in `tests/test_architecture_services.py`
+- [ ] T027 [P] [US2] Add analysis gap rendering tests for missing entry points, ambiguous dependencies, incomplete auth/data flow, and too-large repository partial-result handling in `tests/test_architecture_services.py`
 - [ ] T028 [P] [US2] Add response metadata tests for sections and gaps in `tests/test_router.py`
 
 ### Implementation for User Story 2
 
 - [ ] T029 [US2] Implement `ArchitectureFinding`, `ArchitectureSection`, and `AnalysisGap` data structures in `src/services/architecture_services.py`
 - [ ] T030 [US2] Implement observed versus inferred classification and evidence path recording in `src/services/architecture_services.py`
-- [ ] T031 [US2] Implement confidence level assignment for inferred findings in `src/services/architecture_services.py`
-- [ ] T032 [US2] Implement reviewer-visible gap detection and caveat rendering in `src/services/architecture_services.py`
+- [ ] T031 [US2] Implement confidence level assignment using `high`, `medium`, `low`, and `not_applicable` values for inferred findings in `src/services/architecture_services.py`
+- [ ] T032 [US2] Implement reviewer-visible gap detection, too-large repository partial-result reporting, and caveat rendering in `src/services/architecture_services.py`
 - [ ] T033 [US2] Include sections, confidence levels, and gaps in architecture generation response payloads in `src/services/workflow_service.py`
 - [ ] T034 [US2] Render confidence and gap summaries in the admin run detail area in `src/templates/admin/dashboard.html`
 
@@ -153,10 +153,10 @@
 - [ ] T053 [P] Update public README endpoint and workflow documentation in `README.md`
 - [ ] T054 [P] Update project documentation overview for architecture docs workflow in `docs/project/overview.rst`
 - [ ] T055 [P] Add architecture feature notes to generated API reference narrative in `docs/api_reference.rst`
-- [ ] T056 Run quickstart validation commands and record any deviations in `specs/001-generate-architecture-docs/quickstart.md`
+- [ ] T056 Run quickstart validation commands, perform checklist-based new-developer readability review, and record any deviations in `specs/001-generate-architecture-docs/quickstart.md`
 - [ ] T057 Run full regression suite with `uv run pytest` and fix failures in `tests/`
-- [ ] T058 Run linting with `uv run ruff check .` and fix issues in `src/` and `tests/`
-- [ ] T059 Run Sphinx validation with `uv run sphinx-build -b html docs docs/_build/html` and fix documentation build issues in `docs/`
+- [ ] T058 Run linting with `uv run ruff check src tests` and fix issues in `src/` and `tests/`
+- [ ] T059 Run Sphinx validation with `uv run sphinx-build -E -W -b html docs docs/_build/html` and fix documentation build issues in `docs/`
 - [ ] T060 Review generated artifacts and logs for token leakage and document findings in `specs/001-generate-architecture-docs/quickstart.md`
 
 ---
@@ -204,14 +204,14 @@
 Task: "T014 [P] [US1] Add contract tests for POST /generate-architecture-docs request/response in tests/test_router.py"
 Task: "T015 [P] [US1] Add architecture draft generation unit tests for required sections in tests/test_architecture_services.py"
 Task: "T016 [P] [US1] Add Sphinx hierarchy/template integration tests in tests/test_sphinx_template.py"
-Task: "T017 [P] [US1] Add workflow no-commit generation tests in tests/test_doc_services.py"
+Task: "T017 [P] [US1] Add workflow no-commit generation and provider read/access failure tests in tests/test_doc_services.py"
 ```
 
 ## Parallel Example: User Story 2
 
 ```bash
 Task: "T026 [P] [US2] Add confidence classification tests for observed and inferred findings in tests/test_architecture_services.py"
-Task: "T027 [P] [US2] Add analysis gap rendering tests for missing entry points, ambiguous dependencies, and incomplete auth/data flow in tests/test_architecture_services.py"
+Task: "T027 [P] [US2] Add analysis gap rendering tests for missing entry points, ambiguous dependencies, incomplete auth/data flow, and too-large repository partial-result handling in tests/test_architecture_services.py"
 Task: "T028 [P] [US2] Add response metadata tests for sections and gaps in tests/test_router.py"
 ```
 

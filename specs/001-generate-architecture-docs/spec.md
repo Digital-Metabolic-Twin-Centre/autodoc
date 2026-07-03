@@ -234,5 +234,5 @@ the reviewed content becomes eligible for commit or publication.
 - Maintainer approval is a separate action from generation.
 - Diagrams are generated only when there is enough evidence to make them useful;
   otherwise the draft records the limitation.
-- Confidence levels may be represented in any reviewer-visible scale as long as
-  the meaning is clear and consistent across the draft.
+- Confidence levels use the reviewer-visible values `high`, `medium`, `low`,
+  and `not_applicable` consistently across the draft.
