@@ -1,17 +1,16 @@
 <!--
 Sync Impact Report
-Version change: unratified template -> 1.0.0
+Version change: 1.0.0 -> 2.0.0
 Modified principles:
 - Principle 1 placeholder -> I. Review-First Documentation Automation
 - Principle 2 placeholder -> II. Provider-Safe Repository Operations
-- Principle 3 placeholder -> III. Tests Protect Workflow Contracts
+- III. Regression Protection & Quality Gates -> III. Baseline Quality Gates & Change Review
 - Principle 4 placeholder -> IV. Traceable Runtime Artifacts
 - Principle 5 placeholder -> V. Simple, Typed Service Boundaries
 Added sections:
-- Technology Constraints
-- Development Workflow
+- None
 Removed sections:
-- Template placeholder comments and undefined placeholder sections
+- None
 Templates requiring updates:
 - ✅ .specify/templates/plan-template.md
 - ✅ .specify/templates/spec-template.md (reviewed; no principle-specific change required)
@@ -19,7 +18,7 @@ Templates requiring updates:
 - ✅ .specify/templates/commands/*.md (directory absent; no update required)
 Runtime guidance requiring updates:
 - ✅ README.md (reviewed; no principle-specific change required)
-- ✅ docs/project/overview.rst (reviewed; no principle-specific change required)
+- ✅ AGENTS.md (reviewed; no principle-specific change required)
 - ✅ docs/project/plan.rst (reviewed; no principle-specific change required)
 Follow-up TODOs:
 - None
@@ -52,34 +51,39 @@ documentation, or runtime artifacts.
 Rationale: The service operates on external repositories and credentials; a
 small ambiguity can publish to the wrong target or expose private access.
 
-### III. Regression Protection & Quality Gates
+### III. Baseline Quality Gates & Change Review
 
-Every implementation MUST pass an automated quality review before it is considered complete.
+Every implementation MUST pass the repository validation baseline before it is
+considered complete. The baseline is the smallest useful set of checks the
+project currently maintains: `uv run ruff check src tests`, `uv run pytest`,
+and `uv run sphinx-build -E -W -b html docs docs/_build/html` when
+documentation sources or Sphinx configuration change. Changes to container or
+runtime packaging MUST additionally pass `docker build` or an equivalent build
+validation step before merge.
 
-The review MUST verify, where applicable:
-
-- Breaking API changes
-- Database migration compatibility
-- Backward compatibility
-- Performance regressions
-- Security vulnerabilities
-- Missing or outdated tests
-- Documentation drift
-- Dependency risks
-- Dead code
-- Inconsistent naming
-- Violations of this constitution
+When a change touches API behavior, admin authentication, repository mutation
+logic, SQLite schema handling, dependency declarations, or publishing
+workflows, the implementation MUST include an explicit review of regression
+risk in those areas. That review MAY be manual when the project does not yet
+have automated coverage, but it MUST be recorded in the plan, tasks, code
+review, or implementation summary and backed by targeted tests or validation
+steps where feasible.
 
 Changes that intentionally introduce breaking behavior MUST explicitly document:
 
 - why the change is required
-- the migration strategy
-- affected APIs or users
-- why the breaking change is acceptable
+- affected APIs, operators, or users
+- any migration, rollback, or manual recovery steps that exist today
+- why the breaking change is acceptable at this stage of the project
 
-Critical findings MUST be resolved before implementation is considered complete unless an explicit exception is documented and approved.
+Critical findings from the baseline checks or targeted review MUST be resolved
+before implementation is considered complete unless an explicit exception is
+documented and approved.
 
-Rationale: AI-generated implementations can satisfy feature requirements while unintentionally introducing regressions or architectural drift. Automated review acts as the final quality gate before merge.
+Rationale: The project has reliable lint, test, documentation, and container
+validation gates today, but broader regression categories are still partly
+manual. The constitution must require what the repository can consistently
+enforce while still making higher-risk changes visible and reviewable.
 
 ### IV. Traceable Runtime Artifacts
 Each documentation run MUST emit enough structured runtime evidence to support
@@ -126,11 +130,14 @@ and again before implementation tasks are finalized. Tasks MUST keep setup,
 foundational work, user-story implementation, tests, documentation updates, and
 cross-cutting concerns traceable to the feature plan.
 
-Code review MUST verify provider safety, test coverage, artifact traceability,
-secret handling, and Sphinx/build compatibility for every relevant change.
-Before merge, maintainers MUST run the smallest useful validation set, normally
-`uv run pytest`, `uv run ruff check .`, and `uv run sphinx-build -b html docs
-docs/_build/html` when documentation output or Sphinx configuration changes.
+Code review MUST verify provider safety, changed-path regression risk, test
+coverage updates, artifact traceability, secret handling, and Sphinx/build
+compatibility for every relevant change. Before merge, maintainers MUST run the
+smallest useful validation set, normally `uv run ruff check src tests`, `uv
+run pytest`, and `uv run sphinx-build -E -W -b html docs docs/_build/html`
+when documentation output or Sphinx configuration changes. Changes that touch
+the Docker image, packaging, or deployment path MUST also validate `docker
+build` or an equivalent container build step.
 
 ## Governance
 
@@ -154,4 +161,4 @@ rejected and the reason it was insufficient.
 
 
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-03
+**Version**: 2.0.0 | **Ratified**: 2026-07-03 | **Last Amended**: 2026-07-03

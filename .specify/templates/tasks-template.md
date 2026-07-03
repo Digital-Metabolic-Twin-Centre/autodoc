@@ -11,7 +11,8 @@ description: "Task list template for feature implementation"
 
 **Tests**: The examples below include test tasks. Include tests whenever the
 constitution requires them for changed analysis, generation, scaffolding, admin,
-provider, authentication, publishing, or artifact-path behavior.
+provider, authentication, publishing, artifact-path behavior, or other
+high-risk workflow changes that can be validated automatically.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -158,6 +159,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit, integration, or provider-boundary tests required by the constitution
 - [ ] TXXX Security hardening and secret-leak review
+- [ ] TXXX Manual regression review notes for API, schema, dependency, or publish-path changes
 - [ ] TXXX Validate Sphinx/AutoAPI output when generated documentation changes
 - [ ] TXXX Run quickstart.md validation
 

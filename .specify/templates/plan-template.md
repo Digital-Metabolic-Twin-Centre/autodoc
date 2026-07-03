@@ -46,9 +46,10 @@
 - Provider-safe repository operations: identify all GitHub/GitLab mutations,
   branch targets, token usage, and protections against unintended writes or
   secret leakage.
-- Tests protect workflow contracts: list automated tests required for changed
-  analysis, generation, scaffolding, admin, provider, auth, publishing, or
-  artifact-path behavior.
+- Baseline quality gates and change review: list the required repository
+  checks (`ruff`, `pytest`, `sphinx-build`, and `docker build` when relevant)
+  plus any manual regression review needed for API, schema, dependency,
+  security, or publishing changes.
 - Traceable runtime artifacts: define logs, summaries, skipped-file reports, or
   suggestion artifacts that will support review and debugging.
 - Simple, typed service boundaries: map changes to routers, services, utils,
