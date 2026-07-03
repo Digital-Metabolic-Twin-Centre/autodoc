@@ -260,6 +260,62 @@ def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
     assert captured["low_content_min_lines"] == 2
 
 
+def test_generate_architecture_docs_endpoint_returns_success(monkeypatch):
+    class DummyResult:
+        response = {
+            "status": "success",
+            "draft_id": "arch-1",
+            "draft_path": "logs/github/example/app_1/arch-1.rst",
+            "proposed_output_path": "docs/project/architecture.rst",
+        }
+
+    monkeypatch.setattr("router.router.execute_architecture_generation_request", lambda req: DummyResult())
+
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["proposed_output_path"] == "docs/project/architecture.rst"
+
+
+def test_approve_architecture_docs_endpoint_returns_success(monkeypatch):
+    class DummyResult:
+        response = {
+            "status": "approved",
+            "draft_id": "arch-1",
+            "output_path": "docs/project/architecture.rst",
+            "branch": "main",
+        }
+
+    monkeypatch.setattr("router.router.execute_architecture_approval_request", lambda req: DummyResult())
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch-1",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": True,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "approved"
+
+
 def test_generate_endpoint_rejects_invalid_docstring_threshold():
     response = request(
         "POST",

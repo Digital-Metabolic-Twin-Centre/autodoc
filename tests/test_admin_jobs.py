@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from admin.database import SessionLocal
-from admin.jobs import _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
+from admin.jobs import _execute_endpoint, _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
 from services.workflow_service import WorkflowRunResult
 
@@ -197,3 +197,53 @@ def test_execute_run_process_updates_progress_and_completion(monkeypatch):
         assert stored_run.progress_percent == 100.0
         assert stored_run.progress_message == "Completed"
         assert stored_run.metrics_files_analyzed == 3
+
+
+def test_execute_endpoint_dispatches_architecture_generation(monkeypatch):
+    captured = {}
+
+    def fake_execute(req, progress_callback=None):
+        captured["output_path"] = req.output_path
+        return WorkflowRunResult(response={"status": "success"}, summary_output="{}")
+
+    monkeypatch.setattr("admin.jobs.execute_architecture_generation_request", fake_execute)
+
+    result = _execute_endpoint(
+        "/generate-architecture-docs",
+        {
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "output_path": "docs/project/architecture.rst",
+        },
+    )
+
+    assert result.response["status"] == "success"
+    assert captured["output_path"] == "docs/project/architecture.rst"
+
+
+def test_execute_endpoint_dispatches_architecture_approval(monkeypatch):
+    captured = {}
+
+    def fake_execute(req, progress_callback=None):
+        captured["draft_id"] = req.draft_id
+        return WorkflowRunResult(response={"status": "approved"}, summary_output="{}")
+
+    monkeypatch.setattr("admin.jobs.execute_architecture_approval_request", fake_execute)
+
+    result = _execute_endpoint(
+        "/approve-architecture-docs",
+        {
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch-1",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": True,
+        },
+    )
+
+    assert result.response["status"] == "approved"
+    assert captured["draft_id"] == "arch-1"

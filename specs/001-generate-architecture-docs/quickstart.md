@@ -93,6 +93,13 @@ uv run ruff check .
 uv run sphinx-build -b html docs docs/_build/html
 ```
 
+## Validation Notes
+
+- Full `uv run pytest` passed during implementation.
+- `uv run ruff check src tests` passed during implementation.
+- `uv run sphinx-build -E -W -b html docs docs/_build/html` passed during implementation.
+- No token or secret leakage was observed in generated architecture artifacts or logs during review.
+
 ## Related Design Artifacts
 
 - [data-model.md](./data-model.md)

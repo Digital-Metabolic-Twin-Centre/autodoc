@@ -1,0 +1,11 @@
+openapi: 3.1.0
+info:
+  title: Architecture Documentation API
+  version: 0.1.0
+paths:
+  /generate-architecture-docs:
+    post:
+      summary: Generate a reviewable architecture documentation draft
+  /approve-architecture-docs:
+    post:
+      summary: Approve a generated architecture draft

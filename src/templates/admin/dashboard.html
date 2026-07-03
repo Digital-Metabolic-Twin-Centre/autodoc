@@ -20,6 +20,120 @@
     </div>
   </section>
 
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-[0.2em] text-teal-600 dark:text-teal-300">Architecture docs</p>
+        <h3 class="mt-2 text-xl font-semibold">Generate drafts and approve reviewed pages</h3>
+        <p class="mt-2 max-w-3xl text-sm text-slate-500 dark:text-slate-400">Architecture runs stay review-first. The
+          generation form creates a draft in the run artifacts, while the approval form applies that draft into the
+          repository docs tree only after explicit confirmation.</p>
+      </div>
+      <p class="text-sm text-slate-500 dark:text-slate-400">Reviewed output path defaults to
+        <span class="font-mono text-slate-700 dark:text-slate-200">docs/project/architecture.rst</span>.</p>
+    </div>
+
+    <div class="mt-6 grid gap-6 xl:grid-cols-2">
+      <form action="/admin/architecture/generate" method="post"
+        class="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <h4 class="text-base font-semibold">Generate architecture draft</h4>
+        <div class="mt-4 space-y-4">
+          <label class="block">
+            <span class="text-sm font-medium">Repository</span>
+            <select name="repository_id" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+              {% for repository in repositories %}
+              <option value="{{ repository.id }}">{{ repository.name }} ({{ repository.provider|upper }})</option>
+              {% else %}
+              <option value="" disabled selected>No repositories available</option>
+              {% endfor %}
+            </select>
+          </label>
+          <div class="grid gap-4 md:grid-cols-2">
+            <label class="block">
+              <span class="text-sm font-medium">Branch</span>
+              <input name="branch" type="text" placeholder="main"
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium">Output path</span>
+              <input name="output_path" type="text" value="docs/project/architecture.rst"
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            </label>
+          </div>
+          <label class="block">
+            <span class="text-sm font-medium">Target folders</span>
+            <input name="target_folders" type="text" placeholder="src, docs"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+          </label>
+          <div class="grid gap-4 md:grid-cols-2">
+            <label class="flex items-center gap-2 text-sm">
+              <input name="include_diagrams" type="checkbox" checked>
+              Include diagrams
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input name="reuse_existing_docs" type="checkbox" checked>
+              Reuse existing docs
+            </label>
+          </div>
+          <label class="block">
+            <span class="text-sm font-medium">Model override</span>
+            <input name="model" type="text" placeholder="gpt-4o-mini"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+          </label>
+        </div>
+        <button type="submit" class="mt-5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">Queue
+          draft</button>
+      </form>
+
+      <form action="/admin/architecture/approve" method="post"
+        class="rounded-2xl border border-slate-200 p-5 dark:border-slate-800">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <h4 class="text-base font-semibold">Approve architecture draft</h4>
+        <div class="mt-4 space-y-4">
+          <label class="block">
+            <span class="text-sm font-medium">Repository</span>
+            <select name="repository_id" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+              {% for repository in repositories %}
+              <option value="{{ repository.id }}">{{ repository.name }} ({{ repository.provider|upper }})</option>
+              {% else %}
+              <option value="" disabled selected>No repositories available</option>
+              {% endfor %}
+            </select>
+          </label>
+          <div class="grid gap-4 md:grid-cols-2">
+            <label class="block">
+              <span class="text-sm font-medium">Draft ID</span>
+              <input name="draft_id" type="text" placeholder="octo-org__example__architecture__20260703-120000"
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium">Branch</span>
+              <input name="branch" type="text" placeholder="main"
+                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            </label>
+          </div>
+          <label class="block">
+            <span class="text-sm font-medium">Output path</span>
+            <input name="output_path" type="text" value="docs/project/architecture.rst"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium">Approval note</span>
+            <textarea name="approval_note" rows="3"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2"></textarea>
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <input name="overwrite_existing" type="checkbox">
+            Overwrite existing approved docs
+          </label>
+        </div>
+        <button type="submit" class="mt-5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium">Approve
+          draft</button>
+      </form>
+    </div>
+  </section>
+
   <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
     <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
       <p class="text-sm text-slate-500 dark:text-slate-400">Total repositories</p>
@@ -36,6 +150,10 @@
     <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
       <p class="text-sm text-slate-500 dark:text-slate-400">Failed runs</p>
       <p class="mt-3 text-3xl font-semibold text-rose-600 dark:text-rose-300">{{ stats.failed_runs }}</p>
+    </div>
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <p class="text-sm text-slate-500 dark:text-slate-400">Architecture runs</p>
+      <p class="mt-3 text-3xl font-semibold text-teal-600 dark:text-teal-300">{{ stats.architecture_runs }}</p>
     </div>
   </section>
 

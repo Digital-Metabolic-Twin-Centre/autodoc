@@ -5,6 +5,8 @@ from fastapi.responses import RedirectResponse
 
 from config.log_config import get_logger
 from models.repo_request import (
+    ArchitectureApprovalRequest,
+    ArchitectureGenerationRequest,
     DocstringPullRequestRequest,
     PublishPagesRequest,
     RepoRequest,
@@ -13,11 +15,14 @@ from services.workflow_service import (
     DocstringPullRequestError,
     PublishPagesError,
     RepoAnalysisError,
+    execute_architecture_approval_request,
+    execute_architecture_generation_request,
     execute_docstring_pr_request,
     execute_generate_request,
     execute_publish_request,
 )
 from utils.docstring_generation import DEFAULT_OPENAI_MODEL
+from utils.git_utils import RepositoryAccessError
 
 logger = get_logger(__name__)
 
@@ -82,6 +87,70 @@ async def generate_docs(req: RepoRequest):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
     except Exception as e:
         logger.exception("Unhandled exception during /generate")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_error_detail(e),
+        )
+
+
+@router.post("/generate-architecture-docs")
+async def generate_architecture_docs(req: ArchitectureGenerationRequest):
+    logger.info(
+        "/generate-architecture-docs endpoint called with provider=%s, repo_url=%s, branch=%s, output_path=%s",
+        req.provider,
+        req.repo_url,
+        req.branch,
+        req.output_path,
+    )
+    if not req.repo_url or not req.token or not req.branch or not req.provider:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required parameters: repo_url, token, branch, or provider.",
+        )
+
+    try:
+        return execute_architecture_generation_request(req).response
+    except RepositoryAccessError as rae:
+        status_code = rae.status_code or status.HTTP_403_FORBIDDEN
+        raise HTTPException(status_code=status_code, detail=str(rae))
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
+    except PermissionError as pe:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
+    except Exception as e:
+        logger.exception("Unhandled exception during /generate-architecture-docs")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=_error_detail(e),
+        )
+
+
+@router.post("/approve-architecture-docs")
+async def approve_architecture_docs(req: ArchitectureApprovalRequest):
+    logger.info(
+        "/approve-architecture-docs endpoint called with provider=%s, repo_url=%s, branch=%s, draft_id=%s",
+        req.provider,
+        req.repo_url,
+        req.branch,
+        req.draft_id,
+    )
+    if not req.repo_url or not req.token or not req.branch or not req.provider or not req.draft_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required parameters: repo_url, token, branch, provider, or draft_id.",
+        )
+
+    try:
+        return execute_architecture_approval_request(req).response
+    except RepositoryAccessError as rae:
+        status_code = rae.status_code or status.HTTP_403_FORBIDDEN
+        raise HTTPException(status_code=status_code, detail=str(rae))
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
+    except PermissionError as pe:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
+    except Exception as e:
+        logger.exception("Unhandled exception during /approve-architecture-docs")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_error_detail(e),

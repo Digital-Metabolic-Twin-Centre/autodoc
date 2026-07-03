@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from services.architecture_services import build_architecture_artifact_paths
 from utils.output_paths import (
     bind_repo_run_log_dir,
     build_repo_output_dir,
@@ -62,3 +63,11 @@ def test_bind_repo_run_log_dir_copies_previous_text_json_and_csv_artifacts(monke
     assert (bound_dir / "suggested_docstrings.json").read_text(encoding="utf-8") == "{}"
     assert (bound_dir / "suggested_docstring.txt").read_text(encoding="utf-8") == "docstring"
     assert not (bound_dir / "non_preserved.log").exists()
+
+
+def test_build_architecture_artifact_paths_scopes_paths_to_repo_logs():
+    paths = build_architecture_artifact_paths("octo-org/example-repo", "github", draft_id="draft-1")
+
+    assert "github/octo-org__example-repo/app_" in paths["artifact_dir"]
+    assert paths["draft_path"].endswith("draft-1.rst")
+    assert paths["summary_path"].endswith("draft-1.json")

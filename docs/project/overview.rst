@@ -11,6 +11,10 @@ to GitHub Pages. The project is designed to reduce the manual effort involved
 in documenting software systems by combining repository analysis, AI-assisted
 documentation generation, and automated documentation publishing in one workflow.
 
+The same workflow now also supports review-first architecture documentation
+drafts that stay in the existing Sphinx docs tree until a maintainer explicitly
+approves them for publication.
+
 Scope
 -----
 

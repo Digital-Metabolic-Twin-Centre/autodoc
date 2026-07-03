@@ -1,6 +1,6 @@
 # Auto Doc
 
-Auto Doc is a FastAPI service that analyzes GitHub and GitLab repositories, identifies missing or weak documentation, generates docstring suggestions with OpenAI, scaffolds a Sphinx documentation site, and publishes reviewed output to GitHub Pages.
+Auto Doc is a FastAPI service that analyzes GitHub and GitLab repositories, identifies missing or weak documentation, generates docstring suggestions with OpenAI, scaffolds a Sphinx documentation site, generates reviewable architecture documentation drafts, and publishes reviewed output to GitHub Pages.
 
 It is built to help teams move from under-documented source code to a usable docs site with less manual setup and less repetitive review work.
 
@@ -12,6 +12,7 @@ It is built to help teams move from under-documented source code to a usable doc
 - Generates missing Python docstring suggestions with OpenAI
 - Reuses previous suggestion artifacts when `reuse_doc=true`
 - Creates a Sphinx docs scaffold for the target repository
+- Generates architecture documentation drafts with observed/inferred evidence labels and confidence levels
 - Mirrors Python sources into `autoapi_include/` for AutoAPI output
 - Publishes built HTML documentation to `gh-pages`
 - Includes an internal admin dashboard for saved repositories, runs, logs, and workflow triggers
@@ -21,7 +22,9 @@ It is built to help teams move from under-documented source code to a usable doc
 1. Analyze a repository branch with `/generate`
 2. Review generated documentation suggestions and scaffolded docs changes
 3. Optionally create a docstring suggestion pull request with `/suggest-python-docstrings-pr`
-4. Publish the reviewed branch to GitHub Pages with `/publish-pages`
+4. Generate an architecture draft with `/generate-architecture-docs`
+5. Approve the reviewed draft with `/approve-architecture-docs`
+6. Publish the reviewed branch to GitHub Pages with `/publish-pages`
 
 ## Project Layout
 
@@ -124,7 +127,7 @@ The built-in dashboard lets you:
 
 - Save repository configurations for GitHub and GitLab
 - Store access tokens in encrypted form
-- Trigger generate, publish, and docstring PR workflows
+- Trigger generate, publish, docstring PR, and architecture documentation workflows
 - Track live run status
 - Review run history, log snippets, and generated artifacts
 
@@ -135,6 +138,16 @@ State-changing admin actions are protected with authentication and CSRF checks.
 ### `POST /generate`
 
 Analyzes a repository branch and writes documentation scaffold files to that branch.
+
+### `POST /generate-architecture-docs`
+
+Analyzes a repository and writes a reviewable architecture documentation draft
+to the run artifact directory without committing or publishing it.
+
+### `POST /approve-architecture-docs`
+
+Applies an approved architecture draft to the requested docs path and updates
+the docs navigation when overwrite confirmation is provided.
 
 ### `POST /suggest-python-docstrings-pr`
 

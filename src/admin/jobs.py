@@ -14,6 +14,8 @@ from admin.models import RunRecord
 from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
 from services.workflow_service import (
     WorkflowRunResult,
+    execute_architecture_approval_request,
+    execute_architecture_generation_request,
     execute_docstring_pr_request,
     execute_generate_request,
     execute_publish_request,
@@ -305,4 +307,18 @@ def _execute_endpoint(
         return execute_publish_request(PublishPagesRequest(**payload), progress_callback=progress_callback)
     if endpoint == "/suggest-python-docstrings-pr":
         return execute_docstring_pr_request(DocstringPullRequestRequest(**payload), progress_callback=progress_callback)
+    if endpoint == "/generate-architecture-docs":
+        from models.repo_request import ArchitectureGenerationRequest
+
+        return execute_architecture_generation_request(
+            ArchitectureGenerationRequest(**payload),
+            progress_callback=progress_callback,
+        )
+    if endpoint == "/approve-architecture-docs":
+        from models.repo_request import ArchitectureApprovalRequest
+
+        return execute_architecture_approval_request(
+            ArchitectureApprovalRequest(**payload),
+            progress_callback=progress_callback,
+        )
     raise ValueError(f"Unsupported endpoint for queued execution: {endpoint}")

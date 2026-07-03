@@ -2,12 +2,21 @@ import json
 import os
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 from config.log_config import get_run_log_dir
 from models.repo_request import (
+    ArchitectureApprovalRequest,
+    ArchitectureGenerationRequest,
     DocstringPullRequestRequest,
     PublishPagesRequest,
     RepoRequest,
+)
+from services.architecture_services import (
+    execute_architecture_approval_request as run_architecture_approval_request,
+)
+from services.architecture_services import (
+    execute_architecture_generation_request as run_architecture_generation_request,
 )
 from services.doc_services import RepoAnalysisError, analyse_repo
 from services.docstring_pr_services import (
@@ -32,6 +41,17 @@ class WorkflowRunResult:
     metrics_files_analyzed: int | None = None
     metrics_docstrings_generated: int | None = None
     metrics_skipped_files: int | None = None
+    architecture_draft_id: str | None = None
+    architecture_draft_path: str | None = None
+    architecture_proposed_output_path: str | None = None
+    architecture_sections: list[dict[str, Any]] | None = None
+    architecture_gaps: list[dict[str, Any]] | None = None
+    architecture_diagram_paths: list[str] | None = None
+    architecture_navigation_update: str | None = None
+    architecture_confidence_summary: dict[str, int] | None = None
+    architecture_approval_required: bool | None = None
+    architecture_overwrite_required: bool | None = None
+    architecture_manual_docs_detected: bool | None = None
 
 
 def _notify_progress(progress_callback, percent: float, message: str) -> None:
@@ -194,11 +214,70 @@ def execute_publish_request(req: PublishPagesRequest, progress_callback=None) ->
     )
 
 
+def execute_architecture_generation_request(
+    req: ArchitectureGenerationRequest,
+    progress_callback=None,
+) -> WorkflowRunResult:
+    _notify_progress(progress_callback, 25.0, "Analyzing repository architecture")
+    result = run_architecture_generation_request(req)
+    _notify_progress(progress_callback, 90.0, "Finalizing architecture draft")
+    return WorkflowRunResult(
+        response=result.to_response(),
+        summary_output=json.dumps(
+            {
+                "draft_id": result.draft_id,
+                "draft_path": result.draft_path,
+                "proposed_output_path": result.proposed_output_path,
+                "status": result.status,
+            }
+        ),
+        artifact_dir=result.artifact_dir,
+        log_path=result.log_path,
+        source_branch=req.branch,
+        architecture_draft_id=result.draft_id,
+        architecture_draft_path=result.draft_path,
+        architecture_proposed_output_path=result.proposed_output_path,
+        architecture_sections=[section.__dict__ for section in result.sections],
+        architecture_gaps=[gap.__dict__ for gap in result.gaps],
+        architecture_diagram_paths=result.diagram_paths,
+        architecture_navigation_update=result.navigation_update,
+        architecture_confidence_summary=result.confidence_summary,
+        architecture_approval_required=result.approval_required,
+        architecture_overwrite_required=result.overwrite_required,
+        architecture_manual_docs_detected=result.manual_docs_detected,
+    )
+
+
+def execute_architecture_approval_request(
+    req: ArchitectureApprovalRequest,
+    progress_callback=None,
+) -> WorkflowRunResult:
+    _notify_progress(progress_callback, 25.0, "Validating architecture approval")
+    result = run_architecture_approval_request(req)
+    _notify_progress(progress_callback, 90.0, "Applying approved architecture documentation")
+    return WorkflowRunResult(
+        response=result.to_response(),
+        summary_output=json.dumps(
+            {
+                "draft_id": result.draft_id,
+                "output_path": result.output_path,
+                "branch": result.branch,
+                "status": result.status,
+            }
+        ),
+        artifact_dir=result.artifact_dir,
+        log_path=None,
+        source_branch=req.branch,
+    )
+
+
 __all__ = [
     "DocstringPullRequestError",
     "PublishPagesError",
     "RepoAnalysisError",
     "WorkflowRunResult",
+    "execute_architecture_approval_request",
+    "execute_architecture_generation_request",
     "execute_docstring_pr_request",
     "execute_generate_request",
     "execute_publish_request",

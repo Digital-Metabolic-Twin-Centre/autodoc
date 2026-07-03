@@ -1,5 +1,7 @@
 import pytest
 
+from models.repo_request import ArchitectureApprovalRequest, ArchitectureGenerationRequest
+from services.architecture_services import approve_architecture_draft, generate_architecture_draft
 from utils.git_utils import (
     GitHubApiError,
     RepositoryAccessError,
@@ -328,3 +330,69 @@ def test_create_github_pull_request_raises_permission_error(monkeypatch):
             "Body",
             "secret",
         )
+
+
+def test_generate_architecture_draft_does_not_write_to_provider(monkeypatch, tmp_path):
+    monkeypatch.setattr("services.architecture_services.fetch_repo_tree", lambda *args, **kwargs: [])
+    monkeypatch.setattr("services.architecture_services.fetch_content_from_github", lambda *args, **kwargs: None)
+    monkeypatch.setattr("services.architecture_services.fetch_content_from_gitlab", lambda *args, **kwargs: None)
+    monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path / "logs"))
+    monkeypatch.setattr(
+        "utils.git_utils.create_a_file",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("generation must not write files")),
+    )
+
+    result = generate_architecture_draft(
+        ArchitectureGenerationRequest(
+            provider="github",
+            repo_url="octo-org/example-repo",
+            token="secret",
+            branch="main",
+        )
+    )
+
+    assert result.approval_required is True
+
+
+def test_approve_architecture_draft_writes_reviewed_doc(monkeypatch, tmp_path):
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir()
+    draft_dir = tmp_path / "logs" / "github" / "example__repo__architecture"
+    draft_dir.mkdir(parents=True)
+    draft_path = draft_dir / "example__repo__architecture__20260703-120000.rst"
+    draft_path.write_text("Architecture Documentation Draft\n", encoding="utf-8")
+    captured = {}
+
+    monkeypatch.setattr(
+        "services.architecture_services.load_architecture_summary",
+        lambda *args, **kwargs: {"approval_required": True, "draft_path": str(draft_path)},
+    )
+    monkeypatch.setattr("services.architecture_services.fetch_content_from_github", lambda *args, **kwargs: None)
+    monkeypatch.setattr("services.architecture_services.fetch_content_from_gitlab", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        "services.architecture_services.create_a_file",
+        lambda repo_path, branch, file_path, content, token, provider: captured.setdefault(
+            "write",
+            (repo_path, branch, file_path, content, token, provider),
+        )
+        or True,
+    )
+    monkeypatch.setattr(
+        "services.architecture_services.apply_architecture_navigation_update",
+        lambda *args, **kwargs: True,
+    )
+
+    result = approve_architecture_draft(
+        ArchitectureApprovalRequest(
+            provider="github",
+            repo_url="example/project",
+            token="secret",
+            branch="main",
+            draft_id="example__repo__architecture__20260703-120000",
+            output_path="docs/project/architecture.rst",
+            overwrite_existing=True,
+        )
+    )
+
+    assert result.status == "approved"
+    assert captured["write"][2] == "docs/project/architecture.rst"

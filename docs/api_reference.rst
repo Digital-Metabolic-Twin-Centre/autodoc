@@ -3,6 +3,9 @@ API Reference
 
 Browse the generated API pages below.
 
+The repository also exposes a review-first architecture documentation workflow
+that writes draft artifacts before anything is approved into the docs tree.
+
 .. toctree::
    :maxdepth: 2
 

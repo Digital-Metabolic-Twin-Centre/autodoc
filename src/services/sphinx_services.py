@@ -45,6 +45,8 @@ from utils.git_utils import (
     download_github_branch_snapshot,
     ensure_github_branch,
     extract_repo_path,
+    fetch_content_from_github,
+    fetch_content_from_gitlab,
     publish_local_directory_to_github_branch,
     request_github_pages_build,
 )
@@ -153,6 +155,7 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         "   :maxdepth: 1\n"
         "   :caption: Project\n\n"
         "   project/overview\n"
+        "   project/architecture\n"
         "   project/objectives\n"
         "   project/plan\n"
         "   project/results\n\n"
@@ -1270,6 +1273,81 @@ def _build_sample_readme() -> str:
     )
 
 
+def _build_sample_architecture_page(project_name: str) -> str:
+    """
+    Generate a starter architecture documentation page.
+    """
+    return (
+        "Architecture\n"
+        "=============\n\n"
+        f"This page is reserved for the reviewed architecture documentation for {project_name}.\n\n"
+        ".. note::\n\n"
+        "   Replace this starter page with the approved architecture draft after review.\n"
+    )
+
+
+def build_architecture_navigation_update(output_path: str, project_name: str) -> str:
+    """
+    Build a navigation proposal for an approved architecture page.
+    """
+    page_ref = Path(output_path).with_suffix("").as_posix()
+    if page_ref.startswith("docs/"):
+        page_ref = page_ref.removeprefix("docs/")
+    return (
+        "Project toctree update\n"
+        "----------------------\n\n"
+        ".. toctree::\n"
+        "   :hidden:\n"
+        "   :maxdepth: 1\n\n"
+        f"   {page_ref}\n"
+    )
+
+
+def _inject_toctree_entry(index_text: str, entry: str) -> str:
+    if entry in index_text:
+        return index_text
+    anchor = "   project/results\n"
+    if anchor in index_text:
+        return index_text.replace(anchor, f"{anchor}   {entry}\n", 1)
+    return index_text.rstrip() + f"\n\n.. toctree::\n   :maxdepth: 1\n\n   {entry}\n"
+
+
+def apply_architecture_navigation_update(
+    repo_path: str,
+    branch: str,
+    token: str,
+    provider: str,
+    output_path: str,
+    project_name: str,
+) -> bool:
+    """
+    Apply the architecture navigation entry to docs/index.rst.
+    """
+    navigation_entry = Path(output_path).with_suffix("").as_posix()
+    if navigation_entry.startswith("docs/"):
+        navigation_entry = navigation_entry.removeprefix("docs/")
+    index_path = "docs/index.rst"
+
+    if os.path.isdir(repo_path):
+        local_index = Path(repo_path) / index_path
+        if not local_index.exists():
+            return False
+        updated_text = _inject_toctree_entry(local_index.read_text(encoding="utf-8"), navigation_entry)
+        local_index.write_text(updated_text, encoding="utf-8")
+        return True
+
+    if provider == "github":
+        existing = fetch_content_from_github(repo_path, branch, index_path, token) or ""
+    elif provider == "gitlab":
+        existing = fetch_content_from_gitlab(repo_path, branch, index_path, token) or ""
+    else:
+        return False
+    if not existing:
+        existing = _sample_docs_files(project_name)[index_path]
+    updated_text = _inject_toctree_entry(existing, navigation_entry)
+    return create_a_file(repo_path, branch, index_path, updated_text, token, provider)
+
+
 def _sample_docs_files(project_name: str) -> dict[str, str]:
     """
     Generate sample documentation files for a given project.
@@ -1288,6 +1366,7 @@ def _sample_docs_files(project_name: str) -> dict[str, str]:
         f"{DOCS_SRC}/api_reference.rst": _build_sample_api_reference(),
         f"{DOCS_SRC}/README.rst": _build_sample_readme(),
         f"{DOCS_SRC}/project/overview.rst": _build_sample_overview(project_name),
+        f"{DOCS_SRC}/project/architecture.rst": _build_sample_architecture_page(project_name),
         f"{DOCS_SRC}/project/objectives.rst": _load_sample_text("project/objectives.rst"),
         f"{DOCS_SRC}/project/plan.rst": _load_sample_text("project/plan.rst"),
         f"{DOCS_SRC}/project/results.rst": _load_sample_text("project/results.rst"),

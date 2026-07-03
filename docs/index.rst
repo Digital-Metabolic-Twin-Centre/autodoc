@@ -57,6 +57,7 @@ Auto Doc
    :caption: Project
 
    project/overview
+   project/architecture
    project/objectives
    project/plan
    project/results

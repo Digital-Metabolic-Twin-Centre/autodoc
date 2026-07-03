@@ -78,3 +78,34 @@ class DocstringPullRequestRequest(BaseModel):
     suggestion_branch: Optional[str] = None
     title: str = "Add suggested docstrings"
     max_docstrings: int = 50
+
+
+class ArchitectureGenerationRequest(BaseModel):
+    """
+    Represents a request to analyze a repository and generate architecture documentation.
+    """
+
+    provider: str
+    repo_url: str
+    token: str
+    branch: str
+    target_folders: list[str] = Field(default_factory=list)
+    output_path: str = "docs/project/architecture.rst"
+    include_diagrams: bool = True
+    reuse_existing_docs: bool = True
+    model: Optional[str] = None
+
+
+class ArchitectureApprovalRequest(BaseModel):
+    """
+    Represents a request to approve and apply an architecture documentation draft.
+    """
+
+    provider: str
+    repo_url: str
+    token: str
+    branch: str
+    draft_id: str
+    output_path: str
+    overwrite_existing: bool
+    approval_note: Optional[str] = None
