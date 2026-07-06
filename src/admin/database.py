@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -21,6 +23,29 @@ def init_db() -> None:
 
     Base.metadata.create_all(bind=engine)
     _ensure_run_record_columns()
+    scrub_sensitive_run_payloads()
+
+
+def scrub_sensitive_run_payloads() -> int:
+    from admin.models import RunRecord
+
+    scrubbed_count = 0
+    with SessionLocal() as session:
+        runs = session.query(RunRecord).filter(RunRecord.request_payload.is_not(None)).all()
+        for run in runs:
+            try:
+                payload = json.loads(run.request_payload or "")
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(payload, dict) or "token" not in payload:
+                continue
+            payload.pop("token", None)
+            run.request_payload = json.dumps(payload, default=str, indent=2)
+            session.add(run)
+            scrubbed_count += 1
+        if scrubbed_count:
+            session.commit()
+    return scrubbed_count
 
 
 def _ensure_run_record_columns() -> None:

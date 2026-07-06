@@ -128,8 +128,8 @@ def require_admin(request: Request) -> str:
     )
 
 
-def ensure_csrf_token(request: Request, response: Response) -> str:
-    csrf_token = get_or_create_csrf_token(request)
+def ensure_csrf_token(request: Request, response: Response, csrf_token: str | None = None) -> str:
+    csrf_token = csrf_token or get_or_create_csrf_token(request)
     response.set_cookie(
         ADMIN_CSRF_COOKIE,
         csrf_token,

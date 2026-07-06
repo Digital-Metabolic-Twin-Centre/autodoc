@@ -1,6 +1,7 @@
+import json
 from datetime import UTC, datetime
 
-from admin.database import SessionLocal
+from admin.database import SessionLocal, scrub_sensitive_run_payloads
 from admin.jobs import _execute_endpoint, _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
 from services.workflow_service import WorkflowRunResult
@@ -77,6 +78,38 @@ def test_reconcile_interrupted_runs_marks_stale_running_run_failed():
         assert stored_run.progress_message == "Failed"
         assert stored_run.error_message == "Run was interrupted because the server stopped before the job could finish."
         assert stored_run.completed_at is not None
+
+
+def test_scrub_sensitive_run_payloads_removes_existing_tokens():
+    with SessionLocal() as session:
+        run = RunRecord(
+            endpoint="/generate",
+            status="failed",
+            created_at=datetime.now(UTC),
+            request_payload=json.dumps(
+                {
+                    "repo_url": "example/project",
+                    "token": "secret-token",
+                    "branch": "main",
+                }
+            ),
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+        run_id = run.id
+
+    scrubbed_count = scrub_sensitive_run_payloads()
+
+    assert scrubbed_count >= 1
+    with SessionLocal() as session:
+        stored_run = session.get(RunRecord, run_id)
+        assert stored_run is not None
+        payload = json.loads(stored_run.request_payload)
+        assert payload == {
+            "repo_url": "example/project",
+            "branch": "main",
+        }
 
 
 def test_clear_runs_deletes_only_selected_repository_history():

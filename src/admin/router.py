@@ -55,6 +55,14 @@ ENDPOINT_LABELS = {
     "/approve-architecture-docs": "Approve Architecture Docs",
 }
 DEFAULT_ARCHITECTURE_OUTPUT_PATH = "docs/project/architecture.rst"
+SENSITIVE_PAYLOAD_FIELDS = {"token"}
+TOKEN_REQUIRED_ENDPOINTS = {
+    "/generate",
+    "/publish-pages",
+    "/suggest-python-docstrings-pr",
+    "/generate-architecture-docs",
+    "/approve-architecture-docs",
+}
 
 
 def _database_label() -> str:
@@ -67,6 +75,25 @@ def _json_loads(value: str | None) -> Any:
     if not value:
         return None
     return json.loads(value)
+
+
+def _safe_request_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in payload.items() if key not in SENSITIVE_PAYLOAD_FIELDS}
+
+
+def _queue_payload_with_repository_secret(
+    endpoint: str,
+    payload: dict[str, Any],
+    repository: RepositoryConfig | None,
+) -> dict[str, Any]:
+    if endpoint not in TOKEN_REQUIRED_ENDPOINTS:
+        return dict(payload)
+    if repository is None:
+        raise HTTPException(status_code=422, detail="Run cannot be retried without a repository token.")
+    return {
+        **payload,
+        "token": decrypt_token(repository.encrypted_token),
+    }
 
 
 def _fmt_duration(seconds: float | None) -> str:
@@ -107,11 +134,12 @@ def _template_response(
 ) -> Response:
     context["request"] = request
     context["active_path"] = request.url.path
-    context["csrf_token"] = get_or_create_csrf_token(request)
+    csrf_token = get_or_create_csrf_token(request)
+    context["csrf_token"] = csrf_token
     context["database_label"] = _database_label()
     content = templates.get_template(name).render(context)
     response = HTMLResponse(content=content, status_code=status_code)
-    ensure_csrf_token(request, response)
+    ensure_csrf_token(request, response, csrf_token)
     return response
 
 
@@ -633,7 +661,7 @@ def _create_run_record(
             progress_percent=5.0,
             progress_message="Queued",
             triggered_by=admin_user,
-            request_payload=json.dumps(payload, default=str, indent=2),
+            request_payload=json.dumps(_safe_request_payload(payload), default=str, indent=2),
         )
         session.add(run)
         session.commit()
@@ -921,15 +949,16 @@ async def retry_run(
             raise HTTPException(status_code=422, detail="Run payload is unavailable.")
         repository_id = run.repository_id
         endpoint = run.endpoint
+        queue_payload = _queue_payload_with_repository_secret(endpoint, payload, run.repository)
     new_run_id = _create_run_record(repository_id, endpoint, admin_user, payload)
     if endpoint == "/generate":
-        repo_request = RepoRequest(**payload)
+        repo_request = RepoRequest(**queue_payload)
         enqueue_run(new_run_id, "/generate", repo_request.model_dump())
     elif endpoint == "/publish-pages":
-        publish_request = PublishPagesRequest(**payload)
+        publish_request = PublishPagesRequest(**queue_payload)
         enqueue_run(new_run_id, "/publish-pages", publish_request.model_dump())
     elif endpoint == "/suggest-python-docstrings-pr":
-        pr_request = DocstringPullRequestRequest(**payload)
+        pr_request = DocstringPullRequestRequest(**queue_payload)
         enqueue_run(new_run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
     else:
         raise HTTPException(status_code=422, detail="Run type is not retryable.")

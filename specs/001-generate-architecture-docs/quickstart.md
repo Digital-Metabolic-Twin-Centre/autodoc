@@ -124,14 +124,13 @@ Recorded after implementing and testing the feature:
   and paths are recorded.
 - `services/architecture_services.py` and `services/sphinx_services.py` log
   provider/repo/branch context but never log the token.
-- The admin dashboard's stored `request_payload` for
-  `/generate-architecture-docs` and `/approve-architecture-docs` runs excludes
-  the `token` field (`model_dump(exclude={"token"})`) before being written to
-  the run history table, since that payload is rendered back to the browser
-  on the run detail page.
-- **Pre-existing, out-of-scope finding**: the existing `/generate`,
-  `/publish-pages`, and `/suggest-python-docstrings-pr` admin trigger routes
-  still store the full request payload (including the plaintext token) in
-  `request_payload` for run history and display it on the run detail page.
-  This predates this feature and is not introduced by it; it is called out
-  here for visibility and should be addressed as a separate follow-up.
+- The admin dashboard's stored `request_payload` excludes the `token` field
+  before writing run history for `/generate`, `/publish-pages`,
+  `/suggest-python-docstrings-pr`, `/generate-architecture-docs`, and
+  `/approve-architecture-docs`, since that payload is rendered back to the
+  browser on the run detail page.
+- Admin retries rehydrate the token from the encrypted repository configuration
+  only for the queued execution payload; the persisted retry run payload remains
+  token-free.
+- Application startup scrubs any existing run-history `request_payload` JSON
+  that still contains a legacy plaintext `token` field.
