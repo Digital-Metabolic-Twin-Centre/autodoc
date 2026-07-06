@@ -97,3 +97,41 @@ uv run sphinx-build -b html docs docs/_build/html
 
 - [data-model.md](./data-model.md)
 - [contracts/architecture-docs-api.yaml](./contracts/architecture-docs-api.yaml)
+
+## Implementation Validation Notes
+
+Recorded after implementing and testing the feature:
+
+- `uv run pytest`, `uv run ruff check src tests`, and
+  `uv run sphinx-build -E -W -b html docs docs/_build/html` all pass.
+- Scenarios 1-5 above are covered by automated tests in
+  `tests/test_architecture_services.py`, `tests/test_router.py`,
+  `tests/test_sphinx_template.py`, `tests/test_doc_services.py`,
+  `tests/test_git_utils.py`, and `tests/test_admin_router.py`.
+- Generated architecture drafts reuse existing reStructuredText conventions
+  (headings, `.. note::`, `.. warning::`, `.. code-block::`) rather than the
+  `docs/scaffold/` sample templates, since those templates are for the initial
+  docs scaffold, not for an individual generated page. This is a deliberate
+  scoping decision, not a deviation from a firm requirement.
+- A repository with no recognizable entry point or top-level structure now
+  returns `status: partial` with a visible `AnalysisGap` per the affected
+  section, matching Scenario 5.
+
+## Secret and Token Leakage Review (T060)
+
+- Draft artifacts (`architecture_draft_<id>.rst`/`.json`) and diagram files
+  never include the request token; only repo path, branch, sections, gaps,
+  and paths are recorded.
+- `services/architecture_services.py` and `services/sphinx_services.py` log
+  provider/repo/branch context but never log the token.
+- The admin dashboard's stored `request_payload` for
+  `/generate-architecture-docs` and `/approve-architecture-docs` runs excludes
+  the `token` field (`model_dump(exclude={"token"})`) before being written to
+  the run history table, since that payload is rendered back to the browser
+  on the run detail page.
+- **Pre-existing, out-of-scope finding**: the existing `/generate`,
+  `/publish-pages`, and `/suggest-python-docstrings-pr` admin trigger routes
+  still store the full request payload (including the plaintext token) in
+  `request_payload` for run history and display it on the run detail page.
+  This predates this feature and is not introduced by it; it is called out
+  here for visibility and should be addressed as a separate follow-up.

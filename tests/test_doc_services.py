@@ -1,10 +1,14 @@
 import json
 
+import pytest
+
+from services.architecture_services import ArchitectureAnalysisError
 from services.doc_services import (
     _file_matches_target_folders,
     _load_reusable_suggestions,
     _normalize_target_folders,
 )
+from services.workflow_service import execute_architecture_generation_request
 
 
 def test_normalize_target_folders_trims_whitespace_and_slashes():
@@ -129,3 +133,63 @@ def test_load_reusable_suggestions_merges_partial_runs_for_same_branch(monkeypat
     assert suggestions["exact"][("src/publish.py", "publish_docs", "function", 22, "python")] == "Publish the docs."
     assert suggestions["fuzzy"][("src/job_views.py", "build_job", "function", "python")] == "Build a job."
     assert suggestions["fuzzy"][("src/publish.py", "publish_docs", "function", "python")] == "Publish the docs."
+
+
+def test_execute_architecture_generation_request_never_commits(monkeypatch):
+    from models.repo_request import ArchitectureGenerationRequest
+
+    monkeypatch.setattr(
+        "services.workflow_service.generate_architecture_draft",
+        lambda **kwargs: {
+            "status": "success",
+            "draft_id": "arch_123",
+            "draft_path": "/tmp/architecture_draft_arch_123.rst",
+            "proposed_output_path": "docs/project/architecture.rst",
+            "sections_summary": [],
+            "gaps": [],
+            "diagram_paths": [],
+            "artifact_dir": "/tmp",
+        },
+    )
+
+    def _fail_if_called(*args, **kwargs):
+        raise AssertionError("generation must never call a provider write helper")
+
+    monkeypatch.setattr("utils.git_utils.create_a_file", _fail_if_called)
+
+    req = ArchitectureGenerationRequest(
+        provider="github",
+        repo_url="example/project",
+        token="secret",
+        branch="main",
+    )
+
+    result = execute_architecture_generation_request(req)
+
+    assert result.response["status"] == "success"
+    assert result.response["approval_required"] is True
+    assert result.draft_id == "arch_123"
+
+
+def test_execute_architecture_generation_request_surfaces_repository_access_failure(monkeypatch):
+    from models.repo_request import ArchitectureGenerationRequest
+
+    def fail_generation(**kwargs):
+        raise ArchitectureAnalysisError(
+            "GitHub rejected access to repository 'example/private' on branch 'main'.",
+            status_code=403,
+        )
+
+    monkeypatch.setattr("services.workflow_service.generate_architecture_draft", fail_generation)
+
+    req = ArchitectureGenerationRequest(
+        provider="github",
+        repo_url="example/private",
+        token="secret",
+        branch="main",
+    )
+
+    with pytest.raises(ArchitectureAnalysisError) as exc_info:
+        execute_architecture_generation_request(req)
+
+    assert exc_info.value.status_code == 403

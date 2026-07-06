@@ -1052,3 +1052,171 @@ def test_suggest_python_docstrings_pr_requires_base_branch():
     )
 
     assert response.status_code == 400
+
+
+def test_generate_architecture_docs_returns_draft_and_never_publishes(monkeypatch):
+    monkeypatch.setattr(
+        "services.workflow_service.generate_architecture_draft",
+        lambda **kwargs: {
+            "status": "success",
+            "draft_id": "arch_20260706_abc123",
+            "draft_path": "/tmp/logs/github/example__project/app_1/architecture_draft_arch_20260706_abc123.rst",
+            "proposed_output_path": "docs/project/architecture.rst",
+            "sections_summary": [
+                {
+                    "section_name": "entry points",
+                    "status": "populated",
+                    "confidence_level": "not_applicable",
+                    "observed_count": 1,
+                    "inferred_count": 0,
+                }
+            ],
+            "gaps": [],
+            "diagram_paths": [],
+            "artifact_dir": "/tmp/logs/github/example__project/app_1",
+        },
+    )
+
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "success"
+    assert payload["draft_id"] == "arch_20260706_abc123"
+    assert payload["approval_required"] is True
+    assert payload["proposed_output_path"] == "docs/project/architecture.rst"
+
+
+def test_generate_architecture_docs_requires_repo_url():
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 400
+
+
+def test_generate_architecture_docs_returns_analysis_error_status(monkeypatch):
+    from services.architecture_services import ArchitectureAnalysisError
+
+    def fail_generation(**kwargs):
+        raise ArchitectureAnalysisError(
+            "Repository was reachable, but no files were found to analyze on branch 'main'.",
+            status_code=404,
+        )
+
+    monkeypatch.setattr("services.workflow_service.generate_architecture_draft", fail_generation)
+
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/empty",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 404
+    assert "no files were found" in response.json()["detail"].lower()
+
+
+def test_generate_architecture_docs_rejects_output_path_outside_docs_tree():
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "output_path": "../outside.rst",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_approve_architecture_docs_applies_approved_draft(monkeypatch):
+    monkeypatch.setattr(
+        "services.workflow_service.apply_architecture_approval",
+        lambda **kwargs: {"status": "approved", "output_path": kwargs["output_path"], "commit_url": None},
+    )
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_20260706_abc123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "approved"
+    assert payload["output_path"] == "docs/project/architecture.rst"
+
+
+def test_approve_architecture_docs_returns_409_when_overwrite_required(monkeypatch):
+    from services.architecture_services import ArchitectureOverwriteRequiredError
+
+    def fail_overwrite(**kwargs):
+        raise ArchitectureOverwriteRequiredError("Existing manual content was found. Set overwrite_existing=true.")
+
+    monkeypatch.setattr("services.workflow_service.apply_architecture_approval", fail_overwrite)
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_20260706_abc123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 409
+
+
+def test_approve_architecture_docs_requires_draft_id():
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 400

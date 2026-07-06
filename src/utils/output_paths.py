@@ -158,6 +158,27 @@ def clear_repo_output_history(repo_path: str, provider: str) -> None:
         shutil.rmtree(repo_dir)
 
 
+def validate_architecture_output_path(output_path: str) -> str:
+    """
+    Validates that an architecture documentation output path stays within the docs tree.
+
+    Args:
+        output_path (str): The proposed documentation output path.
+
+    Returns:
+        str: The normalized, validated output path.
+
+    Raises:
+        ValueError: If the path escapes the repository or the docs/ tree.
+    """
+    normalized = str(output_path or "").strip().strip("/")
+    if not normalized or normalized.startswith("..") or "/../" in f"/{normalized}/":
+        raise ValueError("output_path must be a relative path inside the documentation tree.")
+    if not normalized.startswith("docs/"):
+        raise ValueError("output_path must stay within the docs/ documentation tree.")
+    return normalized
+
+
 def find_latest_repo_run_dir(repo_path: str, provider: str) -> str | None:
     """
     Retrieve the latest run directory for a specified repository.

@@ -1,4 +1,10 @@
-from services.sphinx_services import _sample_docs_files, _write_sample_sphinx_scaffold
+from services.sphinx_services import (
+    _sample_docs_files,
+    _write_sample_sphinx_scaffold,
+    detect_navigation_conflict,
+    propose_architecture_navigation,
+    update_sphinx_navigation_for_architecture,
+)
 
 
 def test_sample_docs_files_follow_shared_template_with_autoapi():
@@ -29,3 +35,88 @@ def test_write_sample_sphinx_scaffold_creates_docs_layout(tmp_path):
     assert (tmp_path / "docs" / "api_reference.rst").exists()
     assert (tmp_path / "docs" / "_static" / "custom-wide.css").exists()
     assert (tmp_path / "docs" / "Makefile").exists()
+
+
+def test_detect_navigation_conflict_returns_false_when_index_missing():
+    conflict, entry = detect_navigation_conflict(None, "project/architecture")
+
+    assert conflict is False
+    assert entry is None
+
+
+def test_detect_navigation_conflict_returns_false_when_already_referenced():
+    index_content = ".. toctree::\n   :hidden:\n\n   project/architecture\n   README\n"
+
+    conflict, entry = detect_navigation_conflict(index_content, "project/architecture")
+
+    assert conflict is False
+    assert entry is None
+
+
+def test_detect_navigation_conflict_flags_same_leaf_name_at_different_path():
+    index_content = ".. toctree::\n   :hidden:\n\n   architecture\n   README\n"
+
+    conflict, entry = detect_navigation_conflict(index_content, "project/architecture")
+
+    assert conflict is True
+    assert entry == "architecture"
+
+
+def test_propose_architecture_navigation_reports_placement(monkeypatch):
+    monkeypatch.setattr(
+        "services.sphinx_services.fetch_content_from_github",
+        lambda repo_path, branch, file_path, token: ".. toctree::\n\n   README\n",
+    )
+
+    navigation_update = propose_architecture_navigation(
+        "octo-org/example-repo", "main", "secret", "github", "docs/project/architecture.rst"
+    )
+
+    assert navigation_update["toctree_entry"] == "project/architecture"
+    assert navigation_update["already_referenced"] is False
+    assert navigation_update["conflict"] is False
+
+
+def test_update_sphinx_navigation_for_architecture_inserts_entry(monkeypatch):
+    written = {}
+
+    def fake_fetch(repo_path, branch, file_path, token):
+        return "Docs\n====\n\n.. toctree::\n   :hidden:\n   :maxdepth: 1\n\n   README\n"
+
+    def fake_create_a_file(repo_path, branch, file_path, content, token, provider):
+        written["file_path"] = file_path
+        written["content"] = content
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.fetch_content_from_github", fake_fetch)
+    monkeypatch.setattr("services.sphinx_services.create_a_file", fake_create_a_file)
+
+    applied = update_sphinx_navigation_for_architecture(
+        "octo-org/example-repo",
+        "main",
+        "secret",
+        "github",
+        {"index_path": "docs/index.rst", "toctree_entry": "project/architecture", "already_referenced": False},
+    )
+
+    assert applied is True
+    assert written["file_path"] == "docs/index.rst"
+    assert "project/architecture" in written["content"]
+
+
+def test_update_sphinx_navigation_for_architecture_skips_when_already_referenced(monkeypatch):
+    def _fail_if_called(*args, **kwargs):
+        raise AssertionError("should not fetch or write when already referenced")
+
+    monkeypatch.setattr("services.sphinx_services.fetch_content_from_github", _fail_if_called)
+    monkeypatch.setattr("services.sphinx_services.create_a_file", _fail_if_called)
+
+    applied = update_sphinx_navigation_for_architecture(
+        "octo-org/example-repo",
+        "main",
+        "secret",
+        "github",
+        {"index_path": "docs/index.rst", "toctree_entry": "project/architecture", "already_referenced": True},
+    )
+
+    assert applied is True

@@ -5,9 +5,18 @@ from datetime import UTC, datetime
 
 from config.log_config import get_run_log_dir
 from models.repo_request import (
+    ArchitectureApprovalRequest,
+    ArchitectureGenerationRequest,
     DocstringPullRequestRequest,
     PublishPagesRequest,
     RepoRequest,
+)
+from services.architecture_services import (
+    ArchitectureAnalysisError,
+    ArchitectureApprovalError,
+    ArchitectureOverwriteRequiredError,
+    apply_architecture_approval,
+    generate_architecture_draft,
 )
 from services.doc_services import RepoAnalysisError, analyse_repo
 from services.docstring_pr_services import (
@@ -32,6 +41,7 @@ class WorkflowRunResult:
     metrics_files_analyzed: int | None = None
     metrics_docstrings_generated: int | None = None
     metrics_skipped_files: int | None = None
+    draft_id: str | None = None
 
 
 def _notify_progress(progress_callback, percent: float, message: str) -> None:
@@ -194,11 +204,99 @@ def execute_publish_request(req: PublishPagesRequest, progress_callback=None) ->
     )
 
 
+def execute_architecture_generation_request(
+    req: ArchitectureGenerationRequest, progress_callback=None
+) -> WorkflowRunResult:
+    _notify_progress(progress_callback, 15.0, "Analyzing repository architecture")
+    result = generate_architecture_draft(
+        provider=req.provider,
+        repo_url=req.repo_url,
+        token=req.token,
+        branch=req.branch,
+        target_folders=req.target_folders,
+        output_path=req.output_path,
+        include_diagrams=req.include_diagrams,
+        reuse_existing_docs=req.reuse_existing_docs,
+        progress_callback=progress_callback,
+    )
+    _notify_progress(progress_callback, 95.0, "Finalizing architecture draft")
+    response = {
+        "status": result["status"],
+        "draft_id": result["draft_id"],
+        "draft_path": result["draft_path"],
+        "proposed_output_path": result["proposed_output_path"],
+        "sections": result["sections_summary"],
+        "gaps": result["gaps"],
+        "diagram_paths": result["diagram_paths"],
+        "approval_required": True,
+        "artifact_dir": result["artifact_dir"],
+    }
+    artifact_dir = result["artifact_dir"]
+    log_path = os.path.join(artifact_dir, "app.log")
+    return WorkflowRunResult(
+        response=response,
+        summary_output=json.dumps(
+            {
+                "draft_id": result["draft_id"],
+                "sections_populated": sum(
+                    1 for section in result["sections_summary"] if section["status"] == "populated"
+                ),
+                "gaps": len(result["gaps"]),
+            }
+        ),
+        artifact_dir=artifact_dir,
+        log_path=log_path if os.path.exists(log_path) else None,
+        source_branch=req.branch,
+        draft_id=result["draft_id"],
+    )
+
+
+def execute_architecture_approval_request(
+    req: ArchitectureApprovalRequest, progress_callback=None
+) -> WorkflowRunResult:
+    _notify_progress(progress_callback, 20.0, "Preparing architecture approval")
+    bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
+    _notify_progress(progress_callback, 60.0, "Applying approved architecture document")
+    result = apply_architecture_approval(
+        provider=req.provider,
+        repo_url=req.repo_url,
+        token=req.token,
+        branch=req.branch,
+        draft_id=req.draft_id,
+        output_path=req.output_path,
+        overwrite_existing=req.overwrite_existing,
+        approval_note=req.approval_note,
+    )
+    _notify_progress(progress_callback, 90.0, "Finalizing approval")
+    response = {
+        "status": result["status"],
+        "draft_id": req.draft_id,
+        "output_path": result["output_path"],
+        "commit_url": result["commit_url"],
+        "branch": req.branch,
+    }
+    artifact_dir = get_run_log_dir()
+    log_path = os.path.join(artifact_dir, "app.log") if artifact_dir else None
+    return WorkflowRunResult(
+        response=response,
+        summary_output=json.dumps({"draft_id": req.draft_id, "output_path": result["output_path"]}),
+        artifact_dir=artifact_dir,
+        log_path=log_path if log_path and os.path.exists(log_path) else None,
+        source_branch=req.branch,
+        draft_id=req.draft_id,
+    )
+
+
 __all__ = [
+    "ArchitectureAnalysisError",
+    "ArchitectureApprovalError",
+    "ArchitectureOverwriteRequiredError",
     "DocstringPullRequestError",
     "PublishPagesError",
     "RepoAnalysisError",
     "WorkflowRunResult",
+    "execute_architecture_approval_request",
+    "execute_architecture_generation_request",
     "execute_docstring_pr_request",
     "execute_generate_request",
     "execute_publish_request",

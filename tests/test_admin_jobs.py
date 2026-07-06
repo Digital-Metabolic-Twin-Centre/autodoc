@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from admin.database import SessionLocal
-from admin.jobs import _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
+from admin.jobs import _execute_endpoint, _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
 from services.workflow_service import WorkflowRunResult
 
@@ -197,3 +197,66 @@ def test_execute_run_process_updates_progress_and_completion(monkeypatch):
         assert stored_run.progress_percent == 100.0
         assert stored_run.progress_message == "Completed"
         assert stored_run.metrics_files_analyzed == 3
+
+
+def test_execute_endpoint_dispatches_generate_architecture_docs(monkeypatch):
+    captured = {}
+
+    def fake_execute_architecture_generation_request(req, progress_callback=None):
+        captured["req"] = req
+        return WorkflowRunResult(response={"status": "success"}, summary_output="{}", draft_id="arch_123")
+
+    monkeypatch.setattr(
+        "admin.jobs.execute_architecture_generation_request",
+        fake_execute_architecture_generation_request,
+    )
+
+    result = _execute_endpoint(
+        "/generate-architecture-docs",
+        {
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert result.draft_id == "arch_123"
+    assert captured["req"].repo_url == "example/project"
+
+
+def test_execute_endpoint_dispatches_approve_architecture_docs(monkeypatch):
+    captured = {}
+
+    def fake_execute_architecture_approval_request(req, progress_callback=None):
+        captured["req"] = req
+        return WorkflowRunResult(response={"status": "approved"}, summary_output="{}", draft_id=req.draft_id)
+
+    monkeypatch.setattr(
+        "admin.jobs.execute_architecture_approval_request",
+        fake_execute_architecture_approval_request,
+    )
+
+    result = _execute_endpoint(
+        "/approve-architecture-docs",
+        {
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert result.draft_id == "arch_123"
+    assert captured["req"].output_path == "docs/project/architecture.rst"
+
+
+def test_execute_endpoint_raises_for_unsupported_endpoint():
+    try:
+        _execute_endpoint("/unsupported", {})
+        raise AssertionError("expected ValueError")
+    except ValueError as exc:
+        assert "Unsupported endpoint" in str(exc)

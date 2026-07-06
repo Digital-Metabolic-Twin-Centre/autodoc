@@ -1,11 +1,14 @@
 from pathlib import Path
 
+import pytest
+
 from utils.output_paths import (
     bind_repo_run_log_dir,
     build_repo_output_dir,
     build_repo_output_file,
     clear_repo_output_history,
     find_latest_repo_run_dir,
+    validate_architecture_output_path,
 )
 
 
@@ -62,3 +65,22 @@ def test_bind_repo_run_log_dir_copies_previous_text_json_and_csv_artifacts(monke
     assert (bound_dir / "suggested_docstrings.json").read_text(encoding="utf-8") == "{}"
     assert (bound_dir / "suggested_docstring.txt").read_text(encoding="utf-8") == "docstring"
     assert not (bound_dir / "non_preserved.log").exists()
+
+
+def test_validate_architecture_output_path_accepts_docs_tree_path():
+    assert validate_architecture_output_path("docs/project/architecture.rst") == "docs/project/architecture.rst"
+    assert validate_architecture_output_path("/docs/project/architecture.rst/") == "docs/project/architecture.rst"
+
+
+@pytest.mark.parametrize(
+    "output_path",
+    [
+        "",
+        "../outside.rst",
+        "docs/../../outside.rst",
+        "notes/architecture.rst",
+    ],
+)
+def test_validate_architecture_output_path_rejects_paths_outside_docs_tree(output_path):
+    with pytest.raises(ValueError):
+        validate_architecture_output_path(output_path)

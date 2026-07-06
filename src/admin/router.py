@@ -35,7 +35,13 @@ from admin.settings import (
     MAX_ACTIVITY_ITEMS,
     TEMPLATES_DIR,
 )
-from models.repo_request import DocstringPullRequestRequest, PublishPagesRequest, RepoRequest
+from models.repo_request import (
+    ArchitectureApprovalRequest,
+    ArchitectureGenerationRequest,
+    DocstringPullRequestRequest,
+    PublishPagesRequest,
+    RepoRequest,
+)
 from utils.git_utils import extract_repo_path
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
@@ -45,7 +51,10 @@ ENDPOINT_LABELS = {
     "/generate": "Generate Docs",
     "/publish-pages": "Publish Pages",
     "/suggest-python-docstrings-pr": "Suggest Docstring PR",
+    "/generate-architecture-docs": "Generate Architecture Docs",
+    "/approve-architecture-docs": "Approve Architecture Docs",
 }
+DEFAULT_ARCHITECTURE_OUTPUT_PATH = "docs/project/architecture.rst"
 
 
 def _database_label() -> str:
@@ -281,6 +290,27 @@ def _build_pr_request(
     )
 
 
+def _build_architecture_generation_request(
+    repository: RepositoryConfig,
+    branch: str | None = None,
+    target_folders: str | None = None,
+    output_path: str | None = None,
+    include_diagrams: bool = True,
+    reuse_existing_docs: bool = True,
+) -> ArchitectureGenerationRequest:
+    return ArchitectureGenerationRequest(
+        provider=repository.provider,
+        repo_url=repository.repo_url,
+        token=decrypt_token(repository.encrypted_token),
+        branch=branch or repository.default_branch,
+        target_folders=_parse_target_folders(target_folders or ",".join(repository.target_folders)),
+        output_path=output_path or DEFAULT_ARCHITECTURE_OUTPUT_PATH,
+        include_diagrams=include_diagrams,
+        reuse_existing_docs=reuse_existing_docs,
+        model=repository.preferred_model or DEFAULT_OPENAI_MODEL,
+    )
+
+
 def _artifact_entries(run: RunRecord) -> list[dict[str, str]]:
     artifact_dir = run.artifact_dir
     if not artifact_dir or not os.path.isdir(artifact_dir):
@@ -358,6 +388,15 @@ def _dashboard_context() -> dict[str, Any]:
         total_runs = session.scalar(select(func.count(RunRecord.id))) or 0
         successful_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "completed")) or 0
         failed_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "failed")) or 0
+        architecture_drafts_generated = (
+            session.scalar(
+                select(func.count(RunRecord.id)).where(
+                    RunRecord.endpoint == "/generate-architecture-docs",
+                    RunRecord.status == "completed",
+                )
+            )
+            or 0
+        )
         recent_runs = session.scalars(
             select(RunRecord)
             .order_by(RunRecord.created_at.desc())
@@ -371,6 +410,7 @@ def _dashboard_context() -> dict[str, Any]:
             "total_runs": total_runs,
             "successful_runs": successful_runs,
             "failed_runs": failed_runs,
+            "architecture_drafts_generated": architecture_drafts_generated,
         },
         "recent_runs": recent_runs,
         "repositories": repositories,
@@ -682,6 +722,81 @@ async def trigger_suggest_pr(
     run_id = _create_run_record(repository_id, "/suggest-python-docstrings-pr", admin_user, pr_request.model_dump())
     enqueue_run(run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
+
+
+@router.post("/repositories/{repository_id}/generate-architecture-docs", response_class=HTMLResponse)
+async def trigger_generate_architecture_docs(
+    repository_id: int,
+    request: Request,
+    admin_user: str = Depends(require_admin),
+    _: None = Depends(verify_csrf),
+    branch: str = Form(default=""),
+    target_folders: str = Form(default=""),
+    output_path: str = Form(default=DEFAULT_ARCHITECTURE_OUTPUT_PATH),
+    include_diagrams: bool = Form(default=True),
+    reuse_existing_docs: bool = Form(default=True),
+) -> Response:
+    with SessionLocal() as session:
+        repository = session.get(RepositoryConfig, repository_id)
+        if repository is None:
+            raise HTTPException(status_code=404, detail="Repository not found.")
+        architecture_request = _build_architecture_generation_request(
+            repository,
+            branch=branch or repository.default_branch,
+            target_folders=target_folders or ",".join(repository.target_folders),
+            output_path=output_path,
+            include_diagrams=include_diagrams,
+            reuse_existing_docs=reuse_existing_docs,
+        )
+    run_id = _create_run_record(
+        repository_id,
+        "/generate-architecture-docs",
+        admin_user,
+        architecture_request.model_dump(exclude={"token"}),
+    )
+    enqueue_run(run_id, "/generate-architecture-docs", architecture_request.model_dump())
+    return _redirect(f"/admin/runs/{run_id}", request)
+
+
+@router.post("/runs/{run_id}/approve-architecture-docs", response_class=HTMLResponse)
+async def trigger_approve_architecture_docs(
+    run_id: int,
+    request: Request,
+    admin_user: str = Depends(require_admin),
+    _: None = Depends(verify_csrf),
+    overwrite_existing: bool = Form(default=False),
+    approval_note: str = Form(default=""),
+) -> Response:
+    with SessionLocal() as session:
+        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        run = session.scalars(stmt).first()
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found.")
+        if run.endpoint != "/generate-architecture-docs" or run.repository is None:
+            raise HTTPException(status_code=422, detail="This run cannot be approved.")
+        result_payload = _json_loads(run.result_payload)
+        if not result_payload or not result_payload.get("draft_id"):
+            raise HTTPException(status_code=422, detail="No architecture draft is available to approve.")
+        repository = run.repository
+        approval_request = ArchitectureApprovalRequest(
+            provider=repository.provider,
+            repo_url=repository.repo_url,
+            token=decrypt_token(repository.encrypted_token),
+            branch=run.source_branch or repository.default_branch,
+            draft_id=result_payload["draft_id"],
+            output_path=result_payload.get("proposed_output_path", DEFAULT_ARCHITECTURE_OUTPUT_PATH),
+            overwrite_existing=overwrite_existing,
+            approval_note=approval_note or None,
+        )
+        repository_id = repository.id
+    new_run_id = _create_run_record(
+        repository_id,
+        "/approve-architecture-docs",
+        admin_user,
+        approval_request.model_dump(exclude={"token"}),
+    )
+    enqueue_run(new_run_id, "/approve-architecture-docs", approval_request.model_dump())
+    return _redirect(f"/admin/runs/{new_run_id}", request)
 
 
 @router.get("/runs", response_class=HTMLResponse)

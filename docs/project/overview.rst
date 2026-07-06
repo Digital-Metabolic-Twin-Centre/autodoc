@@ -28,3 +28,16 @@ incomplete, outdated, or postponed because it takes time to produce and maintain
 By automating repository inspection, highlighting documentation gaps, and
 preparing a publishable documentation scaffold, Auto Doc helps teams improve
 clarity, maintainability, onboarding, and long-term project knowledge sharing.
+
+Architecture documentation workflow
+------------------------------------
+
+In addition to docstring generation, Auto Doc can analyse a repository and produce a
+reviewable architecture documentation draft covering project overview, entry points,
+services, routers, modules, dependencies, data flow, background jobs, database models,
+configuration, environment variables, authentication flow, API endpoints, diagrams,
+repository structure, and technology stack. Observed facts are distinguished from
+inferred relationships, and inferred findings include a confidence level. Generation
+never commits or publishes; a maintainer must explicitly approve a draft before it is
+applied to the repository's documentation tree, and existing manual documentation is
+preserved unless overwrite is confirmed.

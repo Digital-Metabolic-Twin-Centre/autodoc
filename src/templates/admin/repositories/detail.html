@@ -37,7 +37,7 @@
     </dl>
   </section>
 
-  <section class="grid gap-6 xl:grid-cols-3">
+  <section class="grid gap-6 xl:grid-cols-2">
     <form method="post" action="/admin/repositories/{{ repository.id }}/generate"
       class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -134,7 +134,42 @@
         publish run</button>
     </form>
 
-
+    <form method="post" action="/admin/repositories/{{ repository.id }}/generate-architecture-docs"
+      class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <h3 class="text-lg font-semibold">Generate architecture docs</h3>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Analyze the repository and produce a reviewable
+        architecture draft. This never commits or publishes automatically.</p>
+      <div class="mt-5 space-y-4">
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Branch</span>
+          <input name="branch" value="{{ repository.default_branch }}"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Target folders</span>
+          <textarea name="target_folders" rows="2"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800">{{ repository.target_folders|join(', ') }}</textarea>
+        </label>
+        <label class="block text-sm">
+          <span class="mb-2 block font-medium">Output path</span>
+          <input name="output_path" value="docs/project/architecture.rst"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        </label>
+        <label class="flex items-center gap-3 text-sm">
+          <input type="checkbox" name="include_diagrams" value="true" checked
+            class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600 dark:border-slate-700" />
+          <span>Include diagrams when evidence is sufficient</span>
+        </label>
+        <label class="flex items-center gap-3 text-sm">
+          <input type="checkbox" name="reuse_existing_docs" value="true" checked
+            class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600 dark:border-slate-700" />
+          <span>Use existing architecture docs as context</span>
+        </label>
+      </div>
+      <button class="mt-5 rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white">Start architecture
+        draft run</button>
+    </form>
   </section>
 
   <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">

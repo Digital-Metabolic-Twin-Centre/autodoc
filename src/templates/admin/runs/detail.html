@@ -1,8 +1,84 @@
 {% extends "admin/base.html" %}
 {% block title %}Run #{{ run.id }} | Auto Doc Admin{% endblock %}
 {% block content %}
+{% set architecture_result = (run.result_payload | from_json) if run.endpoint == '/generate-architecture-docs' and run.result_payload else None %}
 <div class="space-y-6">
   {% include "admin/partials/run_status.html" %}
+
+  {% if architecture_result %}
+  <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div>
+        <h3 class="text-lg font-semibold">Architecture draft review</h3>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Draft
+          <code>{{ architecture_result.draft_id }}</code> proposes
+          <code>{{ architecture_result.proposed_output_path }}</code>. Approval is required before this content is
+          written to the repository.</p>
+      </div>
+      <span
+        class="rounded-full px-3 py-1 text-xs font-medium {% if architecture_result.status == 'success' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200{% else %}bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200{% endif %}">
+        {{ architecture_result.status }}</span>
+    </div>
+
+    <div class="mt-5 overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="text-xs uppercase text-slate-500 dark:text-slate-400">
+          <tr>
+            <th class="pb-2 pr-4">Section</th>
+            <th class="pb-2 pr-4">Status</th>
+            <th class="pb-2 pr-4">Confidence</th>
+            <th class="pb-2 pr-4">Observed</th>
+            <th class="pb-2">Inferred</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for section in architecture_result.sections %}
+          <tr class="border-t border-slate-100 dark:border-slate-800">
+            <td class="py-2 pr-4 font-medium">{{ section.section_name|title }}</td>
+            <td class="py-2 pr-4">{{ section.status }}</td>
+            <td class="py-2 pr-4">{{ section.confidence_level }}</td>
+            <td class="py-2 pr-4">{{ section.observed_count }}</td>
+            <td class="py-2">{{ section.inferred_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if architecture_result.gaps %}
+    <div class="mt-5 space-y-2">
+      <h4 class="text-sm font-semibold">Analysis gaps</h4>
+      {% for gap in architecture_result.gaps %}
+      <div
+        class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+        <p><strong>{{ gap.section_name|title }}</strong> ({{ gap.gap_type }}): {{ gap.description }}</p>
+        {% if gap.recommended_review_action %}
+        <p class="mt-1 text-xs opacity-80">Recommended action: {{ gap.recommended_review_action }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if run.status == 'completed' %}
+    <form method="post" action="/admin/runs/{{ run.id }}/approve-architecture-docs" class="mt-6 space-y-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="flex items-center gap-3 text-sm">
+        <input type="checkbox" name="overwrite_existing" value="true"
+          class="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-600 dark:border-slate-700" />
+        <span>Overwrite existing manual content at this path if present</span>
+      </label>
+      <label class="block text-sm">
+        <span class="mb-2 block font-medium">Approval note (optional)</span>
+        <input name="approval_note"
+          class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+      </label>
+      <button class="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white">Approve and apply
+        draft</button>
+    </form>
+    {% endif %}
+  </section>
+  {% endif %}
 
   <section class="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,1fr)]">
     <div class="space-y-6">

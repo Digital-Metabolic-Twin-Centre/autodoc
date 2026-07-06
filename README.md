@@ -14,6 +14,7 @@ It is built to help teams move from under-documented source code to a usable doc
 - Creates a Sphinx docs scaffold for the target repository
 - Mirrors Python sources into `autoapi_include/` for AutoAPI output
 - Publishes built HTML documentation to `gh-pages`
+- Generates a reviewable architecture documentation draft with `/generate-architecture-docs`, without committing or publishing
 - Includes an internal admin dashboard for saved repositories, runs, logs, and workflow triggers
 
 ## Current Workflow
@@ -22,6 +23,7 @@ It is built to help teams move from under-documented source code to a usable doc
 2. Review generated documentation suggestions and scaffolded docs changes
 3. Optionally create a docstring suggestion pull request with `/suggest-python-docstrings-pr`
 4. Publish the reviewed branch to GitHub Pages with `/publish-pages`
+5. Optionally generate an architecture documentation draft with `/generate-architecture-docs` and approve it with `/approve-architecture-docs`
 
 ## Project Layout
 
@@ -33,7 +35,7 @@ It is built to help teams move from under-documented source code to a usable doc
 │   ├── config/        # App configuration and logging
 │   ├── models/        # Request models
 │   ├── router/        # Public API routes
-│   ├── services/      # Analysis, docstring PR, Sphinx, publish workflows
+│   ├── services/      # Analysis, docstring PR, Sphinx, publish, architecture workflows
 │   ├── templates/     # Jinja admin UI templates
 │   └── utils/         # Repo, docstring, and path helpers
 ├── docs/              # Sphinx docs for this project
@@ -143,6 +145,21 @@ Creates a branch and pull request with suggested Python docstring changes.
 ### `POST /publish-pages`
 
 Builds the reviewed docs branch and publishes the static output to `gh-pages`.
+
+### `POST /generate-architecture-docs`
+
+Analyzes a repository branch and produces a reviewable architecture documentation draft
+(project overview, entry points, services, routers, modules, dependencies, data flow,
+background jobs, database models, configuration, environment variables, authentication
+flow, API endpoints, diagrams, repository structure, and technology stack). Observed facts
+are distinguished from inferred relationships, and inferred findings carry a confidence
+level. This endpoint never commits or publishes to the target repository.
+
+### `POST /approve-architecture-docs`
+
+Applies a previously generated architecture draft (by `draft_id`) to the requested
+documentation path. Existing manual content at that path is preserved unless
+`overwrite_existing` is explicitly set to `true`.
 
 ## Runtime Output
 

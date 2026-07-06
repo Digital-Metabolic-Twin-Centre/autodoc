@@ -45,6 +45,8 @@ from utils.git_utils import (
     download_github_branch_snapshot,
     ensure_github_branch,
     extract_repo_path,
+    fetch_content_from_github,
+    fetch_content_from_gitlab,
     publish_local_directory_to_github_branch,
     request_github_pages_build,
 )
@@ -1811,3 +1813,169 @@ def trigger_gitlab_pipeline(repo_url: str, branch: str, token: str, variables: d
     except Exception as e:
         logger.error(f"Exception while triggering pipeline: {e}")
         return False
+
+
+def _fetch_existing_doc_text(
+    repo_path: str,
+    branch: str,
+    file_path: str,
+    token: str,
+    provider: str,
+) -> str | None:
+    """
+    Fetches the raw text of an existing repository document, if any.
+    """
+    normalized_provider = provider.lower()
+    if normalized_provider == "github":
+        return fetch_content_from_github(repo_path, branch, file_path, token)
+    if normalized_provider == "gitlab":
+        return fetch_content_from_gitlab(repo_path, branch, file_path, token)
+    return None
+
+
+def _toctree_entry_from_output_path(output_path: str) -> str:
+    """
+    Converts a docs output path into a toctree entry relative to the docs source directory.
+    """
+    docs_prefix = f"{DOCS_SRC}/"
+    entry = output_path[len(docs_prefix) :] if output_path.startswith(docs_prefix) else output_path
+    if entry.endswith(".rst"):
+        entry = entry[: -len(".rst")]
+    return entry
+
+
+def detect_navigation_conflict(
+    existing_index_content: str | None,
+    toctree_entry: str,
+) -> tuple[bool, str | None]:
+    """
+    Detects whether an existing ``index.rst`` already references a conflicting entry.
+
+    A conflict exists when a toctree entry with the same leaf page name already points
+    somewhere other than the proposed architecture doc location.
+
+    Args:
+        existing_index_content (str | None): Current contents of ``index.rst``, if known.
+        toctree_entry (str): Proposed toctree entry for the architecture draft.
+
+    Returns:
+        tuple[bool, str | None]: Whether a conflict was found, and the conflicting line.
+    """
+    if not existing_index_content:
+        return False, None
+    if toctree_entry in existing_index_content:
+        return False, None
+    leaf_name = toctree_entry.rsplit("/", 1)[-1]
+    for line in existing_index_content.splitlines():
+        stripped = line.strip()
+        if stripped == leaf_name or stripped.endswith(f"/{leaf_name}"):
+            return True, stripped
+    return False, None
+
+
+def propose_architecture_navigation(
+    repo_path: str,
+    branch: str,
+    token: str,
+    provider: str,
+    output_path: str,
+) -> dict:
+    """
+    Proposes where a generated architecture draft should be linked in the Sphinx navigation.
+
+    Args:
+        repo_path (str): Repository path (e.g., 'user/repo').
+        branch (str): Branch to inspect for the existing ``index.rst``.
+        token (str): Access token used for the read-only lookup.
+        provider (str): Git provider ('github' or 'gitlab').
+        output_path (str): Proposed architecture documentation output path.
+
+    Returns:
+        dict: Navigation placement proposal including any detected conflict.
+    """
+    index_path = f"{DOCS_SRC}/index.rst"
+    toctree_entry = _toctree_entry_from_output_path(output_path)
+    existing_index = _fetch_existing_doc_text(repo_path, branch, index_path, token, provider)
+    already_referenced = bool(existing_index and toctree_entry in existing_index)
+    conflict, conflicting_entry = detect_navigation_conflict(existing_index, toctree_entry)
+    return {
+        "index_path": index_path,
+        "toctree_entry": toctree_entry,
+        "already_referenced": already_referenced,
+        "conflict": conflict,
+        "conflicting_entry": conflicting_entry,
+    }
+
+
+def _insert_toctree_entry(index_content: str, toctree_entry: str) -> str:
+    """
+    Inserts a new entry into the first toctree directive found in ``index.rst`` content.
+    """
+    lines = index_content.splitlines()
+    for line_index, line in enumerate(lines):
+        if line.strip().startswith(".. toctree::"):
+            insert_at = line_index + 1
+            while insert_at < len(lines) and (lines[insert_at].strip().startswith(":") or not lines[insert_at].strip()):
+                insert_at += 1
+            lines.insert(insert_at, f"   {toctree_entry}")
+            return "\n".join(lines) + "\n"
+    return index_content.rstrip() + f"\n\n.. toctree::\n   :maxdepth: 1\n\n   {toctree_entry}\n"
+
+
+def update_sphinx_navigation_for_architecture(
+    repo_path: str,
+    branch: str,
+    token: str,
+    provider: str,
+    navigation_update: dict,
+) -> bool:
+    """
+    Applies a proposed navigation update for an approved architecture document.
+
+    Args:
+        repo_path (str): Repository path (e.g., 'user/repo').
+        branch (str): Branch receiving the update.
+        token (str): Access token used for the write operation.
+        provider (str): Git provider ('github' or 'gitlab').
+        navigation_update (dict): Proposal produced by ``propose_architecture_navigation``.
+
+    Returns:
+        bool: True if the navigation is already correct or was updated successfully.
+    """
+    if navigation_update.get("already_referenced"):
+        return True
+    index_path = navigation_update.get("index_path", f"{DOCS_SRC}/index.rst")
+    toctree_entry = navigation_update["toctree_entry"]
+    existing_index = _fetch_existing_doc_text(repo_path, branch, index_path, token, provider)
+    if existing_index is None:
+        logger.warning("No existing index.rst found at %s; skipping navigation update.", index_path)
+        return False
+    if toctree_entry in existing_index:
+        return True
+    updated_index = _insert_toctree_entry(existing_index, toctree_entry)
+    return create_a_file(repo_path, branch, index_path, updated_index, token, provider)
+
+
+def apply_approved_architecture_document(
+    repo_path: str,
+    branch: str,
+    token: str,
+    provider: str,
+    output_path: str,
+    content: str,
+) -> bool:
+    """
+    Writes an approved architecture document to the target repository documentation path.
+
+    Args:
+        repo_path (str): Repository path (e.g., 'user/repo').
+        branch (str): Branch receiving the approved document.
+        token (str): Access token used for the write operation.
+        provider (str): Git provider ('github' or 'gitlab').
+        output_path (str): Documentation path to create or update.
+        content (str): Approved architecture document content.
+
+    Returns:
+        bool: True if the write succeeded, False otherwise.
+    """
+    return create_a_file(repo_path, branch, output_path, content, token, provider)

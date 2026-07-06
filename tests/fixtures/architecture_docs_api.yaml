@@ -1,0 +1,220 @@
+openapi: 3.1.0
+info:
+  title: Architecture Documentation API
+  version: 0.1.0
+  description: Contracts for generating and approving reviewable architecture documentation drafts.
+paths:
+  /generate-architecture-docs:
+    post:
+      summary: Generate a reviewable architecture documentation draft
+      operationId: generateArchitectureDocs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArchitectureGenerationRequest"
+      responses:
+        "200":
+          description: Draft generated or partial draft available for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchitectureGenerationResponse"
+        "400":
+          description: Required request fields are missing or invalid
+        "403":
+          description: Repository access is denied
+        "422":
+          description: Repository could not be analyzed enough to create a useful draft
+        "500":
+          description: Unexpected generation failure
+  /approve-architecture-docs:
+    post:
+      summary: Approve a generated architecture draft for repository documentation update
+      operationId: approveArchitectureDocs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArchitectureApprovalRequest"
+      responses:
+        "200":
+          description: Approved documentation update applied or prepared successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ArchitectureApprovalResponse"
+        "400":
+          description: Required approval fields are missing or invalid
+        "403":
+          description: Repository write access is denied
+        "409":
+          description: Existing manual content requires overwrite confirmation
+        "422":
+          description: Draft cannot be approved in its current state
+        "500":
+          description: Unexpected approval failure
+components:
+  schemas:
+    ArchitectureGenerationRequest:
+      type: object
+      required:
+        - provider
+        - repo_url
+        - token
+        - branch
+      properties:
+        provider:
+          type: string
+          enum: [github, gitlab]
+        repo_url:
+          type: string
+        token:
+          type: string
+          writeOnly: true
+        branch:
+          type: string
+        target_folders:
+          type: array
+          items:
+            type: string
+          default: []
+        output_path:
+          type: string
+          default: docs/project/architecture.rst
+        include_diagrams:
+          type: boolean
+          default: true
+        reuse_existing_docs:
+          type: boolean
+          default: true
+        model:
+          type: string
+          nullable: true
+    ArchitectureGenerationResponse:
+      type: object
+      required:
+        - status
+        - draft_id
+        - draft_path
+        - proposed_output_path
+        - sections
+        - gaps
+        - approval_required
+      properties:
+        status:
+          type: string
+          enum: [success, partial]
+        draft_id:
+          type: string
+        draft_path:
+          type: string
+        proposed_output_path:
+          type: string
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/ArchitectureSectionSummary"
+        gaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalysisGap"
+        diagram_paths:
+          type: array
+          items:
+            type: string
+        approval_required:
+          type: boolean
+          const: true
+        artifact_dir:
+          type: string
+        log_path:
+          type: string
+          nullable: true
+    ArchitectureApprovalRequest:
+      type: object
+      required:
+        - provider
+        - repo_url
+        - token
+        - branch
+        - draft_id
+        - output_path
+        - overwrite_existing
+      properties:
+        provider:
+          type: string
+          enum: [github, gitlab]
+        repo_url:
+          type: string
+        token:
+          type: string
+          writeOnly: true
+        branch:
+          type: string
+        draft_id:
+          type: string
+        output_path:
+          type: string
+        overwrite_existing:
+          type: boolean
+        approval_note:
+          type: string
+          nullable: true
+    ArchitectureApprovalResponse:
+      type: object
+      required:
+        - status
+        - draft_id
+        - output_path
+      properties:
+        status:
+          type: string
+          enum: [approved, prepared]
+        draft_id:
+          type: string
+        output_path:
+          type: string
+        commit_url:
+          type: string
+          nullable: true
+        branch:
+          type: string
+    ArchitectureSectionSummary:
+      type: object
+      required:
+        - section_name
+        - status
+      properties:
+        section_name:
+          type: string
+        status:
+          type: string
+          enum: [populated, partial, unavailable]
+        confidence_level:
+          type: string
+          enum: [high, medium, low, not_applicable]
+        observed_count:
+          type: integer
+          minimum: 0
+        inferred_count:
+          type: integer
+          minimum: 0
+    AnalysisGap:
+      type: object
+      required:
+        - section_name
+        - gap_type
+        - description
+      properties:
+        section_name:
+          type: string
+        gap_type:
+          type: string
+          enum: [missing, ambiguous, inaccessible, unsupported, too_large]
+        description:
+          type: string
+        recommended_review_action:
+          type: string

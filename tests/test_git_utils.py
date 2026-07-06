@@ -328,3 +328,41 @@ def test_create_github_pull_request_raises_permission_error(monkeypatch):
             "Body",
             "secret",
         )
+
+
+def test_architecture_draft_generation_never_calls_provider_write_helper(monkeypatch):
+    """Regression guard: architecture generation is read-only and must never mutate the repo."""
+    from contextlib import contextmanager
+    from pathlib import Path
+
+    from services.architecture_services import generate_architecture_draft
+
+    fixture_repo_dir = str(Path(__file__).parent / "fixtures" / "architecture_repo")
+
+    @contextmanager
+    def _fake_clone(repo_url, token, branch, provider):
+        yield fixture_repo_dir
+
+    def _fail_if_called(*args, **kwargs):
+        raise AssertionError("architecture generation must never write to the target repository")
+
+    monkeypatch.setattr("services.architecture_services.clone_repository", _fake_clone)
+    monkeypatch.setattr("services.architecture_services.fetch_content_from_github", lambda *a, **k: None)
+    monkeypatch.setattr("services.architecture_services.fetch_content_from_gitlab", lambda *a, **k: None)
+    monkeypatch.setattr("services.sphinx_services.fetch_content_from_github", lambda *a, **k: None)
+    monkeypatch.setattr("services.sphinx_services.fetch_content_from_gitlab", lambda *a, **k: None)
+    monkeypatch.setattr("utils.git_utils.create_a_file", _fail_if_called)
+
+    result = generate_architecture_draft(
+        provider="github",
+        repo_url="octo-org/widgets",
+        token="secret",
+        branch="main",
+        target_folders=[],
+        output_path="docs/project/architecture.rst",
+        include_diagrams=True,
+        reuse_existing_docs=True,
+    )
+
+    assert result["draft_id"]
+    assert result["status"] in {"success", "partial"}

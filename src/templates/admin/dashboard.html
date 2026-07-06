@@ -20,7 +20,7 @@
     </div>
   </section>
 
-  <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+  <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
     <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
       <p class="text-sm text-slate-500 dark:text-slate-400">Total repositories</p>
       <p class="mt-3 text-3xl font-semibold">{{ stats.total_repositories }}</p>
@@ -36,6 +36,10 @@
     <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
       <p class="text-sm text-slate-500 dark:text-slate-400">Failed runs</p>
       <p class="mt-3 text-3xl font-semibold text-rose-600 dark:text-rose-300">{{ stats.failed_runs }}</p>
+    </div>
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+      <p class="text-sm text-slate-500 dark:text-slate-400">Architecture drafts generated</p>
+      <p class="mt-3 text-3xl font-semibold text-teal-600 dark:text-teal-300">{{ stats.architecture_drafts_generated }}</p>
     </div>
   </section>
 
