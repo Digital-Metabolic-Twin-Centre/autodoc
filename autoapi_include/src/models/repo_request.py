@@ -1,6 +1,8 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from utils.output_paths import validate_architecture_output_path
 
 
 class RepoRequest(BaseModel):
@@ -78,3 +80,77 @@ class DocstringPullRequestRequest(BaseModel):
     suggestion_branch: Optional[str] = None
     title: str = "Add suggested docstrings"
     max_docstrings: int = 50
+
+
+class ArchitectureGenerationRequest(BaseModel):
+    """
+    Represents a request to analyze a repository and produce a reviewable
+    architecture documentation draft. Generation never commits or publishes.
+
+        Args:
+            provider (str): The repository provider, either 'github' or 'gitlab'.
+            repo_url (str): The URL of the repository.
+            token (str): Authentication token used for repository read access.
+            branch (str): The branch of the repository to analyze.
+            target_folders (list[str], optional): Optional folder filters, defaults to empty.
+            output_path (str, optional): Preferred documentation path for the approved page.
+            include_diagrams (bool, optional): Whether diagrams should be generated when
+            evidence is sufficient, defaults to True.
+            reuse_existing_docs (bool, optional): Whether existing architecture docs should be
+            used as context for regeneration, defaults to True.
+            model (Optional[str], optional): Optional generation model override.
+
+        Returns:
+            None: This class does not return a value.
+
+    """
+
+    provider: str
+    repo_url: str
+    token: str
+    branch: str
+    target_folders: list[str] = Field(default_factory=list)
+    output_path: str = "docs/project/architecture.rst"
+    include_diagrams: bool = True
+    reuse_existing_docs: bool = True
+    model: Optional[str] = None
+
+    @field_validator("output_path")
+    @classmethod
+    def _validate_output_path(cls, value: str) -> str:
+        return validate_architecture_output_path(value)
+
+
+class ArchitectureApprovalRequest(BaseModel):
+    """
+    Represents explicit maintainer approval to apply a generated architecture draft
+    to the target repository documentation workflow.
+
+        Args:
+            provider (str): The repository provider, either 'github' or 'gitlab'.
+            repo_url (str): The URL of the repository.
+            token (str): Authentication token used for repository write access.
+            branch (str): The branch receiving the approved documentation update.
+            draft_id (str): Identifier for the generated architecture draft artifact.
+            output_path (str): Documentation path to update.
+            overwrite_existing (bool): Whether approved manual edits may be replaced.
+            approval_note (Optional[str], optional): Optional reviewer note.
+
+        Returns:
+            None: This class does not return a value.
+
+    """
+
+    provider: str
+    repo_url: str
+    token: str
+    branch: str
+    draft_id: str
+    output_path: str
+    overwrite_existing: bool
+    approval_note: Optional[str] = None
+
+    @field_validator("output_path")
+    @classmethod
+    def _validate_output_path(cls, value: str) -> str:
+        return validate_architecture_output_path(value)
