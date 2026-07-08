@@ -14,7 +14,7 @@ def test_analyse_docstring_in_module_returns_python_module_docstring():
 
 def test_analyse_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch):
     monkeypatch.setattr(
-        "utils.docstring_validation.generate_docstring_with_openai",
+        "utils.docstring_validation.generate_docstring",
         lambda code, language, model=None: None,
     )
 
@@ -56,7 +56,7 @@ def test_analyse_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(monk
     captured = {}
 
     monkeypatch.setattr(
-        "utils.docstring_validation.generate_docstring_with_openai",
+        "utils.docstring_validation.generate_docstring",
         lambda code, language, model=None: (captured.update({"model": model}) or "Run the task."),
     )
     suggested_file = tmp_path / "logs" / "app_20260428_000000" / "github" / "owner__repo" / "suggested_docstring.txt"
@@ -83,10 +83,10 @@ def test_analyse_docstring_in_blocks_writes_suggestions_to_repo_scoped_file(monk
 
 def test_analyse_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(monkeypatch):
     def fail_if_called(code, language, model=None):
-        raise AssertionError("OpenAI should not be called when a fuzzy cached suggestion exists")
+        raise AssertionError("AI generation should not be called when a fuzzy cached suggestion exists")
 
     monkeypatch.setattr(
-        "utils.docstring_validation.generate_docstring_with_openai",
+        "utils.docstring_validation.generate_docstring",
         fail_if_called,
     )
 
@@ -112,9 +112,9 @@ def test_analyse_docstring_in_blocks_reuses_cached_suggestion_when_line_changes(
 
 def test_analyse_docstring_in_blocks_logs_cache_reuse(monkeypatch, caplog):
     monkeypatch.setattr(
-        "utils.docstring_validation.generate_docstring_with_openai",
+        "utils.docstring_validation.generate_docstring",
         lambda code, language, model=None: (_ for _ in ()).throw(
-            AssertionError("OpenAI should not be called for cached suggestions")
+            AssertionError("AI generation should not be called for cached suggestions")
         ),
     )
 

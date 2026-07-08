@@ -13,7 +13,7 @@ Requirements:
 
 - Python 3.11 or newer
 - ``uv``
-- an OpenAI API key
+- an OpenAI API key, or an authenticated ``codex``/``claude`` CLI
 - a GitHub or GitLab access token for the target repository
 - Docker, if you want to run the service in a container
 
@@ -29,10 +29,23 @@ Create a ``.env`` file in the project root:
 
 .. code-block:: text
 
+   # Optional when using OpenAI directly.
    OPENAI_API_KEY=your-openai-api-key
+
+   # Optional AI backend selection: openai, codex, or claude.
+   AUTODOC_AI_PROVIDER=codex
+   AUTODOC_AI_CLI_PROVIDER=codex
+   AUTODOC_AI_MODEL=your-cli-supported-model
 
    # Optional, only needed if Auto Doc should trigger GitLab pipelines.
    CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
+
+If ``OPENAI_API_KEY`` is not set, Auto Doc uses the configured CLI provider for
+docstring generation. The default fallback is ``codex``. Saved repository model
+values can also use prefixes such as ``codex:your-supported-model`` or
+``claude:sonnet``.
+For CLI backends, leave the model unset unless you know the model name is
+supported by your authenticated CLI account.
 
 Run the application locally
 ---------------------------

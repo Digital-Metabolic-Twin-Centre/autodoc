@@ -6,10 +6,11 @@ Summary
 
 Auto Doc is a FastAPI service that analyses GitHub and GitLab repositories,
 detects missing or incomplete documentation, generates docstring suggestions
-with OpenAI, scaffolds a Sphinx documentation site, and publishes reviewed HTML
-to GitHub Pages. The project is designed to reduce the manual effort involved
-in documenting software systems by combining repository analysis, AI-assisted
-documentation generation, and automated documentation publishing in one workflow.
+with OpenAI, Codex CLI, or Claude CLI, scaffolds a Sphinx documentation site,
+and publishes reviewed HTML to GitHub Pages. The project is designed to reduce
+the manual effort involved in documenting software systems by combining
+repository analysis, AI-assisted documentation generation, and automated
+documentation publishing in one workflow.
 
 Scope
 -----

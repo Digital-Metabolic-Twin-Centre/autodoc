@@ -32,8 +32,9 @@
         <input name="default_branch" required value="{{ repository.default_branch if repository else 'main' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
       </label>
       <label class="block text-sm">
-        <span class="mb-2 block font-medium">Preferred OpenAI model</span>
+        <span class="mb-2 block font-medium">Preferred AI model</span>
         <input name="preferred_model" value="{{ repository.preferred_model if repository else 'gpt-4o-mini' }}" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-shell-800" />
+        <span class="mt-2 block text-xs text-slate-500 dark:text-slate-400">Use prefixes like codex:your-supported-model or claude:sonnet to select a CLI backend.</span>
       </label>
       <label class="block text-sm md:col-span-2">
         <span class="mb-2 block font-medium">Target folders</span>

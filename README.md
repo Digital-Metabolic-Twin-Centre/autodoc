@@ -1,6 +1,6 @@
 # Auto Doc
 
-Auto Doc is a FastAPI service that analyzes GitHub and GitLab repositories, identifies missing or weak documentation, generates docstring suggestions with OpenAI, scaffolds a Sphinx documentation site, and publishes reviewed output to GitHub Pages.
+Auto Doc is a FastAPI service that analyzes GitHub and GitLab repositories, identifies missing or weak documentation, generates docstring suggestions with OpenAI or local AI CLIs, scaffolds a Sphinx documentation site, and publishes reviewed output to GitHub Pages.
 
 It is built to help teams move from under-documented source code to a usable docs site with less manual setup and less repetitive review work.
 
@@ -9,7 +9,7 @@ It is built to help teams move from under-documented source code to a usable doc
 - Connects to GitHub and GitLab repositories through provider APIs
 - Scans Python, JavaScript, TypeScript, and MATLAB source files
 - Detects documentation coverage at module, class, and function level
-- Generates missing Python docstring suggestions with OpenAI
+- Generates missing Python docstring suggestions with OpenAI, Codex CLI, or Claude CLI
 - Reuses previous suggestion artifacts when `reuse_doc=true`
 - Creates a Sphinx docs scaffold for the target repository
 - Mirrors Python sources into `autoapi_include/` for AutoAPI output
@@ -57,7 +57,7 @@ For a closer look at the internal structure, see the [Container diagram](diagram
 ## Stack
 
 - FastAPI
-- OpenAI API
+- OpenAI API, Codex CLI, or Claude CLI for AI-generated suggestions
 - Sphinx + AutoAPI
 - Jinja2 + HTMX
 - SQLite + SQLAlchemy
@@ -68,7 +68,7 @@ For a closer look at the internal structure, see the [Container diagram](diagram
 
 - Python 3.11+
 - `uv`
-- OpenAI API key
+- OpenAI API key, or an authenticated `codex`/`claude` CLI
 - GitHub or GitLab token for the target repository
 - Docker, if you want to run it in a container
 
@@ -77,16 +77,34 @@ For a closer look at the internal structure, see the [Container diagram](diagram
 Create a `.env` file in the project root:
 
 ```env
-OPENAI_API_KEY=your-openai-api-key
 ADMIN_PASSWORD=choose-a-strong-password
 ADMIN_SECRET_KEY=choose-a-long-random-secret
 
 # Optional
+# OPENAI_API_KEY=your-openai-api-key
+# AUTODOC_AI_PROVIDER=codex        # openai, codex, or claude
+# AUTODOC_AI_CLI_PROVIDER=codex    # fallback when OPENAI_API_KEY is not set
+# AUTODOC_AI_MODEL=your-cli-supported-model
+# AUTODOC_CODEX_COMMAND=codex exec --skip-git-repo-check -
+# AUTODOC_CLAUDE_COMMAND=claude -p --output-format text
+# AUTODOC_AI_CLI_TIMEOUT=120
 # ADMIN_USERNAME=admin
 # ADMIN_SQLITE_PATH=/app/data/admin.db
 # ADMIN_DEFAULT_MODEL=gpt-4o-mini
 # CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 ```
+
+### AI Provider Selection
+
+Docstring generation chooses an AI backend in this order:
+
+1. A model prefix in the request or saved repository, such as `codex:your-supported-model`, `claude:sonnet`, or `openai:gpt-4o-mini`.
+2. `AUTODOC_AI_PROVIDER`, when set to `openai`, `codex`, or `claude`.
+3. OpenAI when `OPENAI_API_KEY` is present.
+4. The CLI fallback from `AUTODOC_AI_CLI_PROVIDER`, defaulting to `codex`.
+
+Repository access still uses GitHub/GitLab tokens. The Codex and Claude CLI providers only replace the AI text-generation section.
+For CLI backends, leave the model unset unless you know the model name is supported by your authenticated CLI account.
 
 ## Local Setup
 
