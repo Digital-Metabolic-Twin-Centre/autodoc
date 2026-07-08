@@ -1,6 +1,6 @@
 [project]
 name = "autodoc"
-version = "0.6.1"
+version = "0.7.0b1"
 description = "Automated documentation generator for code repositories."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -13,7 +13,7 @@ dependencies = [
     "pydantic==2.11.7",
     "python-dotenv==1.2.2",
     "python-gitlab==6.2.0",
-    "python-multipart==0.0.29",
+    "python-multipart>=0.0.32",
     "requests==2.33.0",
     "sqlalchemy>=2.0.49",
     "tqdm==4.67.1",
