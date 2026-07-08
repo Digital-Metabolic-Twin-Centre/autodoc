@@ -29,3 +29,5 @@ Module Contents
 
 .. py:function:: init_db() -> None
 
+.. py:function:: scrub_sensitive_run_payloads() -> int
+

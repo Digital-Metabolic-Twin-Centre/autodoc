@@ -5,8 +5,8 @@ Objectives
    and GitLab and gather enough structural information to support automated
    documentation workflows.
 2. Detect missing or weak documentation across supported codebases and generate
-   high-quality docstring suggestions using OpenAI for Python, JavaScript,
-   TypeScript, and MATLAB projects.
+   high-quality docstring suggestions using OpenAI, Codex CLI, or Claude CLI for
+   Python, JavaScript, TypeScript, and MATLAB projects.
 3. Automate Sphinx documentation scaffolding so a repository can be turned into
    a structured documentation site with minimal manual setup.
 4. Support a review-first publishing workflow in which generated documentation

@@ -27,6 +27,14 @@ Module Contents
    :async:
 
 
+.. py:function:: generate_architecture_docs(req: models.repo_request.ArchitectureGenerationRequest)
+   :async:
+
+
+.. py:function:: approve_architecture_docs(req: models.repo_request.ArchitectureApprovalRequest)
+   :async:
+
+
 .. py:function:: publish_pages(req: models.repo_request.PublishPagesRequest)
    :async:
 

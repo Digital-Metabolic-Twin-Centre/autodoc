@@ -27,7 +27,7 @@ Module Contents
 
 .. py:function:: require_admin(request: fastapi.Request) -> str
 
-.. py:function:: ensure_csrf_token(request: fastapi.Request, response: fastapi.Response) -> str
+.. py:function:: ensure_csrf_token(request: fastapi.Request, response: fastapi.Response, csrf_token: str | None = None) -> str
 
 .. py:function:: get_or_create_csrf_token(request: fastapi.Request) -> str
 

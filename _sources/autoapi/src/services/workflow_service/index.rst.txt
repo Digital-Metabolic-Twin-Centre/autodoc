@@ -69,9 +69,19 @@ Module Contents
 
 
 
+   .. py:attribute:: draft_id
+      :type:  str | None
+      :value: None
+
+
+
 .. py:function:: execute_generate_request(req: models.repo_request.RepoRequest, progress_callback=None) -> WorkflowRunResult
 
 .. py:function:: execute_docstring_pr_request(req: models.repo_request.DocstringPullRequestRequest, progress_callback=None) -> WorkflowRunResult
 
 .. py:function:: execute_publish_request(req: models.repo_request.PublishPagesRequest, progress_callback=None) -> WorkflowRunResult
+
+.. py:function:: execute_architecture_generation_request(req: models.repo_request.ArchitectureGenerationRequest, progress_callback=None) -> WorkflowRunResult
+
+.. py:function:: execute_architecture_approval_request(req: models.repo_request.ArchitectureApprovalRequest, progress_callback=None) -> WorkflowRunResult
 

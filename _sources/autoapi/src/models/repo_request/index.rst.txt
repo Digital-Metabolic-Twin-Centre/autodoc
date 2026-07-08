@@ -169,3 +169,132 @@ Module Contents
 
 
 
+.. py:class:: ArchitectureGenerationRequest(/, **data: Any)
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+
+   Represents a request to analyze a repository and produce a reviewable
+   architecture documentation draft. Generation never commits or publishes.
+
+       Args:
+           provider (str): The repository provider, either 'github' or 'gitlab'.
+           repo_url (str): The URL of the repository.
+           token (str): Authentication token used for repository read access.
+           branch (str): The branch of the repository to analyze.
+           target_folders (list[str], optional): Optional folder filters, defaults to empty.
+           output_path (str, optional): Preferred documentation path for the approved page.
+           include_diagrams (bool, optional): Whether diagrams should be generated when
+           evidence is sufficient, defaults to True.
+           reuse_existing_docs (bool, optional): Whether existing architecture docs should be
+           used as context for regeneration, defaults to True.
+           model (Optional[str], optional): Optional generation model override.
+
+       Returns:
+           None: This class does not return a value.
+
+
+
+   .. py:attribute:: provider
+      :type:  str
+
+
+   .. py:attribute:: repo_url
+      :type:  str
+
+
+   .. py:attribute:: token
+      :type:  str
+
+
+   .. py:attribute:: branch
+      :type:  str
+
+
+   .. py:attribute:: target_folders
+      :type:  list[str]
+      :value: None
+
+
+
+   .. py:attribute:: output_path
+      :type:  str
+      :value: 'docs/project/architecture.rst'
+
+
+
+   .. py:attribute:: include_diagrams
+      :type:  bool
+      :value: True
+
+
+
+   .. py:attribute:: reuse_existing_docs
+      :type:  bool
+      :value: True
+
+
+
+   .. py:attribute:: model
+      :type:  Optional[str]
+      :value: None
+
+
+
+.. py:class:: ArchitectureApprovalRequest(/, **data: Any)
+
+   Bases: :py:obj:`pydantic.BaseModel`
+
+
+   Represents explicit maintainer approval to apply a generated architecture draft
+   to the target repository documentation workflow.
+
+       Args:
+           provider (str): The repository provider, either 'github' or 'gitlab'.
+           repo_url (str): The URL of the repository.
+           token (str): Authentication token used for repository write access.
+           branch (str): The branch receiving the approved documentation update.
+           draft_id (str): Identifier for the generated architecture draft artifact.
+           output_path (str): Documentation path to update.
+           overwrite_existing (bool): Whether approved manual edits may be replaced.
+           approval_note (Optional[str], optional): Optional reviewer note.
+
+       Returns:
+           None: This class does not return a value.
+
+
+
+   .. py:attribute:: provider
+      :type:  str
+
+
+   .. py:attribute:: repo_url
+      :type:  str
+
+
+   .. py:attribute:: token
+      :type:  str
+
+
+   .. py:attribute:: branch
+      :type:  str
+
+
+   .. py:attribute:: draft_id
+      :type:  str
+
+
+   .. py:attribute:: output_path
+      :type:  str
+
+
+   .. py:attribute:: overwrite_existing
+      :type:  bool
+
+
+   .. py:attribute:: approval_note
+      :type:  Optional[str]
+      :value: None
+
+
+

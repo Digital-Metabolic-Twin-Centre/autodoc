@@ -15,8 +15,9 @@ Completed and active capabilities
 2. Repository access has been integrated for both GitHub and GitLab.
 3. The system can scan Python, JavaScript, TypeScript, and MATLAB files and
    assess documentation coverage across supported source code blocks.
-4. OpenAI-powered docstring suggestion generation is available for missing
-   documentation, with support for reuse of previously generated suggestions.
+4. AI-powered docstring suggestion generation is available for missing
+   documentation through OpenAI, Codex CLI, or Claude CLI, with support for reuse
+   of previously generated suggestions.
 5. A Sphinx documentation scaffold is generated automatically for reviewed
    repositories.
 6. AutoAPI integration is supported through the ``autoapi_include/`` workflow,

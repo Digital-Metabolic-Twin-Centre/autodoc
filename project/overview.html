@@ -51,6 +51,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#scope">Scope</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#project-value">Project value</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#architecture-documentation-workflow">Architecture documentation workflow</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="objectives.html">Objectives</a><ul>
@@ -82,6 +83,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/database/index.html#src.admin.database.engine"><code class="docutils literal notranslate"><span class="pre">engine</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/database/index.html#src.admin.database.SessionLocal"><code class="docutils literal notranslate"><span class="pre">SessionLocal</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/database/index.html#src.admin.database.init_db"><code class="docutils literal notranslate"><span class="pre">init_db()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/database/index.html#src.admin.database.scrub_sensitive_run_payloads"><code class="docutils literal notranslate"><span class="pre">scrub_sensitive_run_payloads()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -120,6 +122,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.templates"><code class="docutils literal notranslate"><span class="pre">templates</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.router"><code class="docutils literal notranslate"><span class="pre">router</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.ENDPOINT_LABELS"><code class="docutils literal notranslate"><span class="pre">ENDPOINT_LABELS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.DEFAULT_ARCHITECTURE_OUTPUT_PATH"><code class="docutils literal notranslate"><span class="pre">DEFAULT_ARCHITECTURE_OUTPUT_PATH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.SENSITIVE_PAYLOAD_FIELDS"><code class="docutils literal notranslate"><span class="pre">SENSITIVE_PAYLOAD_FIELDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.TOKEN_REQUIRED_ENDPOINTS"><code class="docutils literal notranslate"><span class="pre">TOKEN_REQUIRED_ENDPOINTS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.login_page"><code class="docutils literal notranslate"><span class="pre">login_page()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.login_submit"><code class="docutils literal notranslate"><span class="pre">login_submit()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.logout"><code class="docutils literal notranslate"><span class="pre">logout()</span></code></a></li>
@@ -135,6 +140,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.trigger_generate"><code class="docutils literal notranslate"><span class="pre">trigger_generate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.trigger_publish"><code class="docutils literal notranslate"><span class="pre">trigger_publish()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.trigger_suggest_pr"><code class="docutils literal notranslate"><span class="pre">trigger_suggest_pr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.trigger_generate_architecture_docs"><code class="docutils literal notranslate"><span class="pre">trigger_generate_architecture_docs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.trigger_approve_architecture_docs"><code class="docutils literal notranslate"><span class="pre">trigger_approve_architecture_docs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.runs_page"><code class="docutils literal notranslate"><span class="pre">runs_page()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.clear_runs"><code class="docutils literal notranslate"><span class="pre">clear_runs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/admin/router/index.html#src.admin.router.run_detail"><code class="docutils literal notranslate"><span class="pre">run_detail()</span></code></a></li>
@@ -186,6 +193,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest"><code class="docutils literal notranslate"><span class="pre">RepoRequest</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/models/repo_request/index.html#src.models.repo_request.PublishPagesRequest"><code class="docutils literal notranslate"><span class="pre">PublishPagesRequest</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest"><code class="docutils literal notranslate"><span class="pre">DocstringPullRequestRequest</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest"><code class="docutils literal notranslate"><span class="pre">ArchitectureGenerationRequest</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest"><code class="docutils literal notranslate"><span class="pre">ArchitectureApprovalRequest</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -197,7 +206,29 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/router/router/index.html#src.router.router.root"><code class="docutils literal notranslate"><span class="pre">root()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/router/router/index.html#src.router.router.generate_docs"><code class="docutils literal notranslate"><span class="pre">generate_docs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/router/router/index.html#src.router.router.suggest_python_docstrings_pr"><code class="docutils literal notranslate"><span class="pre">suggest_python_docstrings_pr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/router/router/index.html#src.router.router.generate_architecture_docs"><code class="docutils literal notranslate"><span class="pre">generate_architecture_docs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/router/router/index.html#src.router.router.approve_architecture_docs"><code class="docutils literal notranslate"><span class="pre">approve_architecture_docs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/router/router/index.html#src.router.router.publish_pages"><code class="docutils literal notranslate"><span class="pre">publish_pages()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html">src.services.architecture_services</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#module-contents">Module Contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.SECTION_NAMES"><code class="docutils literal notranslate"><span class="pre">SECTION_NAMES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.MANUAL_EDIT_MARKER"><code class="docutils literal notranslate"><span class="pre">MANUAL_EDIT_MARKER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureAnalysisError"><code class="docutils literal notranslate"><span class="pre">ArchitectureAnalysisError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureApprovalError"><code class="docutils literal notranslate"><span class="pre">ArchitectureApprovalError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureOverwriteRequiredError"><code class="docutils literal notranslate"><span class="pre">ArchitectureOverwriteRequiredError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding"><code class="docutils literal notranslate"><span class="pre">ArchitectureFinding</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap"><code class="docutils literal notranslate"><span class="pre">AnalysisGap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection"><code class="docutils literal notranslate"><span class="pre">ArchitectureSection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.generate_draft_id"><code class="docutils literal notranslate"><span class="pre">generate_draft_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.architecture_draft_paths"><code class="docutils literal notranslate"><span class="pre">architecture_draft_paths()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.is_autodoc_generated_content"><code class="docutils literal notranslate"><span class="pre">is_autodoc_generated_content()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.generate_architecture_draft"><code class="docutils literal notranslate"><span class="pre">generate_architecture_draft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.find_architecture_draft"><code class="docutils literal notranslate"><span class="pre">find_architecture_draft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/architecture_services/index.html#src.services.architecture_services.apply_architecture_approval"><code class="docutils literal notranslate"><span class="pre">apply_architecture_approval()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -240,6 +271,10 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.create_sphinx_setup"><code class="docutils literal notranslate"><span class="pre">create_sphinx_setup()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.publish_github_pages"><code class="docutils literal notranslate"><span class="pre">publish_github_pages()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.trigger_gitlab_pipeline"><code class="docutils literal notranslate"><span class="pre">trigger_gitlab_pipeline()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.detect_navigation_conflict"><code class="docutils literal notranslate"><span class="pre">detect_navigation_conflict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.propose_architecture_navigation"><code class="docutils literal notranslate"><span class="pre">propose_architecture_navigation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.update_sphinx_navigation_for_architecture"><code class="docutils literal notranslate"><span class="pre">update_sphinx_navigation_for_architecture()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.apply_approved_architecture_document"><code class="docutils literal notranslate"><span class="pre">apply_approved_architecture_document()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -250,6 +285,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_generate_request"><code class="docutils literal notranslate"><span class="pre">execute_generate_request()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_docstring_pr_request"><code class="docutils literal notranslate"><span class="pre">execute_docstring_pr_request()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_publish_request"><code class="docutils literal notranslate"><span class="pre">execute_publish_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_architecture_generation_request"><code class="docutils literal notranslate"><span class="pre">execute_architecture_generation_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_architecture_approval_request"><code class="docutils literal notranslate"><span class="pre">execute_architecture_approval_request()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -334,6 +371,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/output_paths/index.html#src.utils.output_paths.build_repo_output_file"><code class="docutils literal notranslate"><span class="pre">build_repo_output_file()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/output_paths/index.html#src.utils.output_paths.bind_repo_run_log_dir"><code class="docutils literal notranslate"><span class="pre">bind_repo_run_log_dir()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/output_paths/index.html#src.utils.output_paths.clear_repo_output_history"><code class="docutils literal notranslate"><span class="pre">clear_repo_output_history()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/output_paths/index.html#src.utils.output_paths.validate_architecture_output_path"><code class="docutils literal notranslate"><span class="pre">validate_architecture_output_path()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/output_paths/index.html#src.utils.output_paths.find_latest_repo_run_dir"><code class="docutils literal notranslate"><span class="pre">find_latest_repo_run_dir()</span></code></a></li>
 </ul>
 </li>
@@ -390,10 +428,11 @@
 <h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
 <p>Auto Doc is a FastAPI service that analyses GitHub and GitLab repositories,
 detects missing or incomplete documentation, generates docstring suggestions
-with OpenAI, scaffolds a Sphinx documentation site, and publishes reviewed HTML
-to GitHub Pages. The project is designed to reduce the manual effort involved
-in documenting software systems by combining repository analysis, AI-assisted
-documentation generation, and automated documentation publishing in one workflow.</p>
+with OpenAI, Codex CLI, or Claude CLI, scaffolds a Sphinx documentation site,
+and publishes reviewed HTML to GitHub Pages. The project is designed to reduce
+the manual effort involved in documenting software systems by combining
+repository analysis, AI-assisted documentation generation, and automated
+documentation publishing in one workflow.</p>
 </section>
 <section id="scope">
 <h2>Scope<a class="headerlink" href="#scope" title="Link to this heading"></a></h2>
@@ -410,6 +449,18 @@ incomplete, outdated, or postponed because it takes time to produce and maintain
 By automating repository inspection, highlighting documentation gaps, and
 preparing a publishable documentation scaffold, Auto Doc helps teams improve
 clarity, maintainability, onboarding, and long-term project knowledge sharing.</p>
+</section>
+<section id="architecture-documentation-workflow">
+<h2>Architecture documentation workflow<a class="headerlink" href="#architecture-documentation-workflow" title="Link to this heading"></a></h2>
+<p>In addition to docstring generation, Auto Doc can analyse a repository and produce a
+reviewable architecture documentation draft covering project overview, entry points,
+services, routers, modules, dependencies, data flow, background jobs, database models,
+configuration, environment variables, authentication flow, API endpoints, diagrams,
+repository structure, and technology stack. Observed facts are distinguished from
+inferred relationships, and inferred findings include a confidence level. Generation
+never commits or publishes; a maintainer must explicitly approve a draft before it is
+applied to the repository’s documentation tree, and existing manual documentation is
+preserved unless overwrite is confirmed.</p>
 </section>
 </section>
 

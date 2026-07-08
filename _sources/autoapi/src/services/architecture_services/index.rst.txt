@@ -1,0 +1,204 @@
+src.services.architecture_services
+==================================
+
+.. py:module:: src.services.architecture_services
+
+
+
+
+
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:data:: SECTION_NAMES
+   :value: ['project overview', 'entry points', 'services', 'routers', 'modules and packages', 'internal...
+
+
+.. py:data:: MANUAL_EDIT_MARKER
+   :value: '.. AUTODOC ARCHITECTURE DRAFT'
+
+
+.. py:exception:: ArchitectureAnalysisError(message: str, status_code: int = 422)
+
+   Bases: :py:obj:`RuntimeError`
+
+
+   Raised when architecture analysis cannot proceed or yields no usable evidence.
+
+
+   .. py:attribute:: status_code
+      :value: 422
+
+
+
+.. py:exception:: ArchitectureApprovalError(message: str, status_code: int = 422)
+
+   Bases: :py:obj:`RuntimeError`
+
+
+   Raised when an architecture draft cannot be approved.
+
+
+   .. py:attribute:: status_code
+      :value: 422
+
+
+
+.. py:exception:: ArchitectureOverwriteRequiredError(message: str)
+
+   Bases: :py:obj:`ArchitectureApprovalError`
+
+
+   Raised when approval would overwrite existing manual content without confirmation.
+
+
+.. py:class:: ArchitectureFinding
+
+   An observed fact or inferred architecture relationship.
+
+
+   .. py:attribute:: finding_type
+      :type:  str
+
+
+   .. py:attribute:: name
+      :type:  str
+
+
+   .. py:attribute:: classification
+      :type:  str
+
+
+   .. py:attribute:: description
+      :type:  str
+
+
+   .. py:attribute:: evidence_paths
+      :type:  list[str]
+      :value: []
+
+
+
+   .. py:attribute:: confidence_level
+      :type:  str | None
+      :value: None
+
+
+
+   .. py:method:: to_dict() -> dict
+
+
+.. py:class:: AnalysisGap
+
+   Incomplete or ambiguous architecture analysis for a section.
+
+
+   .. py:attribute:: section_name
+      :type:  str
+
+
+   .. py:attribute:: gap_type
+      :type:  str
+
+
+   .. py:attribute:: description
+      :type:  str
+
+
+   .. py:attribute:: recommended_review_action
+      :type:  str
+      :value: ''
+
+
+
+   .. py:method:: to_dict() -> dict
+
+
+.. py:class:: ArchitectureSection
+
+   One required section of the architecture draft.
+
+
+   .. py:attribute:: section_name
+      :type:  str
+
+
+   .. py:attribute:: status
+      :type:  str
+
+
+   .. py:attribute:: summary
+      :type:  str
+
+
+   .. py:attribute:: findings
+      :type:  list[ArchitectureFinding]
+      :value: []
+
+
+
+   .. py:attribute:: confidence_level
+      :type:  str
+      :value: 'not_applicable'
+
+
+
+   .. py:attribute:: gaps
+      :type:  list[AnalysisGap]
+      :value: []
+
+
+
+   .. py:property:: observed_count
+      :type: int
+
+
+
+   .. py:property:: inferred_count
+      :type: int
+
+
+
+   .. py:method:: to_summary_dict() -> dict
+
+
+.. py:function:: generate_draft_id() -> str
+
+   Generates a unique, sortable architecture draft id.
+
+
+.. py:function:: architecture_draft_paths(repo_path: str, provider: str, draft_id: str) -> tuple[str, str]
+
+   Returns the (rst_path, json_metadata_path) artifact locations for a draft id.
+
+
+.. py:function:: is_autodoc_generated_content(content: str) -> bool
+
+   Returns True when content was previously written by an approved Auto Doc draft.
+
+
+.. py:function:: generate_architecture_draft(provider: str, repo_url: str, token: str, branch: str, target_folders: list[str] | None, output_path: str, include_diagrams: bool, reuse_existing_docs: bool, progress_callback=None) -> dict
+
+   Analyzes a repository and produces a reviewable architecture documentation draft.
+
+   Generation is read-only: it never commits, writes, or publishes to the target repository.
+
+
+.. py:function:: find_architecture_draft(repo_path: str, provider: str, draft_id: str) -> dict | None
+
+   Searches this repository's run artifact history for a generated draft's metadata.
+
+
+.. py:function:: apply_architecture_approval(provider: str, repo_url: str, token: str, branch: str, draft_id: str, output_path: str, overwrite_existing: bool, approval_note: str | None = None) -> dict
+
+   Applies an approved architecture draft to the target repository documentation tree.
+
+   Raises ArchitectureOverwriteRequiredError when existing manual content would be replaced
+   without explicit overwrite confirmation.
+
+

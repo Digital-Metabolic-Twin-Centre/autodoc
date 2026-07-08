@@ -48,6 +48,7 @@
 <li class="toctree-l2"><a class="reference internal" href="project/overview.html#summary">Summary</a></li>
 <li class="toctree-l2"><a class="reference internal" href="project/overview.html#scope">Scope</a></li>
 <li class="toctree-l2"><a class="reference internal" href="project/overview.html#project-value">Project value</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/overview.html#architecture-documentation-workflow">Architecture documentation workflow</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="project/objectives.html">Objectives</a><ul>
@@ -79,6 +80,7 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/database/index.html#src.admin.database.engine"><code class="docutils literal notranslate"><span class="pre">engine</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/database/index.html#src.admin.database.SessionLocal"><code class="docutils literal notranslate"><span class="pre">SessionLocal</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/database/index.html#src.admin.database.init_db"><code class="docutils literal notranslate"><span class="pre">init_db()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/database/index.html#src.admin.database.scrub_sensitive_run_payloads"><code class="docutils literal notranslate"><span class="pre">scrub_sensitive_run_payloads()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -117,6 +119,9 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.templates"><code class="docutils literal notranslate"><span class="pre">templates</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.router"><code class="docutils literal notranslate"><span class="pre">router</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.ENDPOINT_LABELS"><code class="docutils literal notranslate"><span class="pre">ENDPOINT_LABELS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.DEFAULT_ARCHITECTURE_OUTPUT_PATH"><code class="docutils literal notranslate"><span class="pre">DEFAULT_ARCHITECTURE_OUTPUT_PATH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.SENSITIVE_PAYLOAD_FIELDS"><code class="docutils literal notranslate"><span class="pre">SENSITIVE_PAYLOAD_FIELDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.TOKEN_REQUIRED_ENDPOINTS"><code class="docutils literal notranslate"><span class="pre">TOKEN_REQUIRED_ENDPOINTS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.login_page"><code class="docutils literal notranslate"><span class="pre">login_page()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.login_submit"><code class="docutils literal notranslate"><span class="pre">login_submit()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.logout"><code class="docutils literal notranslate"><span class="pre">logout()</span></code></a></li>
@@ -132,6 +137,8 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.trigger_generate"><code class="docutils literal notranslate"><span class="pre">trigger_generate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.trigger_publish"><code class="docutils literal notranslate"><span class="pre">trigger_publish()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.trigger_suggest_pr"><code class="docutils literal notranslate"><span class="pre">trigger_suggest_pr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.trigger_generate_architecture_docs"><code class="docutils literal notranslate"><span class="pre">trigger_generate_architecture_docs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.trigger_approve_architecture_docs"><code class="docutils literal notranslate"><span class="pre">trigger_approve_architecture_docs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.runs_page"><code class="docutils literal notranslate"><span class="pre">runs_page()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.clear_runs"><code class="docutils literal notranslate"><span class="pre">clear_runs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/admin/router/index.html#src.admin.router.run_detail"><code class="docutils literal notranslate"><span class="pre">run_detail()</span></code></a></li>
@@ -183,6 +190,8 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest"><code class="docutils literal notranslate"><span class="pre">RepoRequest</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/models/repo_request/index.html#src.models.repo_request.PublishPagesRequest"><code class="docutils literal notranslate"><span class="pre">PublishPagesRequest</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest"><code class="docutils literal notranslate"><span class="pre">DocstringPullRequestRequest</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest"><code class="docutils literal notranslate"><span class="pre">ArchitectureGenerationRequest</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest"><code class="docutils literal notranslate"><span class="pre">ArchitectureApprovalRequest</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -194,7 +203,29 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/router/router/index.html#src.router.router.root"><code class="docutils literal notranslate"><span class="pre">root()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/router/router/index.html#src.router.router.generate_docs"><code class="docutils literal notranslate"><span class="pre">generate_docs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/router/router/index.html#src.router.router.suggest_python_docstrings_pr"><code class="docutils literal notranslate"><span class="pre">suggest_python_docstrings_pr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/router/router/index.html#src.router.router.generate_architecture_docs"><code class="docutils literal notranslate"><span class="pre">generate_architecture_docs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/router/router/index.html#src.router.router.approve_architecture_docs"><code class="docutils literal notranslate"><span class="pre">approve_architecture_docs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/router/router/index.html#src.router.router.publish_pages"><code class="docutils literal notranslate"><span class="pre">publish_pages()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html">src.services.architecture_services</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#module-contents">Module Contents</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.SECTION_NAMES"><code class="docutils literal notranslate"><span class="pre">SECTION_NAMES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.MANUAL_EDIT_MARKER"><code class="docutils literal notranslate"><span class="pre">MANUAL_EDIT_MARKER</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureAnalysisError"><code class="docutils literal notranslate"><span class="pre">ArchitectureAnalysisError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureApprovalError"><code class="docutils literal notranslate"><span class="pre">ArchitectureApprovalError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureOverwriteRequiredError"><code class="docutils literal notranslate"><span class="pre">ArchitectureOverwriteRequiredError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding"><code class="docutils literal notranslate"><span class="pre">ArchitectureFinding</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap"><code class="docutils literal notranslate"><span class="pre">AnalysisGap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection"><code class="docutils literal notranslate"><span class="pre">ArchitectureSection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.generate_draft_id"><code class="docutils literal notranslate"><span class="pre">generate_draft_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.architecture_draft_paths"><code class="docutils literal notranslate"><span class="pre">architecture_draft_paths()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.is_autodoc_generated_content"><code class="docutils literal notranslate"><span class="pre">is_autodoc_generated_content()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.generate_architecture_draft"><code class="docutils literal notranslate"><span class="pre">generate_architecture_draft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.find_architecture_draft"><code class="docutils literal notranslate"><span class="pre">find_architecture_draft()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.apply_architecture_approval"><code class="docutils literal notranslate"><span class="pre">apply_architecture_approval()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -237,6 +268,10 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.create_sphinx_setup"><code class="docutils literal notranslate"><span class="pre">create_sphinx_setup()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.publish_github_pages"><code class="docutils literal notranslate"><span class="pre">publish_github_pages()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.trigger_gitlab_pipeline"><code class="docutils literal notranslate"><span class="pre">trigger_gitlab_pipeline()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.detect_navigation_conflict"><code class="docutils literal notranslate"><span class="pre">detect_navigation_conflict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.propose_architecture_navigation"><code class="docutils literal notranslate"><span class="pre">propose_architecture_navigation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.update_sphinx_navigation_for_architecture"><code class="docutils literal notranslate"><span class="pre">update_sphinx_navigation_for_architecture()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.apply_approved_architecture_document"><code class="docutils literal notranslate"><span class="pre">apply_approved_architecture_document()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -247,6 +282,8 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_generate_request"><code class="docutils literal notranslate"><span class="pre">execute_generate_request()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_docstring_pr_request"><code class="docutils literal notranslate"><span class="pre">execute_docstring_pr_request()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_publish_request"><code class="docutils literal notranslate"><span class="pre">execute_publish_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_architecture_generation_request"><code class="docutils literal notranslate"><span class="pre">execute_architecture_generation_request()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_architecture_approval_request"><code class="docutils literal notranslate"><span class="pre">execute_architecture_approval_request()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -331,6 +368,7 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.build_repo_output_file"><code class="docutils literal notranslate"><span class="pre">build_repo_output_file()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.bind_repo_run_log_dir"><code class="docutils literal notranslate"><span class="pre">bind_repo_run_log_dir()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.clear_repo_output_history"><code class="docutils literal notranslate"><span class="pre">clear_repo_output_history()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.validate_architecture_output_path"><code class="docutils literal notranslate"><span class="pre">validate_architecture_output_path()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.find_latest_repo_run_dir"><code class="docutils literal notranslate"><span class="pre">find_latest_repo_run_dir()</span></code></a></li>
 </ul>
 </li>
@@ -397,6 +435,7 @@
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
@@ -418,14 +457,40 @@
 </li>
       <li><a href="autoapi/src/services/doc_services/index.html#src.services.doc_services.analyse_repo">analyse_repo() (in module src.services.doc_services)</a>
 </li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap">AnalysisGap (class in src.services.architecture_services)</a>
+</li>
+      <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.apply_approved_architecture_document">apply_approved_architecture_document() (in module src.services.sphinx_services)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.apply_architecture_approval">apply_architecture_approval() (in module src.services.architecture_services)</a>
+</li>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.approval_note">approval_note (src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
+</li>
+      <li><a href="autoapi/src/router/router/index.html#src.router.router.approve_architecture_docs">approve_architecture_docs() (in module src.router.router)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.architecture_draft_paths">architecture_draft_paths() (in module src.services.architecture_services)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureAnalysisError">ArchitectureAnalysisError</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureApprovalError">ArchitectureApprovalError</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest">ArchitectureApprovalRequest (class in src.models.repo_request)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding">ArchitectureFinding (class in src.services.architecture_services)</a>
+</li>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest">ArchitectureGenerationRequest (class in src.models.repo_request)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureOverwriteRequiredError">ArchitectureOverwriteRequiredError</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection">ArchitectureSection (class in src.services.architecture_services)</a>
+</li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.artifact_dir">artifact_dir (src.admin.models.RunRecord attribute)</a>
 
       <ul>
         <li><a href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.WorkflowRunResult.artifact_dir">(src.services.workflow_service.WorkflowRunResult attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/update_conf_content/index.html#src.utils.update_conf_content.AUTOAPI_ADD_TOCTREE_LINE">AUTOAPI_ADD_TOCTREE_LINE (in module src.utils.update_conf_content)</a>
 </li>
       <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_END">AUTOAPI_CONF_MARKER_END (in module src.services.sphinx_services)</a>
@@ -452,14 +517,18 @@
 </li>
       <li><a href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.bind_repo_run_log_dir">bind_repo_run_log_dir() (in module src.utils.output_paths)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.PublishPagesRequest.branch">branch (src.models.repo_request.PublishPagesRequest attribute)</a>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.branch">branch (src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
 
       <ul>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.branch">(src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.PublishPagesRequest.branch">(src.models.repo_request.PublishPagesRequest attribute)</a>
+</li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest.branch">(src.models.repo_request.RepoRequest attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.build_repo_output_dir">build_repo_output_dir() (in module src.utils.output_paths)</a>
 </li>
       <li><a href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.build_repo_output_file">build_repo_output_file() (in module src.utils.output_paths)</a>
@@ -473,6 +542,8 @@
       <li><a href="autoapi/src/admin/jobs/index.html#src.admin.jobs.CANCEL_GRACE_SECONDS">CANCEL_GRACE_SECONDS (in module src.admin.jobs)</a>
 </li>
       <li><a href="autoapi/src/admin/router/index.html#src.admin.router.cancel_run">cancel_run() (in module src.admin.router)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding.classification">classification (src.services.architecture_services.ArchitectureFinding attribute)</a>
 </li>
       <li><a href="autoapi/src/admin/security/index.html#src.admin.security.clear_admin_session">clear_admin_session() (in module src.admin.security)</a>
 </li>
@@ -490,14 +561,20 @@
 </li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.completed_at">completed_at (src.admin.models.RunRecord attribute)</a>
 </li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding.confidence_level">confidence_level (src.services.architecture_services.ArchitectureFinding attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.confidence_level">(src.services.architecture_services.ArchitectureSection attribute)</a>
+</li>
+      </ul></li>
       <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.configure_github_pages">configure_github_pages() (in module src.utils.git_utils)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.configure_openai">configure_openai() (in module src.utils.docstring_generation)</a>
 </li>
       <li><a href="autoapi/src/services/docstring_pr_services/index.html#src.services.docstring_pr_services.PatchedPythonFile.content">content (src.services.docstring_pr_services.PatchedPythonFile attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.create_a_file">create_a_file() (in module src.utils.git_utils)</a>
 </li>
       <li><a href="autoapi/src/admin/security/index.html#src.admin.security.create_admin_session">create_admin_session() (in module src.admin.security)</a>
@@ -536,6 +613,8 @@
 </li>
       <li><a href="autoapi/src/admin/security/index.html#src.admin.security.decrypt_token">decrypt_token() (in module src.admin.security)</a>
 </li>
+      <li><a href="autoapi/src/admin/router/index.html#src.admin.router.DEFAULT_ARCHITECTURE_OUTPUT_PATH">DEFAULT_ARCHITECTURE_OUTPUT_PATH (in module src.admin.router)</a>
+</li>
       <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DEFAULT_AUTOAPI_IGNORE_PATTERNS">DEFAULT_AUTOAPI_IGNORE_PATTERNS (in module src.services.sphinx_services)</a>
 </li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.default_branch">default_branch (src.admin.models.RepositoryConfig attribute)</a>
@@ -544,16 +623,24 @@
 </li>
       <li><a href="autoapi/src/admin/router/index.html#src.admin.router.delete_repository">delete_repository() (in module src.admin.router)</a>
 </li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap.description">description (src.services.architecture_services.AnalysisGap attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding.description">(src.services.architecture_services.ArchitectureFinding attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.detect_navigation_conflict">detect_navigation_conflict() (in module src.services.sphinx_services)</a>
+</li>
       <li><a href="autoapi/src/admin/jobs/index.html#src.admin.jobs.DISPATCHER_LOCK">DISPATCHER_LOCK (in module src.admin.jobs)</a>
 </li>
       <li><a href="autoapi/src/admin/jobs/index.html#src.admin.jobs.DISPATCHER_THREAD">DISPATCHER_THREAD (in module src.admin.jobs)</a>
 </li>
       <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DOCS_ASSET_DIR">DOCS_ASSET_DIR (in module src.services.sphinx_services)</a>
 </li>
-      <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DOCS_SCAFFOLD_DIR">DOCS_SCAFFOLD_DIR (in module src.services.sphinx_services)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DOCS_SCAFFOLD_DIR">DOCS_SCAFFOLD_DIR (in module src.services.sphinx_services)</a>
+</li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.docstring_threshold">docstring_threshold (src.admin.models.RepositoryConfig attribute)</a>
 
       <ul>
@@ -578,6 +665,12 @@
 </li>
       <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.download_github_branch_snapshot">download_github_branch_snapshot() (in module src.utils.git_utils)</a>
 </li>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.draft_id">draft_id (src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.WorkflowRunResult.draft_id">(src.services.workflow_service.WorkflowRunResult attribute)</a>
+</li>
+      </ul></li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.duration_seconds">duration_seconds (src.admin.models.RunRecord attribute)</a>
 </li>
   </ul></td>
@@ -602,13 +695,19 @@
 </li>
       <li><a href="autoapi/src/admin/jobs/index.html#src.admin.jobs.enqueue_run">enqueue_run() (in module src.admin.jobs)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/admin/security/index.html#src.admin.security.ensure_csrf_token">ensure_csrf_token() (in module src.admin.security)</a>
 </li>
       <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.ensure_github_branch">ensure_github_branch() (in module src.utils.git_utils)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.error_message">error_message (src.admin.models.RunRecord attribute)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding.evidence_paths">evidence_paths (src.services.architecture_services.ArchitectureFinding attribute)</a>
+</li>
+      <li><a href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_architecture_approval_request">execute_architecture_approval_request() (in module src.services.workflow_service)</a>
+</li>
+      <li><a href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_architecture_generation_request">execute_architecture_generation_request() (in module src.services.workflow_service)</a>
 </li>
       <li><a href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.execute_docstring_pr_request">execute_docstring_pr_request() (in module src.services.workflow_service)</a>
 </li>
@@ -634,13 +733,19 @@
 </li>
       <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.fetch_repo_tree">fetch_repo_tree() (in module src.utils.git_utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/code_block_extraction/index.html#src.utils.code_block_extraction.GenericCodeBlockExtractor.file_content">file_content (src.utils.code_block_extraction.GenericCodeBlockExtractor attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/code_block_extraction/index.html#src.utils.code_block_extraction.GenericCodeBlockExtractor.file_name">file_name (src.utils.code_block_extraction.GenericCodeBlockExtractor attribute)</a>
 </li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.find_architecture_draft">find_architecture_draft() (in module src.services.architecture_services)</a>
+</li>
       <li><a href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.find_latest_repo_run_dir">find_latest_repo_run_dir() (in module src.utils.output_paths)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding.finding_type">finding_type (src.services.architecture_services.ArchitectureFinding attribute)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.findings">findings (src.services.architecture_services.ArchitectureSection attribute)</a>
 </li>
       <li><a href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.format_docstring_for_language">format_docstring_for_language() (in module src.utils.docstring_generation)</a>
 </li>
@@ -650,20 +755,30 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap.gap_type">gap_type (src.services.architecture_services.AnalysisGap attribute)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.gaps">gaps (src.services.architecture_services.ArchitectureSection attribute)</a>
+</li>
+      <li><a href="autoapi/src/router/router/index.html#src.router.router.generate_architecture_docs">generate_architecture_docs() (in module src.router.router)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.generate_architecture_draft">generate_architecture_draft() (in module src.services.architecture_services)</a>
+</li>
       <li><a href="autoapi/src/router/router/index.html#src.router.router.generate_docs">generate_docs() (in module src.router.router)</a>
 </li>
       <li><a href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstring_with_openai">generate_docstring_with_openai() (in module src.utils.docstring_generation)</a>
 </li>
       <li><a href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai">generate_docstrings_for_code_blocks_openai() (in module src.utils.docstring_generation)</a>
 </li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.generate_draft_id">generate_draft_id() (in module src.services.architecture_services)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/generate_yml_content/index.html#src.utils.generate_yml_content.generate_github_actions_file">generate_github_actions_file() (in module src.utils.generate_yml_content)</a>
 </li>
       <li><a href="autoapi/src/utils/generate_yml_content/index.html#src.utils.generate_yml_content.generate_github_pages_index">generate_github_pages_index() (in module src.utils.generate_yml_content)</a>
 </li>
       <li><a href="autoapi/src/utils/generate_yml_content/index.html#src.utils.generate_yml_content.generate_gitlab_ci_file">generate_gitlab_ci_file() (in module src.utils.generate_yml_content)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/utils/code_block_extraction/index.html#src.utils.code_block_extraction.GenericCodeBlockExtractor">GenericCodeBlockExtractor (class in src.utils.code_block_extraction)</a>
 </li>
       <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.get_gitignore_patterns">get_gitignore_patterns() (in module src.utils.git_utils)</a>
@@ -688,15 +803,21 @@
         <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.id">(src.admin.models.RunRecord attribute)</a>
 </li>
       </ul></li>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.include_diagrams">include_diagrams (src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
       <li><a href="autoapi/src/services/docstring_pr_services/index.html#src.services.docstring_pr_services.DocstringInsertion.indent">indent (src.services.docstring_pr_services.DocstringInsertion attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.inferred_count">inferred_count (src.services.architecture_services.ArchitectureSection property)</a>
+</li>
       <li><a href="autoapi/src/admin/database/index.html#src.admin.database.init_db">init_db() (in module src.admin.database)</a>
 </li>
       <li><a href="autoapi/src/services/docstring_pr_services/index.html#src.services.docstring_pr_services.DocstringInsertion.insert_index">insert_index (src.services.docstring_pr_services.DocstringInsertion attribute)</a>
 </li>
       <li><a href="autoapi/src/services/docstring_pr_services/index.html#src.services.docstring_pr_services.PatchedPythonFile.inserted">inserted (src.services.docstring_pr_services.PatchedPythonFile attribute)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.is_autodoc_generated_content">is_autodoc_generated_content() (in module src.services.architecture_services)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -788,6 +909,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.MANUAL_EDIT_MARKER">MANUAL_EDIT_MARKER (in module src.services.architecture_services)</a>
+</li>
       <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest.max_docstrings">max_docstrings (src.models.repo_request.DocstringPullRequestRequest attribute)</a>
 </li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.metrics_docstrings_generated">metrics_docstrings_generated (src.admin.models.RunRecord attribute)</a>
@@ -808,8 +931,12 @@
         <li><a href="autoapi/src/services/workflow_service/index.html#src.services.workflow_service.WorkflowRunResult.metrics_skipped_files">(src.services.workflow_service.WorkflowRunResult attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest.model">model (src.models.repo_request.RepoRequest attribute)</a>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.model">model (src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest.model">(src.models.repo_request.RepoRequest attribute)</a>
 </li>
+      </ul></li>
       <li>
     module
 
@@ -829,6 +956,8 @@
         <li><a href="autoapi/src/models/repo_request/index.html#module-src.models.repo_request">src.models.repo_request</a>
 </li>
         <li><a href="autoapi/src/router/router/index.html#module-src.router.router">src.router.router</a>
+</li>
+        <li><a href="autoapi/src/services/architecture_services/index.html#module-src.services.architecture_services">src.services.architecture_services</a>
 </li>
         <li><a href="autoapi/src/services/doc_services/index.html#module-src.services.doc_services">src.services.doc_services</a>
 </li>
@@ -862,9 +991,29 @@
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.name">name (src.admin.models.RepositoryConfig attribute)</a>
 
       <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding.name">(src.services.architecture_services.ArchitectureFinding attribute)</a>
+</li>
         <li><a href="autoapi/src/services/docstring_pr_services/index.html#src.services.docstring_pr_services.DocstringInsertion.name">(src.services.docstring_pr_services.DocstringInsertion attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.observed_count">observed_count (src.services.architecture_services.ArchitectureSection property)</a>
+</li>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.output_path">output_path (src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.output_path">(src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.overwrite_existing">overwrite_existing (src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -887,9 +1036,15 @@
 </li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.progress_percent">progress_percent (src.admin.models.RunRecord attribute)</a>
 </li>
+      <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.propose_architecture_navigation">propose_architecture_navigation() (in module src.services.sphinx_services)</a>
+</li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.provider">provider (src.admin.models.RepositoryConfig attribute)</a>
 
       <ul>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.provider">(src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
+</li>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.provider">(src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest.provider">(src.models.repo_request.DocstringPullRequestRequest attribute)</a>
 </li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest.provider">(src.models.repo_request.RepoRequest attribute)</a>
@@ -941,6 +1096,8 @@
 </li>
       <li><a href="autoapi/src/admin/router/index.html#src.admin.router.recent_activity_fragment">recent_activity_fragment() (in module src.admin.router)</a>
 </li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap.recommended_review_action">recommended_review_action (src.services.architecture_services.AnalysisGap attribute)</a>
+</li>
       <li><a href="autoapi/src/admin/jobs/index.html#src.admin.jobs.reconcile_interrupted_runs">reconcile_interrupted_runs() (in module src.admin.jobs)</a>
 </li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.repo_path">repo_path (src.admin.models.RepositoryConfig attribute)</a>
@@ -948,6 +1105,10 @@
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.repo_url">repo_url (src.admin.models.RepositoryConfig attribute)</a>
 
       <ul>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.repo_url">(src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
+</li>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.repo_url">(src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest.repo_url">(src.models.repo_request.DocstringPullRequestRequest attribute)</a>
 </li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.PublishPagesRequest.repo_url">(src.models.repo_request.PublishPagesRequest attribute)</a>
@@ -977,10 +1138,10 @@
 </li>
       <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.request_github_pages_build">request_github_pages_build() (in module src.utils.git_utils)</a>
 </li>
-      <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.request_payload">request_payload (src.admin.models.RunRecord attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.request_payload">request_payload (src.admin.models.RunRecord attribute)</a>
+</li>
       <li><a href="autoapi/src/admin/jobs/index.html#src.admin.jobs.request_run_cancellation">request_run_cancellation() (in module src.admin.jobs)</a>
 </li>
       <li><a href="autoapi/src/admin/security/index.html#src.admin.security.require_admin">require_admin() (in module src.admin.security)</a>
@@ -1003,6 +1164,8 @@
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest.reuse_doc">(src.models.repo_request.RepoRequest attribute)</a>
 </li>
       </ul></li>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.reuse_existing_docs">reuse_existing_docs (src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
       <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.RISKY_AUTOAPI_PATH_PATTERNS">RISKY_AUTOAPI_PATH_PATTERNS (in module src.services.sphinx_services)</a>
 </li>
       <li><a href="autoapi/src/router/router/index.html#src.router.router.root">root() (in module src.router.router)</a>
@@ -1038,6 +1201,18 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS">SAMPLE_DOCS_FALLBACK_TEXTS (in module src.services.sphinx_services)</a>
+</li>
+      <li><a href="autoapi/src/admin/database/index.html#src.admin.database.scrub_sensitive_run_payloads">scrub_sensitive_run_payloads() (in module src.admin.database)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap.section_name">section_name (src.services.architecture_services.AnalysisGap attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.section_name">(src.services.architecture_services.ArchitectureSection attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.SECTION_NAMES">SECTION_NAMES (in module src.services.architecture_services)</a>
+</li>
+      <li><a href="autoapi/src/admin/router/index.html#src.admin.router.SENSITIVE_PAYLOAD_FIELDS">SENSITIVE_PAYLOAD_FIELDS (in module src.admin.router)</a>
 </li>
       <li><a href="autoapi/src/admin/database/index.html#src.admin.database.SessionLocal">SessionLocal (in module src.admin.database)</a>
 </li>
@@ -1108,6 +1283,13 @@
 </li>
       </ul></li>
       <li>
+    src.services.architecture_services
+
+      <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#module-src.services.architecture_services">module</a>
+</li>
+      </ul></li>
+      <li>
     src.services.doc_services
 
       <ul>
@@ -1121,6 +1303,8 @@
         <li><a href="autoapi/src/services/docstring_pr_services/index.html#module-src.services.docstring_pr_services">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     src.services.sphinx_services
 
@@ -1128,8 +1312,6 @@
         <li><a href="autoapi/src/services/sphinx_services/index.html#module-src.services.sphinx_services">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     src.services.workflow_service
 
@@ -1189,10 +1371,18 @@
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.started_at">started_at (src.admin.models.RunRecord attribute)</a>
 </li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.status">status (src.admin.models.RunRecord attribute)</a>
-</li>
-      <li><a href="autoapi/src/services/doc_services/index.html#src.services.doc_services.RepoAnalysisError.status_code">status_code (src.services.doc_services.RepoAnalysisError attribute)</a>
 
       <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.status">(src.services.architecture_services.ArchitectureSection attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureAnalysisError.status_code">status_code (src.services.architecture_services.ArchitectureAnalysisError attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureApprovalError.status_code">(src.services.architecture_services.ArchitectureApprovalError attribute)</a>
+</li>
+        <li><a href="autoapi/src/services/doc_services/index.html#src.services.doc_services.RepoAnalysisError.status_code">(src.services.doc_services.RepoAnalysisError attribute)</a>
+</li>
         <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.PublishPagesError.status_code">(src.services.sphinx_services.PublishPagesError attribute)</a>
 </li>
         <li><a href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.GitHubApiError.status_code">(src.utils.git_utils.GitHubApiError attribute)</a>
@@ -1203,6 +1393,8 @@
       <li><a href="autoapi/src/router/router/index.html#src.router.router.suggest_python_docstrings_pr">suggest_python_docstrings_pr() (in module src.router.router)</a>
 </li>
       <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest.suggestion_branch">suggestion_branch (src.models.repo_request.DocstringPullRequestRequest attribute)</a>
+</li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.summary">summary (src.services.architecture_services.ArchitectureSection attribute)</a>
 </li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RunRecord.summary_output">summary_output (src.admin.models.RunRecord attribute)</a>
 
@@ -1219,6 +1411,8 @@
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.target_folders">target_folders (src.admin.models.RepositoryConfig property)</a>
 
       <ul>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.target_folders">(src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest.target_folders">(src.models.repo_request.RepoRequest attribute)</a>
 </li>
       </ul></li>
@@ -1228,9 +1422,21 @@
 </li>
       <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest.title">title (src.models.repo_request.DocstringPullRequestRequest attribute)</a>
 </li>
-      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest.token">token (src.models.repo_request.DocstringPullRequestRequest attribute)</a>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.AnalysisGap.to_dict">to_dict() (src.services.architecture_services.AnalysisGap method)</a>
 
       <ul>
+        <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureFinding.to_dict">(src.services.architecture_services.ArchitectureFinding method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/src/services/architecture_services/index.html#src.services.architecture_services.ArchitectureSection.to_summary_dict">to_summary_dict() (src.services.architecture_services.ArchitectureSection method)</a>
+</li>
+      <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest.token">token (src.models.repo_request.ArchitectureApprovalRequest attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest.token">(src.models.repo_request.ArchitectureGenerationRequest attribute)</a>
+</li>
+        <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest.token">(src.models.repo_request.DocstringPullRequestRequest attribute)</a>
+</li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.PublishPagesRequest.token">(src.models.repo_request.PublishPagesRequest attribute)</a>
 </li>
         <li><a href="autoapi/src/models/repo_request/index.html#src.models.repo_request.RepoRequest.token">(src.models.repo_request.RepoRequest attribute)</a>
@@ -1240,7 +1446,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.token_last4">token_last4 (src.admin.models.RepositoryConfig attribute)</a>
 </li>
+      <li><a href="autoapi/src/admin/router/index.html#src.admin.router.TOKEN_REQUIRED_ENDPOINTS">TOKEN_REQUIRED_ENDPOINTS (in module src.admin.router)</a>
+</li>
+      <li><a href="autoapi/src/admin/router/index.html#src.admin.router.trigger_approve_architecture_docs">trigger_approve_architecture_docs() (in module src.admin.router)</a>
+</li>
       <li><a href="autoapi/src/admin/router/index.html#src.admin.router.trigger_generate">trigger_generate() (in module src.admin.router)</a>
+</li>
+      <li><a href="autoapi/src/admin/router/index.html#src.admin.router.trigger_generate_architecture_docs">trigger_generate_architecture_docs() (in module src.admin.router)</a>
 </li>
       <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.trigger_gitlab_pipeline">trigger_gitlab_pipeline() (in module src.services.sphinx_services)</a>
 </li>
@@ -1264,6 +1476,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/admin/router/index.html#src.admin.router.update_repository">update_repository() (in module src.admin.router)</a>
 </li>
+      <li><a href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.update_sphinx_navigation_for_architecture">update_sphinx_navigation_for_architecture() (in module src.services.sphinx_services)</a>
+</li>
       <li><a href="autoapi/src/admin/models/index.html#src.admin.models.RepositoryConfig.updated_at">updated_at (src.admin.models.RepositoryConfig attribute)</a>
 </li>
   </ul></td>
@@ -1273,6 +1487,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/src/admin/security/index.html#src.admin.security.validate_admin_credentials">validate_admin_credentials() (in module src.admin.security)</a>
+</li>
+      <li><a href="autoapi/src/utils/output_paths/index.html#src.utils.output_paths.validate_architecture_output_path">validate_architecture_output_path() (in module src.utils.output_paths)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>

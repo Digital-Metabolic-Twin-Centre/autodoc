@@ -60,6 +60,19 @@ Module Contents
 
 
 
+.. py:function:: validate_architecture_output_path(output_path: str) -> str
+
+   Validates that an architecture documentation output path stays within the docs tree.
+
+   :param output_path: The proposed documentation output path.
+   :type output_path: str
+
+   :returns: The normalized, validated output path.
+   :rtype: str
+
+   :raises ValueError: If the path escapes the repository or the docs/ tree.
+
+
 .. py:function:: find_latest_repo_run_dir(repo_path: str, provider: str) -> str | None
 
    Retrieve the latest run directory for a specified repository.

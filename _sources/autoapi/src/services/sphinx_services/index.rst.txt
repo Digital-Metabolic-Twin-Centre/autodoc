@@ -98,3 +98,78 @@ Module Contents
    :rtype: bool
 
 
+.. py:function:: detect_navigation_conflict(existing_index_content: str | None, toctree_entry: str) -> tuple[bool, str | None]
+
+   Detects whether an existing ``index.rst`` already references a conflicting entry.
+
+   A conflict exists when a toctree entry with the same leaf page name already points
+   somewhere other than the proposed architecture doc location.
+
+   :param existing_index_content: Current contents of ``index.rst``, if known.
+   :type existing_index_content: str | None
+   :param toctree_entry: Proposed toctree entry for the architecture draft.
+   :type toctree_entry: str
+
+   :returns: Whether a conflict was found, and the conflicting line.
+   :rtype: tuple[bool, str | None]
+
+
+.. py:function:: propose_architecture_navigation(repo_path: str, branch: str, token: str, provider: str, output_path: str) -> dict
+
+   Proposes where a generated architecture draft should be linked in the Sphinx navigation.
+
+   :param repo_path: Repository path (e.g., 'user/repo').
+   :type repo_path: str
+   :param branch: Branch to inspect for the existing ``index.rst``.
+   :type branch: str
+   :param token: Access token used for the read-only lookup.
+   :type token: str
+   :param provider: Git provider ('github' or 'gitlab').
+   :type provider: str
+   :param output_path: Proposed architecture documentation output path.
+   :type output_path: str
+
+   :returns: Navigation placement proposal including any detected conflict.
+   :rtype: dict
+
+
+.. py:function:: update_sphinx_navigation_for_architecture(repo_path: str, branch: str, token: str, provider: str, navigation_update: dict) -> bool
+
+   Applies a proposed navigation update for an approved architecture document.
+
+   :param repo_path: Repository path (e.g., 'user/repo').
+   :type repo_path: str
+   :param branch: Branch receiving the update.
+   :type branch: str
+   :param token: Access token used for the write operation.
+   :type token: str
+   :param provider: Git provider ('github' or 'gitlab').
+   :type provider: str
+   :param navigation_update: Proposal produced by ``propose_architecture_navigation``.
+   :type navigation_update: dict
+
+   :returns: True if the navigation is already correct or was updated successfully.
+   :rtype: bool
+
+
+.. py:function:: apply_approved_architecture_document(repo_path: str, branch: str, token: str, provider: str, output_path: str, content: str) -> bool
+
+   Writes an approved architecture document to the target repository documentation path.
+
+   :param repo_path: Repository path (e.g., 'user/repo').
+   :type repo_path: str
+   :param branch: Branch receiving the approved document.
+   :type branch: str
+   :param token: Access token used for the write operation.
+   :type token: str
+   :param provider: Git provider ('github' or 'gitlab').
+   :type provider: str
+   :param output_path: Documentation path to create or update.
+   :type output_path: str
+   :param content: Approved architecture document content.
+   :type content: str
+
+   :returns: True if the write succeeded, False otherwise.
+   :rtype: bool
+
+

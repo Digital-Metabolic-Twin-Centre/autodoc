@@ -17,6 +17,14 @@ Module Contents
 
 .. py:data:: ENDPOINT_LABELS
 
+.. py:data:: DEFAULT_ARCHITECTURE_OUTPUT_PATH
+   :value: 'docs/project/architecture.rst'
+
+
+.. py:data:: SENSITIVE_PAYLOAD_FIELDS
+
+.. py:data:: TOKEN_REQUIRED_ENDPOINTS
+
 .. py:function:: login_page(request: fastapi.Request) -> fastapi.Response
    :async:
 
@@ -74,6 +82,14 @@ Module Contents
 
 
 .. py:function:: trigger_suggest_pr(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), base_branch: str = Form(default=''), suggestion_branch: str = Form(default=''), title: str = Form(default='Add suggested docstrings'), max_docstrings: int = Form(default=50)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: trigger_generate_architecture_docs(repository_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), branch: str = Form(default=''), target_folders: str = Form(default=''), output_path: str = Form(default=DEFAULT_ARCHITECTURE_OUTPUT_PATH), include_diagrams: bool = Form(default=True), reuse_existing_docs: bool = Form(default=True)) -> fastapi.Response
+   :async:
+
+
+.. py:function:: trigger_approve_architecture_docs(run_id: int, request: fastapi.Request, admin_user: str = Depends(require_admin), _: None = Depends(verify_csrf), overwrite_existing: bool = Form(default=False), approval_note: str = Form(default='')) -> fastapi.Response
    :async:
 
 

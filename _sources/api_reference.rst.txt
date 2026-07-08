@@ -23,6 +23,7 @@ Browse the generated API pages below.
    autoapi/src/router/index
    autoapi/src/router/router/index
    autoapi/src/services/index
+   autoapi/src/services/architecture_services/index
    autoapi/src/services/doc_services/index
    autoapi/src/services/docstring_pr_services/index
    autoapi/src/services/sphinx_services/index
