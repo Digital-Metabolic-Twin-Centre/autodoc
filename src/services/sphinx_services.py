@@ -1148,7 +1148,14 @@ def _build_sample_index(project_name: str) -> str:
         lines[1] = "=" * len(project_name)
     index_text = "\n".join(lines).rstrip() + "\n"
     if "api_reference" not in index_text:
-        index_text += "\n.. toctree::\n   :hidden:\n   :maxdepth: 1\n   :caption: Reference\n\n   api_reference\n   README\n"
+        index_text += (
+            "\n.. toctree::\n"
+            "   :hidden:\n"
+            "   :maxdepth: 1\n"
+            "   :caption: Reference\n\n"
+            "   api_reference\n"
+            "   README\n"
+        )
     return index_text
 
 

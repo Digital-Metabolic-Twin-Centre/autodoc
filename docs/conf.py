@@ -47,8 +47,8 @@ def setup(app):
 
     # Patch AutoAPI's astroid utilities to handle TooManyLevelsError gracefully
     try:
-        from autoapi import _astroid_utils
         from astroid.exceptions import TooManyLevelsError
+        from autoapi import _astroid_utils
 
         original_get_full_import_name = _astroid_utils.get_full_import_name
 
