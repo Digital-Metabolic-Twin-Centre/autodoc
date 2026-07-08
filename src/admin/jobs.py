@@ -43,8 +43,12 @@ CURRENT_PROCESS: Process | None = None
 CURRENT_RUN_ID: int | None = None
 PROCESS_LOCK = Lock()
 UNEXPECTED_EXIT_MESSAGE = "Job process exited unexpectedly before the run could finish."
-RESTART_EXIT_MESSAGE = "Run was interrupted because the server stopped before the job could finish."
-RESTART_QUEUE_MESSAGE = "Run was interrupted because the server stopped before the queued job could start."
+RESTART_EXIT_MESSAGE = (
+    "Run was interrupted because the server stopped before the job could finish."
+)
+RESTART_QUEUE_MESSAGE = (
+    "Run was interrupted because the server stopped before the queued job could start."
+)
 CANCEL_GRACE_SECONDS = 10.0
 
 
@@ -76,9 +80,15 @@ def _duration_seconds(
         return 0.0
     normalized_started_at = started_at
     normalized_finished_at = finished_at
-    if normalized_started_at.tzinfo is None and normalized_finished_at.tzinfo is not None:
+    if (
+        normalized_started_at.tzinfo is None
+        and normalized_finished_at.tzinfo is not None
+    ):
         normalized_finished_at = normalized_finished_at.replace(tzinfo=None)
-    elif normalized_started_at.tzinfo is not None and normalized_finished_at.tzinfo is None:
+    elif (
+        normalized_started_at.tzinfo is not None
+        and normalized_finished_at.tzinfo is None
+    ):
         normalized_started_at = normalized_started_at.replace(tzinfo=None)
     return (normalized_finished_at - normalized_started_at).total_seconds()
 
@@ -101,7 +111,11 @@ def reconcile_interrupted_runs() -> int:
     recovered_at = datetime.now(UTC)
 
     with SessionLocal() as session:
-        interrupted_runs = session.query(RunRecord).filter(RunRecord.status.in_(("queued", "running"))).all()
+        interrupted_runs = (
+            session.query(RunRecord)
+            .filter(RunRecord.status.in_(("queued", "running")))
+            .all()
+        )
         for run in interrupted_runs:
             previous_status = run.status
             run.status = "failed"
@@ -109,13 +123,25 @@ def reconcile_interrupted_runs() -> int:
             run.progress_message = "Failed"
             run.completed_at = recovered_at
             run.duration_seconds = _duration_seconds(run.started_at, recovered_at)
-            run.error_message = RESTART_EXIT_MESSAGE if previous_status == "running" else RESTART_QUEUE_MESSAGE
+            run.error_message = (
+                RESTART_EXIT_MESSAGE
+                if previous_status == "running"
+                else RESTART_QUEUE_MESSAGE
+            )
             session.add(run)
         session.commit()
         return len(interrupted_runs)
 
 
 def _terminate_process_tree(process: Process) -> bool:
+    """
+    Terminate a process group gracefully, then forcefully if needed.
+    Args:
+        process (Process): Process whose process group should be terminated.
+    Returns:
+        bool: True if the process is stopped or no longer exists; otherwise False.
+
+    """
     if not process.pid:
         return False
     try:
@@ -146,6 +172,15 @@ def _terminate_process_tree(process: Process) -> bool:
 
 
 def _ensure_dispatcher() -> None:
+    """
+    Ensure the background admin dispatcher thread is running.
+
+    Args:
+        None.
+    Returns:
+        None: This function does not return a value.
+
+    """
     global DISPATCHER_THREAD
     with DISPATCHER_LOCK:
         if DISPATCHER_THREAD and DISPATCHER_THREAD.is_alive():
@@ -159,6 +194,16 @@ def _ensure_dispatcher() -> None:
 
 
 def enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
+    """
+    Enqueue a run job and notify the dispatcher.
+
+    Args:
+        run_id (int): Unique run identifier. endpoint (str): Target endpoint. payload (dict[str,
+        Any]): Job payload.
+    Returns:
+        None: This function does not return a value.
+
+    """
     with QUEUE_CONDITION:
         JOB_QUEUE.append(QueuedJob(run_id=run_id, endpoint=endpoint, payload=payload))
         QUEUE_CONDITION.notify()
@@ -166,6 +211,12 @@ def enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
 
 
 def _dispatch_loop() -> None:
+    """
+    Continuously dispatch queued jobs into isolated worker processes.
+
+    Args: None.
+    Returns: None; runs indefinitely and updates run state after process completion.
+    """
     global CURRENT_PROCESS, CURRENT_RUN_ID
 
     while True:
@@ -204,13 +255,23 @@ def _dispatch_loop() -> None:
                 run.progress_percent = 100.0
                 run.progress_message = "Failed"
                 run.completed_at = datetime.now(UTC)
-                run.duration_seconds = _duration_seconds(run.started_at, run.completed_at)
+                run.duration_seconds = _duration_seconds(
+                    run.started_at, run.completed_at
+                )
                 run.error_message = UNEXPECTED_EXIT_MESSAGE
                 session.add(run)
                 session.commit()
 
 
 def request_run_cancellation(run_id: int) -> str:
+    """
+    Cancel a queued or running run by ID.
+    Args:
+        run_id (int): Identifier of the run to cancel.
+    Returns:
+        str: Resulting run status, typically "cancelled", "running", or the existing status.
+
+    """
     with QUEUE_CONDITION:
         for index, job in enumerate(JOB_QUEUE):
             if job.run_id == run_id:
@@ -222,10 +283,16 @@ def request_run_cancellation(run_id: int) -> str:
         active_process = CURRENT_PROCESS
         active_run_id = CURRENT_RUN_ID
 
-    if active_run_id == run_id and active_process is not None and active_process.is_alive():
+    if (
+        active_run_id == run_id
+        and active_process is not None
+        and active_process.is_alive()
+    ):
         terminated = _terminate_process_tree(active_process)
         if terminated:
-            _mark_cancelled(run_id, "Run was cancelled while execution was in progress.")
+            _mark_cancelled(
+                run_id, "Run was cancelled while execution was in progress."
+            )
             return "cancelled"
         return "running"
 
@@ -245,6 +312,15 @@ def request_run_cancellation(run_id: int) -> str:
 
 
 def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
+    """
+    Execute a run in a new process session and persist lifecycle state.
+    Args:
+        run_id (int): Run record ID; endpoint (str): Endpoint to execute; payload (dict[str, Any]):
+        Request payload.
+    Returns:
+        None: This function does not return a value.
+
+    """
     os.setsid()
     started_at = datetime.now(UTC)
 
@@ -263,7 +339,9 @@ def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) ->
         result = _execute_endpoint(
             endpoint,
             payload,
-            progress_callback=lambda percent, message: _set_run_progress(run_id, percent, message),
+            progress_callback=lambda percent, message: _set_run_progress(
+                run_id, percent, message
+            ),
         )
         completed_at = datetime.now(UTC)
 
@@ -307,15 +385,34 @@ def _execute_endpoint(
     payload: dict[str, Any],
     progress_callback=None,
 ) -> WorkflowRunResult:
+    """
+    Execute a queued workflow request for a supported endpoint.
+
+    Args:
+        endpoint (str): Endpoint path identifying the workflow to run.
+        payload (dict[str, Any]): Request data used to build the endpoint-specific request model.
+        progress_callback (Callable | None): Optional callback for workflow progress updates.
+
+    Returns:
+        WorkflowRunResult: Result produced by the selected workflow executor.
+
+    """
     if endpoint == "/generate":
-        return execute_generate_request(RepoRequest(**payload), progress_callback=progress_callback)
+        return execute_generate_request(
+            RepoRequest(**payload), progress_callback=progress_callback
+        )
     if endpoint == "/publish-pages":
-        return execute_publish_request(PublishPagesRequest(**payload), progress_callback=progress_callback)
+        return execute_publish_request(
+            PublishPagesRequest(**payload), progress_callback=progress_callback
+        )
     if endpoint == "/suggest-python-docstrings-pr":
-        return execute_docstring_pr_request(DocstringPullRequestRequest(**payload), progress_callback=progress_callback)
+        return execute_docstring_pr_request(
+            DocstringPullRequestRequest(**payload), progress_callback=progress_callback
+        )
     if endpoint == "/generate-architecture-docs":
         return execute_architecture_generation_request(
-            ArchitectureGenerationRequest(**payload), progress_callback=progress_callback
+            ArchitectureGenerationRequest(**payload),
+            progress_callback=progress_callback,
         )
     if endpoint == "/approve-architecture-docs":
         return execute_architecture_approval_request(

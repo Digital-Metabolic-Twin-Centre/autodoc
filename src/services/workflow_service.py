@@ -23,7 +23,11 @@ from services.docstring_pr_services import (
     DocstringPullRequestError,
     create_python_docstring_pull_request,
 )
-from services.sphinx_services import PublishPagesError, create_sphinx_setup, publish_github_pages
+from services.sphinx_services import (
+    PublishPagesError,
+    create_sphinx_setup,
+    publish_github_pages,
+)
 from utils.docstring_generation import DEFAULT_OPENAI_MODEL
 from utils.git_utils import extract_repo_path
 from utils.output_paths import bind_repo_run_log_dir
@@ -31,6 +35,13 @@ from utils.output_paths import bind_repo_run_log_dir
 
 @dataclass
 class WorkflowRunResult:
+    """
+    Store metadata and outputs from a workflow run.
+    Args: response (dict): Raw workflow response; summary_output (str): Generated summary; optional
+    fields include artifact paths, branches, URL, metrics, and draft ID.
+    Returns: WorkflowRunResult: Container with workflow results and related metadata.
+    """
+
     response: dict
     summary_output: str
     artifact_dir: str | None = None
@@ -45,19 +56,46 @@ class WorkflowRunResult:
 
 
 def _notify_progress(progress_callback, percent: float, message: str) -> None:
+    """
+    Notify progress through the provided callback when available.
+
+    Args:
+        progress_callback (Callable[[float, str], None] | None): Callback receiving percent and
+        message.
+        percent (float): Progress percentage.
+        message (str): Progress status message.
+    Returns:
+        None: This function does not return a value.
+
+    """
     if progress_callback is not None:
         progress_callback(percent, message)
 
 
 def _summarize_generate(docstring_analysis: list[dict]) -> tuple[int, int, int]:
+    """
+    Summarize docstring generation results across analyzed files.
+
+    Args:
+        docstring_analysis (list[dict]): Per-file analysis entries containing generated docstring
+        data.
+    Returns:
+        tuple[int, int, int]: Files analyzed, docstrings generated, and files skipped.
+
+    """
     files_analyzed = len(docstring_analysis)
     docstrings_generated = 0
     skipped_files = 0
     for file_summary in docstring_analysis:
-        generated_for_file = any(item.get("generated_docstring") for item in file_summary.get("docstring_analysis", []))
+        generated_for_file = any(
+            item.get("generated_docstring")
+            for item in file_summary.get("docstring_analysis", [])
+        )
         if generated_for_file:
             docstrings_generated += sum(
-                1 for item in file_summary.get("docstring_analysis", []) if item.get("generated_docstring")
+                1
+                for item in file_summary.get("docstring_analysis", [])
+                if item.get("generated_docstring")
             )
         else:
             skipped_files += 1
@@ -65,6 +103,16 @@ def _summarize_generate(docstring_analysis: list[dict]) -> tuple[int, int, int]:
 
 
 def _github_pages_url(repo_url: str) -> str | None:
+    """
+    Build the GitHub Pages URL for a GitHub repository.
+
+    Args:
+        repo_url (str): GitHub repository URL to parse.
+
+    Returns:
+        str | None: GitHub Pages URL, or None if the repository path is invalid.
+
+    """
     repo_path = extract_repo_path(repo_url, "github")
     if "/" not in repo_path:
         return None
@@ -72,9 +120,25 @@ def _github_pages_url(repo_url: str) -> str | None:
     return f"https://{owner}.github.io/{repo_name}/"
 
 
-def execute_generate_request(req: RepoRequest, progress_callback=None) -> WorkflowRunResult:
+def execute_generate_request(
+    req: RepoRequest, progress_callback=None
+) -> WorkflowRunResult:
+    """
+    Execute a repository documentation generation workflow.
+
+    Args:
+        req (RepoRequest): Request containing repository access, branch, model, and generation
+        settings.
+        progress_callback (Callable | None): Optional callback for workflow progress updates.
+
+    Returns:
+        WorkflowRunResult: Workflow response, artifact paths, source branch, and generation metrics.
+
+    """
     if not req.repo_url or not req.token or not req.branch or not req.provider:
-        raise ValueError("Missing required parameters: repo_url, token, branch, or provider.")
+        raise ValueError(
+            "Missing required parameters: repo_url, token, branch, or provider."
+        )
 
     _notify_progress(progress_callback, 25.0, "Analyzing repository")
     analysis_file, docstring_analysis = analyse_repo(
@@ -102,7 +166,9 @@ def execute_generate_request(req: RepoRequest, progress_callback=None) -> Workfl
             f"or branch '{req.branch}' is protected."
         )
     _notify_progress(progress_callback, 90.0, "Finalizing results")
-    files_analyzed, docstrings_generated, skipped_files = _summarize_generate(docstring_analysis)
+    files_analyzed, docstrings_generated, skipped_files = _summarize_generate(
+        docstring_analysis
+    )
     response = {
         "status": "success",
         "sphinx_setup_created": sphinx_setup_created,
@@ -128,7 +194,19 @@ def execute_generate_request(req: RepoRequest, progress_callback=None) -> Workfl
     )
 
 
-def execute_docstring_pr_request(req: DocstringPullRequestRequest, progress_callback=None) -> WorkflowRunResult:
+def execute_docstring_pr_request(
+    req: DocstringPullRequestRequest, progress_callback=None
+) -> WorkflowRunResult:
+    """
+    Create a pull request containing generated Python docstring suggestions.
+    Args:
+        req (DocstringPullRequestRequest): Pull request configuration, repository access, and
+        generation limits.
+        progress_callback (Callable | None): Optional callback for workflow progress updates.
+    Returns:
+        WorkflowRunResult: Pull request response, summary metrics, and artifact/log paths.
+
+    """
     _notify_progress(progress_callback, 25.0, "Preparing docstring suggestions")
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
     suggestion_branch = req.suggestion_branch or (
@@ -165,7 +243,17 @@ def execute_docstring_pr_request(req: DocstringPullRequestRequest, progress_call
     )
 
 
-def execute_publish_request(req: PublishPagesRequest, progress_callback=None) -> WorkflowRunResult:
+def execute_publish_request(
+    req: PublishPagesRequest, progress_callback=None
+) -> WorkflowRunResult:
+    """
+    Publishes repository documentation to GitHub Pages and returns workflow metadata.
+
+    Args: req (PublishPagesRequest): Publish request configuration; progress_callback (Callable |
+    None): Optional progress notifier.
+    Returns: WorkflowRunResult: Publish result with response data, artifacts, logs, branches, and
+    documentation URL.
+    """
     _notify_progress(progress_callback, 25.0, "Preparing publish job")
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, "github"), "github")
     _notify_progress(progress_callback, 70.0, "Publishing GitHub Pages")
@@ -207,6 +295,15 @@ def execute_publish_request(req: PublishPagesRequest, progress_callback=None) ->
 def execute_architecture_generation_request(
     req: ArchitectureGenerationRequest, progress_callback=None
 ) -> WorkflowRunResult:
+    """
+    Execute an architecture generation workflow and package its result.
+    Args:
+        req (ArchitectureGenerationRequest): Request containing repository, provider, branch, and
+        output options; progress_callback (callable, optional): Callback for progress updates.
+    Returns:
+        WorkflowRunResult: Workflow response, summary, artifact paths, and draft metadata.
+
+    """
     _notify_progress(progress_callback, 15.0, "Analyzing repository architecture")
     result = generate_architecture_draft(
         provider=req.provider,
@@ -239,7 +336,9 @@ def execute_architecture_generation_request(
             {
                 "draft_id": result["draft_id"],
                 "sections_populated": sum(
-                    1 for section in result["sections_summary"] if section["status"] == "populated"
+                    1
+                    for section in result["sections_summary"]
+                    if section["status"] == "populated"
                 ),
                 "gaps": len(result["gaps"]),
             }
@@ -254,6 +353,13 @@ def execute_architecture_generation_request(
 def execute_architecture_approval_request(
     req: ArchitectureApprovalRequest, progress_callback=None
 ) -> WorkflowRunResult:
+    """
+    Apply an approved architecture document and return workflow metadata.
+    Args: req (ArchitectureApprovalRequest): Approval request details; progress_callback (Callable |
+    None): Optional progress notifier.
+    Returns: WorkflowRunResult: Result containing response, summary, artifacts, log path, branch,
+    and draft ID.
+    """
     _notify_progress(progress_callback, 20.0, "Preparing architecture approval")
     bind_repo_run_log_dir(extract_repo_path(req.repo_url, req.provider), req.provider)
     _notify_progress(progress_callback, 60.0, "Applying approved architecture document")
@@ -279,7 +385,9 @@ def execute_architecture_approval_request(
     log_path = os.path.join(artifact_dir, "app.log") if artifact_dir else None
     return WorkflowRunResult(
         response=response,
-        summary_output=json.dumps({"draft_id": req.draft_id, "output_path": result["output_path"]}),
+        summary_output=json.dumps(
+            {"draft_id": req.draft_id, "output_path": result["output_path"]}
+        ),
         artifact_dir=artifact_dir,
         log_path=log_path if log_path and os.path.exists(log_path) else None,
         source_branch=req.branch,

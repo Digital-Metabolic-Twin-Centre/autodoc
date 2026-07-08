@@ -118,6 +118,16 @@ class ArchitectureGenerationRequest(BaseModel):
     @field_validator("output_path")
     @classmethod
     def _validate_output_path(cls, value: str) -> str:
+        """
+        Validate an architecture output path value.
+
+        Args:
+            value (str): Output path to validate.
+
+        Returns:
+            str: Validated architecture output path.
+
+        """
         return validate_architecture_output_path(value)
 
 
@@ -153,4 +163,14 @@ class ArchitectureApprovalRequest(BaseModel):
     @field_validator("output_path")
     @classmethod
     def _validate_output_path(cls, value: str) -> str:
+        """
+        Validate an architecture documentation output path.
+
+        Args:
+            value (str): Output path to validate.
+
+        Returns:
+            str: Validated output path.
+
+        """
         return validate_architecture_output_path(value)
