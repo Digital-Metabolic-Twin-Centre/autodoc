@@ -260,6 +260,8 @@ def analyse_repo(
         branch (str): The branch name to Analyse.
         target_folders (list[str] | None): Optional repository folders to limit analysis to.
         model (str | None): Optional AI model override for generated docstrings.
+        reuse_doc (bool): When True, reuse cached docstring suggestions from the most recent
+            prior run instead of regenerating them.
 
     Returns:
         tuple:
@@ -278,7 +280,9 @@ def analyse_repo(
     # Extract repo path from URL
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
-    existing_suggestions = _load_reusable_suggestions(repo_path, provider, branch)
+    existing_suggestions = (
+        _load_reusable_suggestions(repo_path, provider, branch) if reuse_doc else {"exact": {}, "fuzzy": {}}
+    )
 
     # Keep each repository analysis isolated under logs/<provider>/<repo>/app_<timestamp>/.
     bind_repo_run_log_dir(repo_path, provider)

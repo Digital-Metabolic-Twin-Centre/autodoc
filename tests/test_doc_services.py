@@ -1,12 +1,16 @@
 import json
+from contextlib import contextmanager
 
 import pytest
 
+import services.doc_services as doc_services_module
 from services.architecture_services import ArchitectureAnalysisError
 from services.doc_services import (
+    RepoAnalysisError,
     _file_matches_target_folders,
     _load_reusable_suggestions,
     _normalize_target_folders,
+    analyse_repo,
 )
 from services.workflow_service import execute_architecture_generation_request
 
@@ -141,6 +145,35 @@ def test_load_reusable_suggestions_merges_partial_runs_for_same_branch(monkeypat
     assert suggestions["exact"][("src/publish.py", "publish_docs", "function", 22, "python")] == "Publish the docs."
     assert suggestions["fuzzy"][("src/job_views.py", "build_job", "function", "python")] == "Build a job."
     assert suggestions["fuzzy"][("src/publish.py", "publish_docs", "function", "python")] == "Publish the docs."
+
+
+def test_analyse_repo_only_loads_cache_when_reuse_doc_true(monkeypatch, tmp_path):
+    monkeypatch.setattr("utils.output_paths.LOG_DIR", str(tmp_path))
+    monkeypatch.setattr(doc_services_module, "extract_repo_path", lambda repo_url, provider: repo_url)
+
+    @contextmanager
+    def fake_clone_repository(repo_url, token, branch, provider):
+        yield str(tmp_path)
+
+    monkeypatch.setattr(doc_services_module, "clone_repository", fake_clone_repository)
+    monkeypatch.setattr(doc_services_module, "fetch_repo_tree", lambda *args, **kwargs: [])
+
+    load_calls = []
+    original_loader = doc_services_module._load_reusable_suggestions
+
+    def spy_loader(repo_path, provider, branch):
+        load_calls.append((repo_path, provider, branch))
+        return original_loader(repo_path, provider, branch)
+
+    monkeypatch.setattr(doc_services_module, "_load_reusable_suggestions", spy_loader)
+
+    with pytest.raises(RepoAnalysisError):
+        analyse_repo("github", "octo-org/no-reuse-repo", "token", "main", reuse_doc=False)
+    assert load_calls == []
+
+    with pytest.raises(RepoAnalysisError):
+        analyse_repo("github", "octo-org/reuse-repo", "token", "main", reuse_doc=True)
+    assert load_calls == [("octo-org/reuse-repo", "github", "main")]
 
 
 def test_execute_architecture_generation_request_never_commits(monkeypatch):
