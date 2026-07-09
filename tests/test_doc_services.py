@@ -23,6 +23,14 @@ def test_normalize_target_folders_discards_empty_values():
     assert _normalize_target_folders(["", "  ", "/"]) == []
 
 
+def test_normalize_target_folders_strips_stray_quotes():
+    assert _normalize_target_folders(['"api"', "'tools'", '"webKinPred"']) == [
+        "api",
+        "tools",
+        "webKinPred",
+    ]
+
+
 def test_file_matches_target_folders_returns_true_when_no_targets():
     assert _file_matches_target_folders("src/main.py", []) is True
 

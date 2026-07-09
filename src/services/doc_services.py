@@ -60,7 +60,7 @@ class RepoAnalysisError(RuntimeError):
 
 def _normalize_target_folders(target_folders):
     """
-    Normalize a list of target folder paths by stripping whitespace and leading/trailing slashes.
+    Normalize a list of target folder paths by stripping whitespace, quotes, and leading/trailing slashes.
 
     Args:
         target_folders (list): A list of folder paths to normalize.
@@ -71,7 +71,7 @@ def _normalize_target_folders(target_folders):
     """
     normalized_folders = []
     for folder in target_folders or []:
-        normalized = str(folder).strip().strip("/")
+        normalized = str(folder).strip().strip("\"'").strip().strip("/")
         if normalized:
             normalized_folders.append(normalized)
     return normalized_folders
