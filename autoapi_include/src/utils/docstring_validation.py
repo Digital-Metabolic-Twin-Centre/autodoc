@@ -5,7 +5,8 @@ from typing import Optional
 from config.log_config import get_logger
 from utils.docstring_generation import (
     format_docstring_for_language,
-    generate_docstring_with_openai,
+    generate_docstring,
+    resolve_ai_provider,
 )
 from utils.output_paths import build_repo_output_file
 
@@ -263,17 +264,18 @@ def analyse_docstring_in_blocks(
                 if generated_docstring:
                     docstring_source = "fuzzy-cache"
             if not generated_docstring:
-                generated_docstring = generate_docstring_with_openai(
+                ai_provider, _ = resolve_ai_provider(model=model)
+                generated_docstring = generate_docstring(
                     clean_code,
                     language,
                     model=model,
                 )
                 if generated_docstring:
-                    docstring_source = "openai"
+                    docstring_source = ai_provider
             if generated_docstring:
                 block_analysis["generated_docstring"] = generated_docstring
-                if docstring_source == "openai":
-                    logger.info("Generated Docstring:")
+                if docstring_source in {"openai", "codex", "claude"}:
+                    logger.info("Generated Docstring with %s:", docstring_source)
                 elif docstring_source == "exact-cache":
                     logger.info("Reused cached docstring (exact match):")
                 else:

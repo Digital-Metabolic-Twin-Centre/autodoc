@@ -8,7 +8,8 @@ from config.log_config import get_logger
 from utils.code_block_extraction import GenericCodeBlockExtractor
 from utils.docstring_generation import (
     format_docstring_for_language,
-    generate_docstring_with_openai,
+    generate_docstring,
+    resolve_ai_provider,
 )
 from utils.docstring_validation import (
     analyse_docstring_in_blocks,
@@ -59,7 +60,7 @@ class RepoAnalysisError(RuntimeError):
 
 def _normalize_target_folders(target_folders):
     """
-    Normalize a list of target folder paths by stripping whitespace and leading/trailing slashes.
+    Normalize a list of target folder paths by stripping whitespace, quotes, and leading/trailing slashes.
 
     Args:
         target_folders (list): A list of folder paths to normalize.
@@ -70,7 +71,7 @@ def _normalize_target_folders(target_folders):
     """
     normalized_folders = []
     for folder in target_folders or []:
-        normalized = str(folder).strip().strip("/")
+        normalized = str(folder).strip().strip("\"'").strip().strip("/")
         if normalized:
             normalized_folders.append(normalized)
     return normalized_folders
@@ -258,7 +259,9 @@ def analyse_repo(
         token (str): The authentication token for accessing the repository.
         branch (str): The branch name to Analyse.
         target_folders (list[str] | None): Optional repository folders to limit analysis to.
-        model (str | None): Optional OpenAI model override for generated docstrings.
+        model (str | None): Optional AI model override for generated docstrings.
+        reuse_doc (bool): When True, reuse cached docstring suggestions from the most recent
+            prior run instead of regenerating them.
 
     Returns:
         tuple:
@@ -277,7 +280,9 @@ def analyse_repo(
     # Extract repo path from URL
     repo_path = extract_repo_path(repo_url, provider)
     logger.info(f"Extracted repo path: {repo_path}")
-    existing_suggestions = _load_reusable_suggestions(repo_path, provider, branch)
+    existing_suggestions = (
+        _load_reusable_suggestions(repo_path, provider, branch) if reuse_doc else {"exact": {}, "fuzzy": {}}
+    )
 
     # Keep each repository analysis isolated under logs/<provider>/<repo>/app_<timestamp>/.
     bind_repo_run_log_dir(repo_path, provider)
@@ -409,18 +414,19 @@ def analyse_repo(
                             if generated_docstring:
                                 docstring_source = "fuzzy-cache"
                         if not generated_docstring:
-                            generated_docstring = generate_docstring_with_openai(
+                            ai_provider, _ = resolve_ai_provider(model=model)
+                            generated_docstring = generate_docstring(
                                 content,
                                 language,
                                 model=model,
                             )
                             if generated_docstring:
-                                docstring_source = "openai"
+                                docstring_source = ai_provider
 
                         if generated_docstring:
                             block_analysis["docstring_analysis"][0]["generated_docstring"] = generated_docstring
-                            if docstring_source == "openai":
-                                logger.info("Generated Docstring:")
+                            if docstring_source in {"openai", "codex", "claude"}:
+                                logger.info("Generated Docstring with %s:", docstring_source)
                             elif docstring_source == "exact-cache":
                                 logger.info("Reused cached docstring (exact match):")
                             else:

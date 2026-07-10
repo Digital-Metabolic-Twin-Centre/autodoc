@@ -204,7 +204,7 @@ async def logout(request: Request, _: None = Depends(verify_csrf)) -> Response:
 def _parse_target_folders(raw_value: str) -> list[str]:
     values = []
     for item in re.split(r"[\n,]+", raw_value or ""):
-        normalized = item.strip().strip("/")
+        normalized = item.strip().strip("\"'").strip().strip("/")
         if not normalized:
             continue
         if normalized.startswith("..") or "/../" in f"/{normalized}/":
