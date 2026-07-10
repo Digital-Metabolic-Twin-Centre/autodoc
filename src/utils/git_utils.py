@@ -1103,6 +1103,23 @@ def download_github_branch_snapshot(repo_url: str, branch: str, token: str, dest
     """
     Downloads a GitHub branch snapshot into a local directory.
     """
+    try:
+        with clone_repository(repo_url, token, branch, "github") as cloned_dir:
+            shutil.copytree(
+                cloned_dir,
+                destination_dir,
+                dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns(".git"),
+            )
+            return True
+    except RepositoryAccessError as error:
+        logger.warning(
+            "Git clone snapshot failed for %s on %s; falling back to GitHub API download: %s",
+            repo_url,
+            branch,
+            error,
+        )
+
     tree_items = list_github_tree(repo_url, branch, token, recursive=True)
     if not tree_items:
         logger.error("No files found while downloading branch snapshot for %s.", branch)

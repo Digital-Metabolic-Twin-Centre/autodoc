@@ -6,6 +6,7 @@ from utils.git_utils import (
     configure_github_pages,
     create_directory_and_add_files,
     create_github_pull_request,
+    download_github_branch_snapshot,
     extract_repo_path,
     fetch_content_bytes_from_github,
     fetch_content_from_github,
@@ -87,6 +88,33 @@ def test_fetch_content_bytes_from_github_preserves_empty_file(monkeypatch):
     monkeypatch.setattr("utils.git_utils.requests.get", lambda *args, **kwargs: response)
 
     assert fetch_content_bytes_from_github("example/project", "main", "__init__.py", "secret") == b""
+
+
+def test_download_github_branch_snapshot_prefers_clone(monkeypatch, tmp_path):
+    from contextlib import contextmanager
+
+    clone_dir = tmp_path / "clone"
+    clone_dir.mkdir()
+    (clone_dir / "api").mkdir()
+    (clone_dir / "api" / "tasks.py").write_text("print('ok')\n", encoding="utf-8")
+    (clone_dir / ".git").mkdir()
+    destination_dir = tmp_path / "snapshot"
+    destination_dir.mkdir()
+
+    @contextmanager
+    def fake_clone_repository(repo_url, token, branch, provider):
+        assert (repo_url, token, branch, provider) == ("example/project", "secret", "main", "github")
+        yield str(clone_dir)
+
+    monkeypatch.setattr("utils.git_utils.clone_repository", fake_clone_repository)
+    monkeypatch.setattr(
+        "utils.git_utils.fetch_content_bytes_from_github",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("GitHub byte fetch should not be called")),
+    )
+
+    assert download_github_branch_snapshot("example/project", "main", "secret", str(destination_dir)) is True
+    assert (destination_dir / "api" / "tasks.py").read_text(encoding="utf-8") == "print('ok')\n"
+    assert not (destination_dir / ".git").exists()
 
 
 def test_configure_github_pages_raises_exact_github_error(monkeypatch):
