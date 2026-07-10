@@ -283,7 +283,16 @@ def test_generate_architecture_draft_rejects_output_path_outside_docs_tree(monke
 
 def test_find_and_approve_architecture_draft_round_trip(monkeypatch):
     _patch_no_existing_docs(monkeypatch)
-    monkeypatch.setattr("services.architecture_services.apply_approved_architecture_document", lambda *a, **k: True)
+    written = {}
+
+    def fake_apply_approved_architecture_document(repo_path, branch, token, provider, output_path, content):
+        written["content"] = content
+        return True
+
+    monkeypatch.setattr(
+        "services.architecture_services.apply_approved_architecture_document",
+        fake_apply_approved_architecture_document,
+    )
     monkeypatch.setattr(
         "services.architecture_services.update_sphinx_navigation_for_architecture", lambda *a, **k: True
     )
@@ -314,6 +323,9 @@ def test_find_and_approve_architecture_draft_round_trip(monkeypatch):
     )
 
     assert approval["status"] == "approved"
+    assert "Architecture (Draft)" not in written["content"]
+    assert "This page is an automatically generated draft" not in written["content"]
+    assert "Architecture\n============\n" in written["content"]
 
     reapproved_draft = find_architecture_draft("octo-org/widgets", "github", generated["draft_id"])
     assert reapproved_draft["status"] == "approved"

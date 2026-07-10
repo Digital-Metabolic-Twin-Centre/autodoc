@@ -398,7 +398,9 @@ def test_publish_github_pages_degrades_when_autoapi_build_still_fails(monkeypatc
         (docs_dir / "index.rst").write_text("Project\n=======\n", encoding="utf-8")
         return True
 
-    def fake_run_with_filters(temp_dir, conf_py_path, low_content_min_meaningful_lines):
+    def fake_run_with_filters(
+        temp_dir, conf_py_path, low_content_min_meaningful_lines, docs_source_dir=None, build_dir=None
+    ):
         return type("Result", (), {"returncode": 1, "stderr": "AttributeError: boom", "stdout": ""})()
 
     def fake_build_once(temp_dir):
@@ -447,10 +449,13 @@ def test_publish_github_pages_copies_project_readme_into_build_output(monkeypatc
         (docs_dir / "index.rst").write_text("Project\n=======\n", encoding="utf-8")
         return True
 
-    def fake_run_with_filters(temp_dir, conf_py_path, low_content_min_meaningful_lines):
-        build_dir = __import__("pathlib").Path(temp_dir) / "docs" / "build" / "html"
-        build_dir.mkdir(parents=True, exist_ok=True)
-        (build_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
+    def fake_run_with_filters(
+        temp_dir, conf_py_path, low_content_min_meaningful_lines, docs_source_dir=None, build_dir=None
+    ):
+        default_build_dir = __import__("pathlib").Path(temp_dir) / "docs" / "build" / "html"
+        output_dir = __import__("pathlib").Path(build_dir or default_build_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
         return type("Result", (), {"returncode": 0, "stderr": "", "stdout": "build ok"})()
 
     def fake_publish_local(repo_path, build_dir, target_branch, token, source_branch_for_seed):
@@ -472,6 +477,67 @@ def test_publish_github_pages_copies_project_readme_into_build_output(monkeypatc
     assert captured["published_readme"] == "# Actual Project Readme\n"
 
 
+def test_publish_github_pages_uses_existing_docs_source_layout(monkeypatch):
+    captured = {}
+
+    def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
+        temp_path = __import__("pathlib").Path(temp_dir)
+        docs_source_dir = temp_path / "docs" / "source"
+        docs_source_dir.mkdir(parents=True, exist_ok=True)
+        (docs_source_dir / "conf.py").write_text("extensions = []\n", encoding="utf-8")
+        (docs_source_dir / "index.rst").write_text("Existing Docs\n=============\n", encoding="utf-8")
+        return True
+
+    def fake_run_with_filters(temp_dir, conf_py_path, low_content_min_meaningful_lines, docs_source_dir, build_dir):
+        captured["conf_py_path"] = conf_py_path
+        captured["docs_source_dir"] = docs_source_dir
+        captured["build_dir"] = build_dir
+        build_path = __import__("pathlib").Path(build_dir)
+        build_path.mkdir(parents=True, exist_ok=True)
+        (build_path / "index.html").write_text("<html>existing docs</html>", encoding="utf-8")
+        return type("Result", (), {"returncode": 0, "stderr": "", "stdout": "build ok"})()
+
+    def fake_publish_local(repo_path, build_dir, target_branch, token, source_branch_for_seed):
+        captured["published_index"] = (__import__("pathlib").Path(build_dir) / "index.html").read_text(
+            encoding="utf-8"
+        )
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.ensure_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.configure_github_pages", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.download_github_branch_snapshot", fake_download_snapshot)
+    monkeypatch.setattr("services.sphinx_services._run_sphinx_build_with_autoapi_filters", fake_run_with_filters)
+    monkeypatch.setattr("services.sphinx_services.publish_local_directory_to_github_branch", fake_publish_local)
+    monkeypatch.setattr("services.sphinx_services.request_github_pages_build", lambda *args, **kwargs: True)
+
+    result = publish_github_pages("example/project", "main", "secret")
+
+    assert result is True
+    assert captured["conf_py_path"].endswith("docs/source/conf.py")
+    assert captured["docs_source_dir"].endswith("docs/source")
+    assert captured["build_dir"].endswith("docs/build/html")
+    assert captured["published_index"] == "<html>existing docs</html>"
+
+
+def test_publish_github_pages_fails_without_sphinx_config(monkeypatch):
+    def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
+        docs_dir = __import__("pathlib").Path(temp_dir) / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        (docs_dir / "index.rst").write_text("No config\n=========\n", encoding="utf-8")
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.ensure_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.configure_github_pages", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.sphinx_services.download_github_branch_snapshot", fake_download_snapshot)
+    monkeypatch.setattr(
+        "services.sphinx_services._write_sample_sphinx_scaffold",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("sample scaffold should not be written")),
+    )
+
+    with __import__("pytest").raises(PublishPagesError, match="No Sphinx conf.py was found"):
+        publish_github_pages("example/project", "main", "secret")
+
+
 def test_publish_github_pages_raises_when_pages_rebuild_request_fails(monkeypatch, tmp_path):
     def fake_download_snapshot(repo_path, source_branch, token, temp_dir):
         docs_dir = __import__("pathlib").Path(temp_dir) / "docs"
@@ -480,10 +546,13 @@ def test_publish_github_pages_raises_when_pages_rebuild_request_fails(monkeypatc
         (docs_dir / "index.rst").write_text("Project\n=======\n", encoding="utf-8")
         return True
 
-    def fake_run_with_filters(temp_dir, conf_py_path, low_content_min_meaningful_lines):
-        build_dir = __import__("pathlib").Path(temp_dir) / "docs" / "build" / "html"
-        build_dir.mkdir(parents=True, exist_ok=True)
-        (build_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
+    def fake_run_with_filters(
+        temp_dir, conf_py_path, low_content_min_meaningful_lines, docs_source_dir=None, build_dir=None
+    ):
+        default_build_dir = __import__("pathlib").Path(temp_dir) / "docs" / "build" / "html"
+        output_dir = __import__("pathlib").Path(build_dir or default_build_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "index.html").write_text("<html>ok</html>", encoding="utf-8")
         return type("Result", (), {"returncode": 0, "stderr": "", "stdout": "build ok"})()
 
     monkeypatch.setattr("services.sphinx_services.ensure_github_branch", lambda *args, **kwargs: True)

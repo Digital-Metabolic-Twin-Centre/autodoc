@@ -18,12 +18,16 @@ def test_sample_docs_files_follow_shared_template_with_autoapi():
     assert 'autoapi_dirs = ["../autoapi_include"]' in files["docs/conf.py"]
     assert "autoapi_add_toctree_entry = False" in files["docs/conf.py"]
     assert "api_reference" in files["docs/index.rst"]
+    assert "Auto Doc" not in files["docs/index.rst"]
+    assert "Repository Analysis and Sphinx Publishing" not in files["docs/index.rst"]
+    assert "Turn repository structure" not in files["docs/index.rst"]
     assert (
         "Generated API entries will appear here after the mirrored Python tree is analysed."
         in files["docs/api_reference.rst"]
     )
     assert "project/overview" in files["docs/index.rst"]
     assert "cd docs" in files["docs/README.rst"]
+    assert "Documentation Notes" not in files["docs/README.rst"]
     assert "docs/build/html/index.html" in files["docs/README.rst"]
 
 
@@ -81,7 +85,19 @@ def test_update_sphinx_navigation_for_architecture_inserts_entry(monkeypatch):
     written = {}
 
     def fake_fetch(repo_path, branch, file_path, token):
-        return "Docs\n====\n\n.. toctree::\n   :hidden:\n   :maxdepth: 1\n\n   README\n"
+        return (
+            "Docs\n====\n\n"
+            ".. toctree::\n"
+            "   :hidden:\n"
+            "   :maxdepth: 1\n"
+            "   :caption: Project\n\n"
+            "   README\n\n"
+            ".. toctree::\n"
+            "   :hidden:\n"
+            "   :maxdepth: 1\n"
+            "   :caption: Reference\n\n"
+            "   api_reference\n"
+        )
 
     def fake_create_a_file(repo_path, branch, file_path, content, token, provider):
         written["file_path"] = file_path
@@ -102,13 +118,64 @@ def test_update_sphinx_navigation_for_architecture_inserts_entry(monkeypatch):
     assert applied is True
     assert written["file_path"] == "docs/index.rst"
     assert "project/architecture" in written["content"]
+    assert written["content"].index("api_reference") < written["content"].index("project/architecture")
 
 
-def test_update_sphinx_navigation_for_architecture_skips_when_already_referenced(monkeypatch):
+def test_update_sphinx_navigation_for_architecture_moves_existing_entry_to_reference(monkeypatch):
+    written = {}
+
+    def fake_fetch(repo_path, branch, file_path, token):
+        return (
+            "Docs\n====\n\n"
+            ".. toctree::\n"
+            "   :hidden:\n"
+            "   :maxdepth: 1\n"
+            "   :caption: Project\n\n"
+            "   project/architecture\n"
+            "   README\n\n"
+            ".. toctree::\n"
+            "   :hidden:\n"
+            "   :maxdepth: 1\n"
+            "   :caption: Reference\n\n"
+            "   api_reference\n"
+        )
+
+    def fake_create_a_file(repo_path, branch, file_path, content, token, provider):
+        written["content"] = content
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.fetch_content_from_github", fake_fetch)
+    monkeypatch.setattr("services.sphinx_services.create_a_file", fake_create_a_file)
+
+    applied = update_sphinx_navigation_for_architecture(
+        "octo-org/example-repo",
+        "main",
+        "secret",
+        "github",
+        {"index_path": "docs/index.rst", "toctree_entry": "project/architecture", "already_referenced": True},
+    )
+
+    assert applied is True
+    assert written["content"].count("project/architecture") == 1
+    assert written["content"].index("api_reference") < written["content"].index("project/architecture")
+
+
+def test_update_sphinx_navigation_for_architecture_skips_when_already_under_reference(monkeypatch):
     def _fail_if_called(*args, **kwargs):
-        raise AssertionError("should not fetch or write when already referenced")
+        raise AssertionError("should not write when already referenced under Reference")
 
-    monkeypatch.setattr("services.sphinx_services.fetch_content_from_github", _fail_if_called)
+    def fake_fetch(repo_path, branch, file_path, token):
+        return (
+            "Docs\n====\n\n"
+            ".. toctree::\n"
+            "   :hidden:\n"
+            "   :maxdepth: 1\n"
+            "   :caption: Reference\n\n"
+            "   api_reference\n"
+            "   project/architecture\n"
+        )
+
+    monkeypatch.setattr("services.sphinx_services.fetch_content_from_github", fake_fetch)
     monkeypatch.setattr("services.sphinx_services.create_a_file", _fail_if_called)
 
     applied = update_sphinx_navigation_for_architecture(

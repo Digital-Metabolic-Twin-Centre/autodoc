@@ -55,6 +55,11 @@ logger = get_logger(__name__)
 DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
 DOCS_ASSET_DIR = Path(__file__).resolve().parents[2] / "docs" / "_static" / "img"
 AUTOAPI_DOCSTRING_THRESHOLD = 0.50
+SPHINX_CONF_CANDIDATES = (
+    CONF_PY,
+    "docs/source/conf.py",
+    "source/conf.py",
+)
 SAMPLE_DOCS_FALLBACK_TEXTS = {
     "conf.py": (
         "from datetime import datetime\n\n"
@@ -100,56 +105,9 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         "        pass\n"
     ),
     "index.rst": (
-        "Auto Doc\n"
-        "=============================\n\n"
-        ".. raw:: html\n\n"
-        '   <section class="hero-panel">\n'
-        '     <div class="hero-copy">\n'
-        '       <p class="eyebrow">Repository Analysis and Sphinx Publishing</p>\n'
-        "       <h1>Turn repository structure, docstring coverage, and code "
-        "context into a publishable documentation site.</h1>\n"
-        '       <p class="lead">\n'
-        "         Auto Doc reviews source trees, generates documentation suggestions, scaffolds a Sphinx site,\n"
-        "         and helps teams publish reviewed HTML without hand-assembling the whole docs workflow.\n"
-        "       </p>\n"
-        "     </div>\n"
-        '     <div class="hero-stat-grid">\n'
-        '       <div class="hero-stat">\n'
-        '         <span class="hero-stat-label">Input</span>\n'
-        "         <strong>GitHub and GitLab repos</strong>\n"
-        "       </div>\n"
-        '       <div class="hero-stat">\n'
-        '         <span class="hero-stat-label">Output</span>\n'
-        "         <strong>Sphinx docs and Pages HTML</strong>\n"
-        "       </div>\n"
-        '       <div class="hero-stat">\n'
-        '         <span class="hero-stat-label">Workflow</span>\n'
-        "         <strong>Generate, review, publish</strong>\n"
-        "       </div>\n"
-        "     </div>\n"
-        "   </section>\n\n"
-        ".. raw:: html\n\n"
-        '   <section class="feature-band">\n'
-        '     <article class="feature-card">\n'
-        '       <p class="feature-kicker">Generate</p>\n'
-        "       <h2>Analyse a target branch</h2>\n"
-        "       <p>Scan source files, measure documentation coverage, and "
-        "prepare a working docs scaffold tied to the repository.</p>\n"
-        "     </article>\n"
-        '     <article class="feature-card">\n'
-        '       <p class="feature-kicker">Refine</p>\n'
-        "       <h2>Shape the documentation set</h2>\n"
-        "       <p>Review project pages, keep weekly progress visible, and "
-        "extend the generated material into something people can actually "
-        "navigate.</p>\n"
-        "     </article>\n"
-        '     <article class="feature-card">\n'
-        '       <p class="feature-kicker">Publish</p>\n'
-        "       <h2>Ship reviewed HTML</h2>\n"
-        "       <p>Build the Sphinx site, filter risky AutoAPI content when "
-        "needed, and publish the final result to GitHub Pages.</p>\n"
-        "     </article>\n"
-        "   </section>\n\n"
+        "Project Documentation\n"
+        "=====================\n\n"
+        "Welcome to the project documentation.\n\n"
         ".. toctree::\n"
         "   :hidden:\n"
         "   :maxdepth: 1\n"
@@ -158,11 +116,6 @@ SAMPLE_DOCS_FALLBACK_TEXTS = {
         "   project/objectives\n"
         "   project/plan\n"
         "   project/results\n\n"
-        ".. toctree::\n"
-        "   :hidden:\n"
-        "   :maxdepth: 1\n"
-        "   :caption: Notes\n\n"
-        "   README\n"
     ),
     "project/overview.rst": (
         "Project Overview\n"
@@ -768,7 +721,21 @@ def _apply_autoapi_runtime_settings(
     conf_path.write_text(conf_text, encoding="utf-8")
 
 
-def _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess:
+def _display_path(path: str, temp_dir: str) -> str:
+    """
+    Return a path relative to the temporary repository when possible.
+    """
+    try:
+        return str(Path(path).resolve().relative_to(Path(temp_dir).resolve()))
+    except ValueError:
+        return path
+
+
+def _build_sphinx_once(
+    temp_dir: str,
+    docs_source_dir: str | None = None,
+    build_dir: str | None = None,
+) -> subprocess.CompletedProcess:
     """
     Builds Sphinx documentation once in the specified temporary directory.
 
@@ -779,8 +746,10 @@ def _build_sphinx_once(temp_dir: str) -> subprocess.CompletedProcess:
             subprocess.CompletedProcess: The result of the Sphinx build process.
 
     """
+    source_arg = docs_source_dir or DOCS_SRC
+    build_arg = build_dir or BUILD_DIR
     return subprocess.run(
-        [sys.executable, "-m", "sphinx", "-b", "html", DOCS_SRC, BUILD_DIR],
+        [sys.executable, "-m", "sphinx", "-b", "html", source_arg, build_arg],
         cwd=temp_dir,
         capture_output=True,
         text=True,
@@ -793,6 +762,8 @@ def _write_sphinx_build_log(
     result: subprocess.CompletedProcess,
     ignore_patterns: list[str],
     temp_dir: str,
+    docs_source_dir: str | None = None,
+    build_dir: str | None = None,
 ) -> None:
     """
     Appends detailed Sphinx build activity to a persistent run log artifact.
@@ -806,9 +777,9 @@ def _write_sphinx_build_log(
         log_file.write(f"=== {attempt_name} ===\n")
         log_file.write(f"temp_dir: {temp_dir}\n")
         log_file.write(f"returncode: {result.returncode}\n")
-        log_file.write(
-            f"command: {sys.executable} -m sphinx -b html {DOCS_SRC} {BUILD_DIR}\n"
-        )
+        source_arg = _display_path(docs_source_dir, temp_dir) if docs_source_dir else DOCS_SRC
+        build_arg = _display_path(build_dir, temp_dir) if build_dir else BUILD_DIR
+        log_file.write(f"command: {sys.executable} -m sphinx -b html {source_arg} {build_arg}\n")
         log_file.write("autoapi_ignore:\n")
         if ignore_patterns:
             for pattern in sorted(set(ignore_patterns)):
@@ -948,6 +919,8 @@ def _run_sphinx_build_with_autoapi_filters(
     temp_dir: str,
     conf_py_path: str,
     low_content_min_meaningful_lines: int = LOW_CONTENT_MIN_MEANINGFUL_LINES,
+    docs_source_dir: str | None = None,
+    build_dir: str | None = None,
 ) -> subprocess.CompletedProcess:
     """
     Run Sphinx build with AutoAPI filters, handling prebuild ignores and retries.
@@ -974,9 +947,9 @@ def _run_sphinx_build_with_autoapi_filters(
         len(prebuild_skipped),
     )
     _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
-    build_result = _build_sphinx_once(temp_dir)
+    build_result = _build_sphinx_once(temp_dir, docs_source_dir, build_dir)
     _write_sphinx_build_log(
-        "initial-build", build_result, active_ignore_patterns, temp_dir
+        "initial-build", build_result, active_ignore_patterns, temp_dir, docs_source_dir, build_dir
     )
     if build_result.returncode == 0:
         _write_skipped_autoapi_report(skipped_files)
@@ -1010,9 +983,9 @@ def _run_sphinx_build_with_autoapi_filters(
         len(new_fallback_ignores),
     )
     _apply_autoapi_runtime_settings(conf_py_path, active_ignore_patterns)
-    retry_result = _build_sphinx_once(temp_dir)
+    retry_result = _build_sphinx_once(temp_dir, docs_source_dir, build_dir)
     _write_sphinx_build_log(
-        "fallback-retry", retry_result, active_ignore_patterns, temp_dir
+        "fallback-retry", retry_result, active_ignore_patterns, temp_dir, docs_source_dir, build_dir
     )
     _write_skipped_autoapi_report(skipped_files)
     return retry_result
@@ -1333,8 +1306,8 @@ def _build_sample_readme() -> str:
 
     """
     return (
-        "Documentation Notes\n"
-        "===================\n\n"
+        "Documentation\n"
+        "=============\n\n"
         "These pages are written in reStructuredText (`.rst`) and built by Sphinx.\n\n"
         "Local preview\n"
         "-------------\n\n"
@@ -1442,6 +1415,55 @@ def _remote_text_file_exists(
     )
 
 
+def _remote_sphinx_conf_exists(
+    repo_path: str,
+    branch: str,
+    token: str,
+    provider: str,
+) -> bool:
+    """
+    Check whether the target branch already contains a recognized Sphinx config.
+    """
+    return any(
+        _remote_text_file_exists(repo_path, branch, candidate, token, provider)
+        for candidate in SPHINX_CONF_CANDIDATES
+    )
+
+
+def _find_sphinx_conf_path(root_dir: str) -> str | None:
+    """
+    Find the existing Sphinx configuration in a checked-out repository.
+    """
+    root_path = Path(root_dir)
+    for candidate in SPHINX_CONF_CANDIDATES:
+        candidate_path = root_path / candidate
+        if candidate_path.is_file():
+            return str(candidate_path)
+
+    ignored_parts = {"build", "_build", ".git", "node_modules"}
+    matches = []
+    for conf_path in root_path.rglob("conf.py"):
+        relative_parts = set(conf_path.relative_to(root_path).parts)
+        if relative_parts & ignored_parts:
+            continue
+        matches.append(conf_path)
+
+    if not matches:
+        return None
+    matches.sort(key=lambda path: (len(path.relative_to(root_path).parts), path.as_posix()))
+    return str(matches[0])
+
+
+def _build_dir_for_sphinx_source(docs_source_dir: str) -> str:
+    """
+    Choose a build directory that respects common Sphinx source layouts.
+    """
+    source_path = Path(docs_source_dir)
+    if source_path.name == "source":
+        return str(source_path.parent / "build" / "html")
+    return str(source_path / "build" / "html")
+
+
 def _create_sample_sphinx_scaffold(
     repo_path: str,
     branch: str,
@@ -1462,6 +1484,10 @@ def _create_sample_sphinx_scaffold(
     Returns:
         bool: True when the scaffold was created successfully, otherwise False.
     """
+    if _remote_sphinx_conf_exists(repo_path, branch, token, provider):
+        logger.info("Existing Sphinx configuration found; skipping sample scaffold creation.")
+        return True
+
     for file_path, content in _sample_docs_files(project_name).items():
         if _remote_text_file_exists(repo_path, branch, file_path, token, provider):
             continue
@@ -1787,16 +1813,21 @@ def publish_github_pages(
                 f"'{source_branch}' exists and the token can read repository contents."
             )
 
-        conf_py_path = os.path.join(temp_dir, CONF_PY)
-        docs_source_dir = os.path.join(temp_dir, DOCS_SRC)
+        conf_py_path = _find_sphinx_conf_path(temp_dir)
+        if not conf_py_path:
+            _raise_publish_error(
+                "No Sphinx conf.py was found in the reviewed branch. Run documentation setup "
+                "first, or add an existing Sphinx config under docs/conf.py, docs/source/conf.py, "
+                "or source/conf.py before publishing.",
+                status_code=422,
+            )
+
+        docs_source_dir = os.path.dirname(conf_py_path)
         index_path = os.path.join(docs_source_dir, "index.rst")
-        build_dir = os.path.join(temp_dir, BUILD_DIR)
+        build_dir = _build_dir_for_sphinx_source(docs_source_dir)
         update_conf_path = os.path.join(temp_dir, CONFIGURATION_UPDATE_FILE)
 
         os.makedirs(docs_source_dir, exist_ok=True)
-
-        if not os.path.exists(conf_py_path):
-            _write_sample_sphinx_scaffold(temp_dir, project_name)
 
         if os.path.exists(update_conf_path):
             update_conf_result = subprocess.run(
@@ -1823,6 +1854,8 @@ def publish_github_pages(
             temp_dir,
             conf_py_path,
             low_content_min_meaningful_lines,
+            docs_source_dir,
+            build_dir,
         )
         if build_result.returncode != 0:
             build_output = "\n".join(
@@ -1841,7 +1874,7 @@ def publish_github_pages(
             )
             build_result = _build_sphinx_once(temp_dir)
             _write_sphinx_build_log(
-                "degraded-publish-retry", build_result, [], temp_dir
+                "degraded-publish-retry", build_result, [], temp_dir, docs_source_dir, build_dir
             )
             if build_result.returncode != 0:
                 degraded_output = "\n".join(
@@ -1863,7 +1896,7 @@ def publish_github_pages(
 
         if not os.path.isdir(build_dir):
             _raise_publish_error(
-                f"Sphinx build did not produce {BUILD_DIR}.",
+                f"Sphinx build did not produce {_display_path(build_dir, temp_dir)}.",
                 status_code=422,
             )
 
@@ -2050,22 +2083,89 @@ def propose_architecture_navigation(
 
 def _insert_toctree_entry(index_content: str, toctree_entry: str) -> str:
     """
-    Inserts a new entry into the first toctree directive found in ``index.rst`` content.
+    Inserts a new entry into the Reference toctree when present.
+    """
+    lines = index_content.splitlines()
+    reference_toctree_start = None
+    fallback_toctree_start = None
+
+    for line_index, line in enumerate(lines):
+        if not line.strip().startswith(".. toctree::"):
+            continue
+        if fallback_toctree_start is None:
+            fallback_toctree_start = line_index
+        option_index = line_index + 1
+        while option_index < len(lines):
+            stripped = lines[option_index].strip()
+            if stripped.startswith(".. "):
+                break
+            if stripped.startswith(":caption:") and stripped.split(":", 2)[-1].strip().lower() == "reference":
+                reference_toctree_start = line_index
+                break
+            if stripped and not stripped.startswith(":"):
+                break
+            option_index += 1
+        if reference_toctree_start is not None:
+            break
+
+    target_start = reference_toctree_start if reference_toctree_start is not None else fallback_toctree_start
+    if target_start is not None:
+        insert_at = target_start + 1
+        while insert_at < len(lines):
+            stripped = lines[insert_at].strip()
+            if stripped.startswith(".. "):
+                break
+            if stripped and not stripped.startswith(":"):
+                insert_at += 1
+                continue
+            if not stripped and insert_at + 1 < len(lines):
+                next_stripped = lines[insert_at + 1].strip()
+                if next_stripped and not next_stripped.startswith(":") and not next_stripped.startswith(".. "):
+                    insert_at += 1
+                    continue
+                if next_stripped.startswith(".. "):
+                    break
+            insert_at += 1
+        lines.insert(insert_at, f"   {toctree_entry}")
+        return "\n".join(lines) + "\n"
+    return (
+        index_content.rstrip()
+        + f"\n\n.. toctree::\n   :maxdepth: 1\n   :caption: Reference\n\n   {toctree_entry}\n"
+    )
+
+
+def _remove_toctree_entry(index_content: str, toctree_entry: str) -> str:
+    """
+    Removes existing occurrences of a toctree entry before reinserting it.
+    """
+    lines = [
+        line
+        for line in index_content.splitlines()
+        if line.strip() != toctree_entry
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _toctree_entry_is_under_reference(index_content: str, toctree_entry: str) -> bool:
+    """
+    Returns whether a toctree entry already lives in a Reference captioned block.
     """
     lines = index_content.splitlines()
     for line_index, line in enumerate(lines):
-        if line.strip().startswith(".. toctree::"):
-            insert_at = line_index + 1
-            while insert_at < len(lines) and (
-                lines[insert_at].strip().startswith(":") or not lines[insert_at].strip()
-            ):
-                insert_at += 1
-            lines.insert(insert_at, f"   {toctree_entry}")
-            return "\n".join(lines) + "\n"
-    return (
-        index_content.rstrip()
-        + f"\n\n.. toctree::\n   :maxdepth: 1\n\n   {toctree_entry}\n"
-    )
+        if not line.strip().startswith(".. toctree::"):
+            continue
+        block_end = line_index + 1
+        while block_end < len(lines) and not lines[block_end].strip().startswith(".. "):
+            block_end += 1
+        block = lines[line_index:block_end]
+        has_reference_caption = any(
+            item.strip().startswith(":caption:")
+            and item.strip().split(":", 2)[-1].strip().lower() == "reference"
+            for item in block
+        )
+        if has_reference_caption and any(item.strip() == toctree_entry for item in block):
+            return True
+    return False
 
 
 def update_sphinx_navigation_for_architecture(
@@ -2088,8 +2188,6 @@ def update_sphinx_navigation_for_architecture(
     Returns:
         bool: True if the navigation is already correct or was updated successfully.
     """
-    if navigation_update.get("already_referenced"):
-        return True
     index_path = navigation_update.get("index_path", f"{DOCS_SRC}/index.rst")
     toctree_entry = navigation_update["toctree_entry"]
     existing_index = _fetch_existing_doc_text(
@@ -2100,9 +2198,12 @@ def update_sphinx_navigation_for_architecture(
             "No existing index.rst found at %s; skipping navigation update.", index_path
         )
         return False
-    if toctree_entry in existing_index:
+    if _toctree_entry_is_under_reference(existing_index, toctree_entry):
         return True
-    updated_index = _insert_toctree_entry(existing_index, toctree_entry)
+    updated_index = _insert_toctree_entry(
+        _remove_toctree_entry(existing_index, toctree_entry),
+        toctree_entry,
+    )
     return create_a_file(repo_path, branch, index_path, updated_index, token, provider)
 
 

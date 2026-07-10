@@ -1296,6 +1296,30 @@ def render_architecture_draft_rst(
     return "\n".join(lines) + "\n"
 
 
+def _approved_architecture_content(draft_content: str) -> str:
+    """
+    Convert a reviewed architecture draft into publishable approved content.
+    """
+    content = re.sub(
+        r"^(?P<title>.+?) Architecture \(Draft\)\n=+\n",
+        "Architecture\n============\n",
+        draft_content,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    content = re.sub(
+        (
+            r"\n?\.\. note::\n"
+            r"   This page is an automatically generated draft\. It has not been approved\n"
+            r"   for publication\. Review each section before approving\.\n\n"
+        ),
+        "\n",
+        content,
+        count=1,
+    )
+    return content.lstrip()
+
+
 def generate_architecture_draft(
     provider: str,
     repo_url: str,
@@ -1525,7 +1549,7 @@ def apply_architecture_approval(
 
     approved_at = datetime.now(UTC)
     marker_line = f"{MANUAL_EDIT_MARKER} (approved {approved_at.isoformat()})\n\n"
-    final_content = marker_line + draft_content
+    final_content = marker_line + _approved_architecture_content(draft_content)
     if approval_note:
         final_content += f"\n.. Reviewer note: {approval_note}\n"
 
