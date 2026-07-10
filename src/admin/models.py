@@ -8,6 +8,16 @@ from admin.database import Base
 
 
 class RepositoryConfig(Base):
+    """
+    Repository configuration model for storing repository metadata, access settings, and
+    documentation preferences.
+    Args:
+        None: SQLAlchemy model fields are mapped as class attributes.
+    Returns:
+        RepositoryConfig: Persisted repository configuration instance.
+
+    """
+
     __tablename__ = "repository_configs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -23,7 +33,9 @@ class RepositoryConfig(Base):
     low_content_min_lines: Mapped[int] = mapped_column(Integer, default=4)
     encrypted_token: Mapped[str] = mapped_column(Text)
     token_last4: Mapped[str] = mapped_column(String(8))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC)
     )
@@ -31,14 +43,40 @@ class RepositoryConfig(Base):
 
     @property
     def target_folders(self) -> list[str]:
+        """
+        Set the target folders from a list of folder paths.
+
+        Args:
+            value (list[str]): Folder paths to serialize and store.
+
+        Returns:
+            None: This method does not return a value.
+
+        """
         return json.loads(self.target_folders_json or "[]")
 
     @target_folders.setter
     def target_folders(self, value: list[str]) -> None:
+        """
+        Return the configured target folders.
+
+        Returns:
+            list[str]: Folder paths decoded from the target folders JSON value.
+
+        """
         self.target_folders_json = json.dumps(value)
 
 
 class RunRecord(Base):
+    """
+    Stores execution metadata and results for a repository documentation run.
+    Args:
+        None: SQLAlchemy model fields are mapped as class attributes.
+    Returns:
+        RunRecord: Persisted run record instance.
+
+    """
+
     __tablename__ = "run_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -49,7 +87,9 @@ class RunRecord(Base):
     status: Mapped[str] = mapped_column(String(40), index=True, default="queued")
     progress_percent: Mapped[float | None] = mapped_column(Float, nullable=True)
     progress_message: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC), index=True
+    )
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     duration_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -64,6 +104,8 @@ class RunRecord(Base):
     source_branch: Mapped[str | None] = mapped_column(String(255), nullable=True)
     published_branch: Mapped[str | None] = mapped_column(String(255), nullable=True)
     metrics_files_analyzed: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    metrics_docstrings_generated: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    metrics_docstrings_generated: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
     metrics_skipped_files: Mapped[int | None] = mapped_column(Integer, nullable=True)
     repository: Mapped[RepositoryConfig | None] = relationship(back_populates="runs")

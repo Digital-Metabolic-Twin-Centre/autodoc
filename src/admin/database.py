@@ -19,6 +19,13 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, futu
 
 
 def init_db() -> None:
+    """
+    Initialize the database schema and required runtime metadata.
+
+    Returns:
+        None: Creates tables, ensures run record columns, and scrubs sensitive payloads.
+
+    """
     from admin import models  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
@@ -27,11 +34,24 @@ def init_db() -> None:
 
 
 def scrub_sensitive_run_payloads() -> int:
+    """
+    Remove token fields from persisted run request payloads.
+
+    Args:
+        None.
+    Returns:
+        int: Number of run records scrubbed.
+
+    """
     from admin.models import RunRecord
 
     scrubbed_count = 0
     with SessionLocal() as session:
-        runs = session.query(RunRecord).filter(RunRecord.request_payload.is_not(None)).all()
+        runs = (
+            session.query(RunRecord)
+            .filter(RunRecord.request_payload.is_not(None))
+            .all()
+        )
         for run in runs:
             try:
                 payload = json.loads(run.request_payload or "")
@@ -49,13 +69,27 @@ def scrub_sensitive_run_payloads() -> int:
 
 
 def _ensure_run_record_columns() -> None:
+    """
+    Ensure run_records has progress tracking columns, adding any missing ones.
+    Args:
+        None.
+    Returns:
+        None: This function does not return a value.
+
+    """
     inspector = inspect(engine)
-    existing_columns = {column["name"] for column in inspector.get_columns("run_records")}
+    existing_columns = {
+        column["name"] for column in inspector.get_columns("run_records")
+    }
     missing_columns: list[str] = []
     if "progress_percent" not in existing_columns:
-        missing_columns.append("ALTER TABLE run_records ADD COLUMN progress_percent FLOAT")
+        missing_columns.append(
+            "ALTER TABLE run_records ADD COLUMN progress_percent FLOAT"
+        )
     if "progress_message" not in existing_columns:
-        missing_columns.append("ALTER TABLE run_records ADD COLUMN progress_message VARCHAR(255)")
+        missing_columns.append(
+            "ALTER TABLE run_records ADD COLUMN progress_message VARCHAR(255)"
+        )
 
     if not missing_columns:
         return

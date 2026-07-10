@@ -66,19 +66,48 @@ TOKEN_REQUIRED_ENDPOINTS = {
 
 
 def _database_label() -> str:
+    """
+    Return a human-readable label for the configured database.
+
+    Returns:
+        str: SQLite label with path for SQLite URLs, otherwise the raw database URL.
+
+    """
     if DATABASE_URL.startswith("sqlite:///"):
         return f"SQLite ({DATABASE_URL.removeprefix('sqlite:///')})"
     return DATABASE_URL
 
 
 def _json_loads(value: str | None) -> Any:
+    """
+    Parse a JSON string into a Python object.
+
+    Args:
+        value (str | None): JSON string to parse; returns None if empty or None.
+    Returns:
+        Any: Parsed JSON value, or None for empty input.
+
+    """
     if not value:
         return None
     return json.loads(value)
 
 
 def _safe_request_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in payload.items() if key not in SENSITIVE_PAYLOAD_FIELDS}
+    """
+    Return a copy of the request payload without sensitive fields.
+
+    Args:
+        payload (dict[str, Any]): Request payload to sanitize.
+    Returns:
+        dict[str, Any]: Sanitized payload excluding sensitive keys.
+
+    """
+    return {
+        key: value
+        for key, value in payload.items()
+        if key not in SENSITIVE_PAYLOAD_FIELDS
+    }
 
 
 def _queue_payload_with_repository_secret(
@@ -86,10 +115,18 @@ def _queue_payload_with_repository_secret(
     payload: dict[str, Any],
     repository: RepositoryConfig | None,
 ) -> dict[str, Any]:
+    """
+    Add a decrypted repository token to payloads for protected endpoints.
+    Args: endpoint (str): Target endpoint; payload (dict[str, Any]): Request payload; repository
+    (RepositoryConfig | None): Repository token source.
+    Returns: dict[str, Any]: Copied payload, optionally including the decrypted token.
+    """
     if endpoint not in TOKEN_REQUIRED_ENDPOINTS:
         return dict(payload)
     if repository is None:
-        raise HTTPException(status_code=422, detail="Run cannot be retried without a repository token.")
+        raise HTTPException(
+            status_code=422, detail="Run cannot be retried without a repository token."
+        )
     return {
         **payload,
         "token": decrypt_token(repository.encrypted_token),
@@ -97,6 +134,15 @@ def _queue_payload_with_repository_secret(
 
 
 def _fmt_duration(seconds: float | None) -> str:
+    """
+    Format an optional duration in seconds for display.
+
+    Args:
+        seconds (float | None): Duration in seconds, or None for a placeholder.
+    Returns:
+        str: Human-readable duration string.
+
+    """
     if seconds is None:
         return "-"
     if seconds < 1:
@@ -108,6 +154,15 @@ def _fmt_duration(seconds: float | None) -> str:
 
 
 def _status_badge_classes(status_value: str) -> str:
+    """
+    Return CSS classes for a status badge based on status value.
+
+    Args:
+        status_value (str): Status name used to select badge styling.
+    Returns:
+        str: Tailwind CSS class string for the matching status style.
+
+    """
     if status_value == "completed":
         return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
     if status_value == "failed":
@@ -123,6 +178,14 @@ templates.env.filters["status_badge_classes"] = _status_badge_classes
 
 
 def _is_htmx(request: Request) -> bool:
+    """
+    Return whether the request was made by HTMX.
+    Args:
+        request (Request): Incoming request whose headers are checked.
+    Returns:
+        bool: True if the HX-Request header is "true"; otherwise False.
+
+    """
     return request.headers.get("HX-Request") == "true"
 
 
@@ -132,6 +195,12 @@ def _template_response(
     context: dict[str, Any],
     status_code: int = 200,
 ) -> Response:
+    """
+    Render a template response with request, CSRF, active path, and database context.
+    Args: request (Request): Incoming request; name (str): template name; context (dict[str, Any]):
+    render context; status_code (int): HTTP status code.
+    Returns: Response: Rendered HTML response with CSRF token ensured.
+    """
     context["request"] = request
     context["active_path"] = request.url.path
     csrf_token = get_or_create_csrf_token(request)
@@ -144,6 +213,13 @@ def _template_response(
 
 
 def _redirect(url: str, request: Request, status_code: int = 303) -> Response:
+    """
+    Redirect to a URL, using HX-Redirect for HTMX requests.
+
+    Args: url (str): Target URL; request (Request): Incoming request; status_code (int): HTTP
+    redirect status code.
+    Returns: Response: HTMX redirect response or standard redirect response.
+    """
     if _is_htmx(request):
         response = Response(status_code=200)
         response.headers["HX-Redirect"] = url
@@ -176,7 +252,9 @@ async def login_submit(
             "page_title": "Admin Sign In",
             "error_message": "The username or password was not recognized.",
         }
-        response = _template_response(request, "admin/login.html", context, status_code=401)
+        response = _template_response(
+            request, "admin/login.html", context, status_code=401
+        )
         clear_admin_session(response)
         return response
     except HTTPException as exc:
@@ -184,7 +262,9 @@ async def login_submit(
             "page_title": "Admin Sign In",
             "error_message": str(exc.detail),
         }
-        response = _template_response(request, "admin/login.html", context, status_code=exc.status_code)
+        response = _template_response(
+            request, "admin/login.html", context, status_code=exc.status_code
+        )
         clear_admin_session(response)
         return response
 
@@ -202,21 +282,44 @@ async def logout(request: Request, _: None = Depends(verify_csrf)) -> Response:
 
 
 def _parse_target_folders(raw_value: str) -> list[str]:
+    """
+    Parse comma- or newline-separated target folder paths.
+
+    Args:
+        raw_value (str): Raw folder list string to normalize and validate.
+    Returns:
+        list[str]: Normalized folder paths without leading/trailing slashes.
+
+    """
     values = []
     for item in re.split(r"[\n,]+", raw_value or ""):
         normalized = item.strip().strip("\"'").strip().strip("/")
         if not normalized:
             continue
         if normalized.startswith("..") or "/../" in f"/{normalized}/":
-            raise HTTPException(status_code=422, detail="Target folders cannot contain '..'.")
+            raise HTTPException(
+                status_code=422, detail="Target folders cannot contain '..'."
+            )
         values.append(normalized)
     return values
 
 
 def _validate_provider(provider: str) -> str:
+    """
+    Validate and normalize a supported source control provider.
+
+    Args:
+        provider (str): Provider name to validate, such as "github" or "gitlab".
+
+    Returns:
+        str: Normalized provider name in lowercase.
+
+    """
     normalized = provider.strip().lower()
     if normalized not in {"github", "gitlab"}:
-        raise HTTPException(status_code=422, detail="Provider must be github or gitlab.")
+        raise HTTPException(
+            status_code=422, detail="Provider must be github or gitlab."
+        )
     return normalized
 
 
@@ -231,6 +334,16 @@ def _validate_repo_form(
     docstring_threshold: float,
     low_content_min_lines: int,
 ) -> dict[str, Any]:
+    """
+    Validate repository form fields and normalize settings.
+    Args:
+        name (str), provider (str), repo_url (str), default_branch (str), target_folders (str),
+        preferred_model (str), reuse_doc (bool), docstring_threshold (float), low_content_min_lines
+        (int): Repository metadata, options, and thresholds.
+    Returns:
+        dict[str, Any]: Normalized repository configuration.
+
+    """
     if not name.strip():
         raise HTTPException(status_code=422, detail="Repository name is required.")
     if not repo_url.strip():
@@ -240,9 +353,13 @@ def _validate_repo_form(
     normalized_provider = _validate_provider(provider)
     repo_path = extract_repo_path(repo_url.strip(), normalized_provider)
     if docstring_threshold < 0 or docstring_threshold > 1:
-        raise HTTPException(status_code=422, detail="Docstring threshold must be between 0 and 1.")
+        raise HTTPException(
+            status_code=422, detail="Docstring threshold must be between 0 and 1."
+        )
     if low_content_min_lines < 0:
-        raise HTTPException(status_code=422, detail="Low content minimum lines must be 0 or greater.")
+        raise HTTPException(
+            status_code=422, detail="Low content minimum lines must be 0 or greater."
+        )
     return {
         "name": name.strip(),
         "provider": normalized_provider,
@@ -266,17 +383,33 @@ def _build_repo_run_request(
     docstring_threshold: float | None = None,
     low_content_min_lines: int | None = None,
 ) -> RepoRequest:
+    """
+    Build a RepoRequest from repository defaults and optional overrides.
+    Args:
+        repository (RepositoryConfig): Stored settings; branch/target_folders/model (str | None),
+        reuse_doc (bool | None), docstring_threshold (float | None), low_content_min_lines (int |
+        None): optional overrides.
+    Returns:
+        RepoRequest: Request with decrypted token, parsed folders, and resolved options.
+
+    """
     return RepoRequest(
         provider=repository.provider,
         repo_url=repository.repo_url,
         token=decrypt_token(repository.encrypted_token),
         branch=branch or repository.default_branch,
-        target_folders=_parse_target_folders(target_folders or ",".join(repository.target_folders)),
+        target_folders=_parse_target_folders(
+            target_folders or ",".join(repository.target_folders)
+        ),
         model=(model or repository.preferred_model or DEFAULT_OPENAI_MODEL),
         reuse_doc=repository.reuse_doc if reuse_doc is None else reuse_doc,
-        docstring_threshold=repository.docstring_threshold if docstring_threshold is None else docstring_threshold,
+        docstring_threshold=repository.docstring_threshold
+        if docstring_threshold is None
+        else docstring_threshold,
         low_content_min_lines=(
-            repository.low_content_min_lines if low_content_min_lines is None else low_content_min_lines
+            repository.low_content_min_lines
+            if low_content_min_lines is None
+            else low_content_min_lines
         ),
     )
 
@@ -286,17 +419,33 @@ def _build_publish_request(
     branch: str | None = None,
     low_content_min_lines: int | None = None,
 ) -> PublishPagesRequest:
+    """
+    Build a request object for publishing repository pages.
+
+    Args: repository (RepositoryConfig): Repository settings and credentials; branch (str | None):
+    Branch override; low_content_min_lines (int | None): Minimum line threshold override.
+    Returns: PublishPagesRequest: Configured publish request with decrypted token.
+    """
     return PublishPagesRequest(
         repo_url=repository.repo_url,
         token=decrypt_token(repository.encrypted_token),
         branch=branch or repository.default_branch,
         low_content_min_lines=(
-            repository.low_content_min_lines if low_content_min_lines is None else low_content_min_lines
+            repository.low_content_min_lines
+            if low_content_min_lines is None
+            else low_content_min_lines
         ),
     )
 
 
 def _default_suggestion_branch() -> str:
+    """
+    Generate the default branch name for docstring suggestions.
+
+    Returns:
+        str: Branch name including a UTC timestamp.
+
+    """
     return f"autodocs-docstring-suggestions-{datetime.now(UTC).strftime('%Y%m%d-%H%M')}"
 
 
@@ -307,6 +456,14 @@ def _build_pr_request(
     title: str | None,
     max_docstrings: int,
 ) -> DocstringPullRequestRequest:
+    """
+    Build a pull request request for generating suggested docstrings.
+
+    Args: repository (RepositoryConfig): Repository settings; base_branch (str | None): Base branch
+    override; suggestion_branch (str | None): Suggestion branch override; title (str | None): PR
+    title override; max_docstrings (int): Maximum docstrings to include.
+    Returns: DocstringPullRequestRequest: Configured pull request request.
+    """
     return DocstringPullRequestRequest(
         provider=repository.provider,
         repo_url=repository.repo_url,
@@ -326,12 +483,29 @@ def _build_architecture_generation_request(
     include_diagrams: bool = True,
     reuse_existing_docs: bool = True,
 ) -> ArchitectureGenerationRequest:
+    """
+    Build an architecture generation request from repository configuration.
+
+    Args:
+        repository (RepositoryConfig): Repository settings and encrypted credentials.
+        branch (str | None): Optional branch override; defaults to the repository default.
+        target_folders (str | None): Optional comma-separated folder list override.
+        output_path (str | None): Optional output path override.
+        include_diagrams (bool): Whether to include diagrams in generated docs.
+        reuse_existing_docs (bool): Whether to reuse existing documentation when available.
+
+    Returns:
+        ArchitectureGenerationRequest: Prepared request with decrypted token and defaults applied.
+
+    """
     return ArchitectureGenerationRequest(
         provider=repository.provider,
         repo_url=repository.repo_url,
         token=decrypt_token(repository.encrypted_token),
         branch=branch or repository.default_branch,
-        target_folders=_parse_target_folders(target_folders or ",".join(repository.target_folders)),
+        target_folders=_parse_target_folders(
+            target_folders or ",".join(repository.target_folders)
+        ),
         output_path=output_path or DEFAULT_ARCHITECTURE_OUTPUT_PATH,
         include_diagrams=include_diagrams,
         reuse_existing_docs=reuse_existing_docs,
@@ -340,6 +514,16 @@ def _build_architecture_generation_request(
 
 
 def _artifact_entries(run: RunRecord) -> list[dict[str, str]]:
+    """
+    List file artifacts associated with a run.
+
+    Args:
+        run (RunRecord): Run record containing the artifact directory path.
+
+    Returns:
+        list[dict[str, str]]: Artifact entries with file names and sizes in bytes.
+
+    """
     artifact_dir = run.artifact_dir
     if not artifact_dir or not os.path.isdir(artifact_dir):
         return []
@@ -357,6 +541,15 @@ def _artifact_entries(run: RunRecord) -> list[dict[str, str]]:
 
 
 def _run_log_entries(run: RunRecord) -> list[dict[str, str]]:
+    """
+    Build ordered log artifact entries for a run.
+
+    Args:
+        run (RunRecord): Run metadata containing artifact and log path details.
+    Returns:
+        list[dict[str, str]]: Ordered log/text entries with labels and sizes.
+
+    """
     artifact_entries = _artifact_entries(run)
     entries_by_name = {entry["name"]: dict(entry) for entry in artifact_entries}
     prioritized_names = [
@@ -394,6 +587,12 @@ def _run_log_entries(run: RunRecord) -> list[dict[str, str]]:
 
 
 def _log_snippet(log_path: str | None, limit: int = 80) -> str:
+    """
+    Return the trailing lines from a log file, or an empty string if unavailable.
+    Args: log_path (str | None): Path to the log file; limit (int): Maximum number of trailing lines
+    to include.
+    Returns: str: Concatenated log snippet from the end of the file.
+    """
     if not log_path or not os.path.exists(log_path):
         return ""
     with open(log_path, "r", encoding="utf-8", errors="replace") as file_handle:
@@ -401,7 +600,20 @@ def _log_snippet(log_path: str | None, limit: int = 80) -> str:
     return "".join(lines[-limit:])
 
 
-def _read_artifact_preview(artifact_path: Path, max_chars: int = 120_000) -> tuple[str, bool]:
+def _read_artifact_preview(
+    artifact_path: Path, max_chars: int = 120_000
+) -> tuple[str, bool]:
+    """
+    Read a preview of a text artifact, optionally truncating it.
+
+    Args:
+        artifact_path (Path): Path to the artifact file to read.
+        max_chars (int): Maximum number of characters to return.
+
+    Returns:
+        tuple[str, bool]: Preview content and whether it was truncated.
+
+    """
     with open(artifact_path, "r", encoding="utf-8", errors="replace") as file_handle:
         content = file_handle.read(max_chars + 1)
     truncated = len(content) > max_chars
@@ -411,11 +623,32 @@ def _read_artifact_preview(artifact_path: Path, max_chars: int = 120_000) -> tup
 
 
 def _dashboard_context() -> dict[str, Any]:
+    """
+    Build dashboard data from repository and run records.
+
+    Args:
+        None.
+    Returns:
+        dict[str, Any]: Dashboard statistics, recent runs, repositories, and endpoint labels.
+
+    """
     with SessionLocal() as session:
-        total_repositories = session.scalar(select(func.count(RepositoryConfig.id))) or 0
+        total_repositories = (
+            session.scalar(select(func.count(RepositoryConfig.id))) or 0
+        )
         total_runs = session.scalar(select(func.count(RunRecord.id))) or 0
-        successful_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "completed")) or 0
-        failed_runs = session.scalar(select(func.count(RunRecord.id)).where(RunRecord.status == "failed")) or 0
+        successful_runs = (
+            session.scalar(
+                select(func.count(RunRecord.id)).where(RunRecord.status == "completed")
+            )
+            or 0
+        )
+        failed_runs = (
+            session.scalar(
+                select(func.count(RunRecord.id)).where(RunRecord.status == "failed")
+            )
+            or 0
+        )
         architecture_drafts_generated = (
             session.scalar(
                 select(func.count(RunRecord.id)).where(
@@ -431,7 +664,9 @@ def _dashboard_context() -> dict[str, Any]:
             .options(selectinload(RunRecord.repository))
             .limit(MAX_ACTIVITY_ITEMS)
         ).all()
-        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())).all()
+        repositories = session.scalars(
+            select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())
+        ).all()
     return {
         "stats": {
             "total_repositories": total_repositories,
@@ -447,7 +682,9 @@ def _dashboard_context() -> dict[str, Any]:
 
 
 @router.get("", response_class=HTMLResponse)
-async def dashboard(request: Request, admin_user: str = Depends(require_admin)) -> Response:
+async def dashboard(
+    request: Request, admin_user: str = Depends(require_admin)
+) -> Response:
     context = _dashboard_context()
     context["admin_user"] = admin_user
     return _template_response(request, "admin/dashboard.html", context)
@@ -464,9 +701,13 @@ async def recent_activity_fragment(
 
 
 @router.get("/repositories", response_class=HTMLResponse)
-async def repositories_page(request: Request, admin_user: str = Depends(require_admin)) -> Response:
+async def repositories_page(
+    request: Request, admin_user: str = Depends(require_admin)
+) -> Response:
     with SessionLocal() as session:
-        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())).all()
+        repositories = session.scalars(
+            select(RepositoryConfig).order_by(RepositoryConfig.updated_at.desc())
+        ).all()
     context = {
         "repositories": repositories,
         "admin_user": admin_user,
@@ -476,7 +717,9 @@ async def repositories_page(request: Request, admin_user: str = Depends(require_
 
 
 @router.get("/repositories/new", response_class=HTMLResponse)
-async def repository_new_form(request: Request, admin_user: str = Depends(require_admin)) -> Response:
+async def repository_new_form(
+    request: Request, admin_user: str = Depends(require_admin)
+) -> Response:
     context = {
         "admin_user": admin_user,
         "repository": None,
@@ -515,9 +758,13 @@ async def create_repository(
         raise HTTPException(status_code=422, detail="Access token is required.")
 
     with SessionLocal() as session:
-        existing = session.scalar(select(RepositoryConfig).where(RepositoryConfig.name == data["name"]))
+        existing = session.scalar(
+            select(RepositoryConfig).where(RepositoryConfig.name == data["name"])
+        )
         if existing:
-            raise HTTPException(status_code=409, detail="Repository name already exists.")
+            raise HTTPException(
+                status_code=409, detail="Repository name already exists."
+            )
         repository = RepositoryConfig(
             name=data["name"],
             provider=data["provider"],
@@ -653,6 +900,14 @@ def _create_run_record(
     admin_user: str,
     payload: dict[str, Any],
 ) -> int:
+    """
+    Create and persist a queued run record for an API request.
+
+    Args: repository_id (int | None): Associated repository ID, if any; endpoint (str): Request
+    endpoint; admin_user (str): User triggering the run; payload (dict[str, Any]): Request payload
+    to store safely.
+    Returns: int: ID of the created run record.
+    """
     with SessionLocal() as session:
         run = RunRecord(
             repository_id=repository_id,
@@ -661,7 +916,9 @@ def _create_run_record(
             progress_percent=5.0,
             progress_message="Queued",
             triggered_by=admin_user,
-            request_payload=json.dumps(_safe_request_payload(payload), default=str, indent=2),
+            request_payload=json.dumps(
+                _safe_request_payload(payload), default=str, indent=2
+            ),
         )
         session.add(run)
         session.commit()
@@ -695,7 +952,9 @@ async def trigger_generate(
             docstring_threshold=docstring_threshold,
             low_content_min_lines=low_content_min_lines,
         )
-    run_id = _create_run_record(repository_id, "/generate", admin_user, repo_request.model_dump())
+    run_id = _create_run_record(
+        repository_id, "/generate", admin_user, repo_request.model_dump()
+    )
     enqueue_run(run_id, "/generate", repo_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
@@ -718,7 +977,9 @@ async def trigger_publish(
             branch=branch or repository.default_branch,
             low_content_min_lines=low_content_min_lines,
         )
-    run_id = _create_run_record(repository_id, "/publish-pages", admin_user, publish_request.model_dump())
+    run_id = _create_run_record(
+        repository_id, "/publish-pages", admin_user, publish_request.model_dump()
+    )
     enqueue_run(run_id, "/publish-pages", publish_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
@@ -739,7 +1000,10 @@ async def trigger_suggest_pr(
         if repository is None:
             raise HTTPException(status_code=404, detail="Repository not found.")
         if repository.provider != "github":
-            raise HTTPException(status_code=422, detail="Docstring suggestion PRs currently support GitHub only.")
+            raise HTTPException(
+                status_code=422,
+                detail="Docstring suggestion PRs currently support GitHub only.",
+            )
         pr_request = _build_pr_request(
             repository,
             base_branch=base_branch,
@@ -747,12 +1011,20 @@ async def trigger_suggest_pr(
             title=title,
             max_docstrings=max_docstrings,
         )
-    run_id = _create_run_record(repository_id, "/suggest-python-docstrings-pr", admin_user, pr_request.model_dump())
+    run_id = _create_run_record(
+        repository_id,
+        "/suggest-python-docstrings-pr",
+        admin_user,
+        pr_request.model_dump(),
+    )
     enqueue_run(run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
 
-@router.post("/repositories/{repository_id}/generate-architecture-docs", response_class=HTMLResponse)
+@router.post(
+    "/repositories/{repository_id}/generate-architecture-docs",
+    response_class=HTMLResponse,
+)
 async def trigger_generate_architecture_docs(
     repository_id: int,
     request: Request,
@@ -782,7 +1054,9 @@ async def trigger_generate_architecture_docs(
         admin_user,
         architecture_request.model_dump(exclude={"token"}),
     )
-    enqueue_run(run_id, "/generate-architecture-docs", architecture_request.model_dump())
+    enqueue_run(
+        run_id, "/generate-architecture-docs", architecture_request.model_dump()
+    )
     return _redirect(f"/admin/runs/{run_id}", request)
 
 
@@ -796,7 +1070,11 @@ async def trigger_approve_architecture_docs(
     approval_note: str = Form(default=""),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -804,7 +1082,9 @@ async def trigger_approve_architecture_docs(
             raise HTTPException(status_code=422, detail="This run cannot be approved.")
         result_payload = _json_loads(run.result_payload)
         if not result_payload or not result_payload.get("draft_id"):
-            raise HTTPException(status_code=422, detail="No architecture draft is available to approve.")
+            raise HTTPException(
+                status_code=422, detail="No architecture draft is available to approve."
+            )
         repository = run.repository
         approval_request = ArchitectureApprovalRequest(
             provider=repository.provider,
@@ -812,7 +1092,9 @@ async def trigger_approve_architecture_docs(
             token=decrypt_token(repository.encrypted_token),
             branch=run.source_branch or repository.default_branch,
             draft_id=result_payload["draft_id"],
-            output_path=result_payload.get("proposed_output_path", DEFAULT_ARCHITECTURE_OUTPUT_PATH),
+            output_path=result_payload.get(
+                "proposed_output_path", DEFAULT_ARCHITECTURE_OUTPUT_PATH
+            ),
             overwrite_existing=overwrite_existing,
             approval_note=approval_note or None,
         )
@@ -834,8 +1116,14 @@ async def runs_page(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        repositories = session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.name.asc())).all()
-        query = select(RunRecord).order_by(RunRecord.created_at.desc()).options(selectinload(RunRecord.repository))
+        repositories = session.scalars(
+            select(RepositoryConfig).order_by(RepositoryConfig.name.asc())
+        ).all()
+        query = (
+            select(RunRecord)
+            .order_by(RunRecord.created_at.desc())
+            .options(selectinload(RunRecord.repository))
+        )
         if repository_id:
             query = query.where(RunRecord.repository_id == repository_id)
         runs = session.scalars(query.limit(100)).all()
@@ -879,7 +1167,11 @@ async def run_detail(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -901,7 +1193,11 @@ async def run_status_fragment(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -920,7 +1216,11 @@ async def run_row_fragment(
     admin_user: str = Depends(require_admin),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -940,7 +1240,11 @@ async def retry_run(
     _: None = Depends(verify_csrf),
 ) -> Response:
     with SessionLocal() as session:
-        stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+        stmt = (
+            select(RunRecord)
+            .where(RunRecord.id == run_id)
+            .options(selectinload(RunRecord.repository))
+        )
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
@@ -949,7 +1253,9 @@ async def retry_run(
             raise HTTPException(status_code=422, detail="Run payload is unavailable.")
         repository_id = run.repository_id
         endpoint = run.endpoint
-        queue_payload = _queue_payload_with_repository_secret(endpoint, payload, run.repository)
+        queue_payload = _queue_payload_with_repository_secret(
+            endpoint, payload, run.repository
+        )
     new_run_id = _create_run_record(repository_id, endpoint, admin_user, payload)
     if endpoint == "/generate":
         repo_request = RepoRequest(**queue_payload)
@@ -959,7 +1265,9 @@ async def retry_run(
         enqueue_run(new_run_id, "/publish-pages", publish_request.model_dump())
     elif endpoint == "/suggest-python-docstrings-pr":
         pr_request = DocstringPullRequestRequest(**queue_payload)
-        enqueue_run(new_run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
+        enqueue_run(
+            new_run_id, "/suggest-python-docstrings-pr", pr_request.model_dump()
+        )
     else:
         raise HTTPException(status_code=422, detail="Run type is not retryable.")
     return _redirect(f"/admin/runs/{new_run_id}", request)
@@ -980,11 +1288,17 @@ async def cancel_run(
         raise HTTPException(status_code=404, detail="Run not found.")
 
     if outcome not in {"queued", "running", "cancelled"}:
-        raise HTTPException(status_code=422, detail="Only queued or running runs can be cancelled.")
+        raise HTTPException(
+            status_code=422, detail="Only queued or running runs can be cancelled."
+        )
 
     if _is_htmx(request):
         with SessionLocal() as session:
-            stmt = select(RunRecord).where(RunRecord.id == run_id).options(selectinload(RunRecord.repository))
+            stmt = (
+                select(RunRecord)
+                .where(RunRecord.id == run_id)
+                .options(selectinload(RunRecord.repository))
+            )
             run = session.scalars(stmt).first()
             if run is None:
                 raise HTTPException(status_code=404, detail="Run not found.")
@@ -1021,7 +1335,9 @@ async def download_artifact(
     return FileResponse(path=str(target), filename=artifact_name)
 
 
-@router.get("/runs/{run_id}/artifacts/{artifact_name}/preview", response_class=HTMLResponse)
+@router.get(
+    "/runs/{run_id}/artifacts/{artifact_name}/preview", response_class=HTMLResponse
+)
 async def preview_artifact(
     run_id: int,
     artifact_name: str,
