@@ -57,9 +57,11 @@ Auto Doc
    :caption: Project
 
    project/overview
+   project/installation
    project/objectives
    project/plan
    project/results
+   project/contributing
 
 .. toctree::
    :hidden:
