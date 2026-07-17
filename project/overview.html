@@ -10,15 +10,16 @@
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="../_static/custom-wide.css?v=74cdff9b" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom-wide.css?v=f639152d" />
 
   
-    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="shortcut icon" href="../_static/logo.png"/>
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../_static/documentation_options.js?v=5929fcd5"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/sidebar-scroll.js?v=de4f24a2"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -36,6 +37,7 @@
           
           <a href="../index.html" class="icon icon-home">
             Auto Doc
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -48,10 +50,11 @@
               <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Project Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#summary">Summary</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scope">Scope</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#project-value">Project value</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#architecture-documentation-workflow">Architecture documentation workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#project-context">Project Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#problem-statement">Problem Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#core-workflow">Core Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-capabilities">Key Capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#technology-summary">Technology Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="objectives.html">Objectives</a><ul>
@@ -73,9 +76,24 @@
 <li class="toctree-l2"><a class="reference internal" href="results.html#how-success-will-be-measured">How success will be measured</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">How to Contribute</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#set-up-the-project">Set Up the Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#development-workflow">Development Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#run-the-application-locally">Run the Application Locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#run-tests-and-checks">Run Tests and Checks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#documentation-guidelines">Documentation Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#code-guidelines">Code Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html#pull-request-checklist">Pull Request Checklist</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../README.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../README.html#local-development">Local Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../README.html#preview-these-docs-locally">Preview These Docs Locally</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../api_reference.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../autoapi/src/admin/database/index.html">src.admin.database</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/src/admin/database/index.html#module-contents">Module Contents</a><ul>
@@ -260,6 +278,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DOCS_SCAFFOLD_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_SCAFFOLD_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DOCS_ASSET_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_ASSET_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_DOCSTRING_THRESHOLD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.SPHINX_CONF_CANDIDATES"><code class="docutils literal notranslate"><span class="pre">SPHINX_CONF_CANDIDATES</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS"><code class="docutils literal notranslate"><span class="pre">SAMPLE_DOCS_FALLBACK_TEXTS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_START"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_START</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_END"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_END</span></code></a></li>
@@ -302,8 +321,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_OPENAI_MODEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_OPENAI_MODEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CODEX_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CODEX_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CLAUDE_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CLAUDE_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.CLI_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">CLI_TIMEOUT_SECONDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.SUPPORTED_AI_PROVIDERS"><code class="docutils literal notranslate"><span class="pre">SUPPORTED_AI_PROVIDERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.resolve_ai_provider"><code class="docutils literal notranslate"><span class="pre">resolve_ai_provider()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.configure_openai"><code class="docutils literal notranslate"><span class="pre">configure_openai()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.create_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_docstring_prompt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.create_openai_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_openai_docstring_prompt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstring"><code class="docutils literal notranslate"><span class="pre">generate_docstring()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstring_with_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstring_with_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstrings_for_code_blocks_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.format_docstring_for_language"><code class="docutils literal notranslate"><span class="pre">format_docstring_for_language()</span></code></a></li>
@@ -332,6 +358,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../autoapi/src/utils/git_utils/index.html">src.utils.git_utils</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/src/utils/git_utils/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/git_utils/index.html#src.utils.git_utils.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/git_utils/index.html#src.utils.git_utils.DEFAULT_GIT_CLONE_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_GIT_CLONE_TIMEOUT_SECONDS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/git_utils/index.html#src.utils.git_utils.GitHubApiError"><code class="docutils literal notranslate"><span class="pre">GitHubApiError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/git_utils/index.html#src.utils.git_utils.RepositoryAccessError"><code class="docutils literal notranslate"><span class="pre">RepositoryAccessError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../autoapi/src/utils/git_utils/index.html#src.utils.git_utils.extract_repo_path"><code class="docutils literal notranslate"><span class="pre">extract_repo_path()</span></code></a></li>
@@ -389,13 +416,6 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../README.html">Documentation Notes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../README.html#application-setup">Application setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../README.html#run-the-application-locally">Run the application locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../README.html#run-with-docker">Run with Docker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../README.html#build-these-docs-locally">Build these docs locally</a></li>
-</ul>
-</li>
 </ul>
 
         </div>
@@ -424,43 +444,73 @@
              
   <section id="project-overview">
 <h1>Project Overview<a class="headerlink" href="#project-overview" title="Link to this heading"></a></h1>
-<section id="summary">
-<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
-<p>Auto Doc is a FastAPI service that analyses GitHub and GitLab repositories,
-detects missing or incomplete documentation, generates docstring suggestions
-with OpenAI, Codex CLI, or Claude CLI, scaffolds a Sphinx documentation site,
-and publishes reviewed HTML to GitHub Pages. The project is designed to reduce
-the manual effort involved in documenting software systems by combining
-repository analysis, AI-assisted documentation generation, and automated
-documentation publishing in one workflow.</p>
+<p>Auto Doc is a FastAPI-based documentation automation service for teams working
+with GitHub and GitLab repositories. It analyses a target repository, identifies
+missing or weak documentation, generates reviewable docstring suggestions, and
+scaffolds a Sphinx documentation site that can be built locally or published as
+static HTML.</p>
+<p>The project is designed to reduce the repetitive work involved in moving from an
+under-documented codebase to a navigable documentation site. Rather than treating
+documentation as a one-off manual task, Auto Doc brings repository analysis,
+AI-assisted writing, Sphinx generation, review artifacts, and publishing support
+into a single workflow.</p>
+<section id="project-context">
+<h2>Project Context<a class="headerlink" href="#project-context" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Project title:</strong> Auto Doc</p></li>
+<li><p><strong>Project type:</strong> Automated documentation generator and publishing workflow</p></li>
+<li><p><strong>Primary audience:</strong> Developers, research software teams, and maintainers who
+need to improve documentation coverage across active repositories.</p></li>
+<li><p><strong>Supported repository providers:</strong> GitHub and GitLab</p></li>
+<li><p><strong>Supported source languages:</strong> Python, JavaScript, TypeScript, and MATLAB</p></li>
+<li><p><strong>Documentation output:</strong> Sphinx documentation with AutoAPI support and
+publishable HTML</p></li>
+</ul>
 </section>
-<section id="scope">
-<h2>Scope<a class="headerlink" href="#scope" title="Link to this heading"></a></h2>
-<p>The system supports Python, JavaScript, TypeScript, and MATLAB repositories,
-making it suitable for a wide range of modern development teams. It focuses on
-improving documentation quality, accelerating Sphinx setup, and helping teams
-move from undocumented source code to a structured, reviewable documentation
-site with less manual configuration.</p>
+<section id="problem-statement">
+<h2>Problem Statement<a class="headerlink" href="#problem-statement" title="Link to this heading"></a></h2>
+<p>Many software projects accumulate useful code faster than they accumulate useful
+documentation. Existing functions, modules, services, and workflows may be hard
+to understand because docstrings are missing, architecture notes are scattered,
+or publishing a documentation site requires too much manual setup.</p>
+<p>Auto Doc addresses this by inspecting repository structure, measuring
+documentation coverage, suggesting missing Python docstrings, and preparing a
+Sphinx site that teams can review before publishing.</p>
 </section>
-<section id="project-value">
-<h2>Project value<a class="headerlink" href="#project-value" title="Link to this heading"></a></h2>
-<p>Auto Doc addresses a common problem in software projects: documentation is often
-incomplete, outdated, or postponed because it takes time to produce and maintain.
-By automating repository inspection, highlighting documentation gaps, and
-preparing a publishable documentation scaffold, Auto Doc helps teams improve
-clarity, maintainability, onboarding, and long-term project knowledge sharing.</p>
+<section id="core-workflow">
+<h2>Core Workflow<a class="headerlink" href="#core-workflow" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>A user selects a target repository and branch through the API or admin
+dashboard.</p></li>
+<li><p>Auto Doc clones and analyses the repository, scanning supported source files
+for documentation coverage.</p></li>
+<li><p>The system generates reviewable documentation artifacts, including docstring
+suggestions and Sphinx scaffold files.</p></li>
+<li><p>Developers review and refine the generated output before adoption.</p></li>
+<li><p>Reviewed documentation can be built as HTML and published to GitHub Pages.</p></li>
+</ol>
 </section>
-<section id="architecture-documentation-workflow">
-<h2>Architecture documentation workflow<a class="headerlink" href="#architecture-documentation-workflow" title="Link to this heading"></a></h2>
-<p>In addition to docstring generation, Auto Doc can analyse a repository and produce a
-reviewable architecture documentation draft covering project overview, entry points,
-services, routers, modules, dependencies, data flow, background jobs, database models,
-configuration, environment variables, authentication flow, API endpoints, diagrams,
-repository structure, and technology stack. Observed facts are distinguished from
-inferred relationships, and inferred findings include a confidence level. Generation
-never commits or publishes; a maintainer must explicitly approve a draft before it is
-applied to the repository’s documentation tree, and existing manual documentation is
-preserved unless overwrite is confirmed.</p>
+<section id="key-capabilities">
+<h2>Key Capabilities<a class="headerlink" href="#key-capabilities" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Repository analysis for GitHub and GitLab projects.</p></li>
+<li><p>Documentation coverage checks at module, class, and function level.</p></li>
+<li><p>AI-assisted Python docstring suggestions using OpenAI, Codex CLI, or Claude
+CLI.</p></li>
+<li><p>Reuse of previous suggestion artifacts when appropriate.</p></li>
+<li><p>Sphinx scaffold generation with AutoAPI integration.</p></li>
+<li><p>Review-first publishing to GitHub Pages.</p></li>
+<li><p>Runtime logs and generated artifacts for traceability.</p></li>
+<li><p>Admin dashboard support for saved repositories, workflow triggers, run
+history, and generated outputs.</p></li>
+</ul>
+</section>
+<section id="technology-summary">
+<h2>Technology Summary<a class="headerlink" href="#technology-summary" title="Link to this heading"></a></h2>
+<p>Auto Doc is built with FastAPI, Sphinx, AutoAPI, Jinja2, HTMX, SQLite,
+SQLAlchemy, Docker, and <code class="docutils literal notranslate"><span class="pre">uv</span></code>. AI-generated suggestions can be provided through
+the OpenAI API or authenticated local CLI providers such as Codex CLI and Claude
+CLI.</p>
 </section>
 </section>
 

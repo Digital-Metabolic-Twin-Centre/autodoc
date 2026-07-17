@@ -23,6 +23,8 @@ Module Contents
    :value: 0.5
 
 
+.. py:data:: SPHINX_CONF_CANDIDATES
+
 .. py:data:: SAMPLE_DOCS_FALLBACK_TEXTS
 
 .. py:data:: AUTOAPI_CONF_MARKER_START

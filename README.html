@@ -6,23 +6,25 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Documentation Notes &mdash; Auto Doc  documentation</title>
+  <title>Installation Guide &mdash; Auto Doc  documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="_static/custom-wide.css?v=74cdff9b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom-wide.css?v=f639152d" />
 
   
-    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="shortcut icon" href="_static/logo.png"/>
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=5929fcd5"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/sidebar-scroll.js?v=de4f24a2"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="src.utils.update_conf_content" href="autoapi/src/utils/update_conf_content/index.html" /> 
+    <link rel="next" title="API Reference" href="api_reference.html" />
+    <link rel="prev" title="How to Contribute" href="project/contributing.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -35,6 +37,7 @@
           
           <a href="index.html" class="icon icon-home">
             Auto Doc
+              <img src="_static/logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -47,10 +50,11 @@
               <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="project/overview.html">Project Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="project/overview.html#summary">Summary</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project/overview.html#scope">Scope</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project/overview.html#project-value">Project value</a></li>
-<li class="toctree-l2"><a class="reference internal" href="project/overview.html#architecture-documentation-workflow">Architecture documentation workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/overview.html#project-context">Project Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/overview.html#problem-statement">Problem Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/overview.html#core-workflow">Core Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/overview.html#key-capabilities">Key Capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/overview.html#technology-summary">Technology Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="project/objectives.html">Objectives</a><ul>
@@ -72,9 +76,24 @@
 <li class="toctree-l2"><a class="reference internal" href="project/results.html#how-success-will-be-measured">How success will be measured</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="project/contributing.html">How to Contribute</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="project/contributing.html#set-up-the-project">Set Up the Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/contributing.html#development-workflow">Development Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/contributing.html#run-the-application-locally">Run the Application Locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/contributing.html#run-tests-and-checks">Run Tests and Checks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/contributing.html#documentation-guidelines">Documentation Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/contributing.html#code-guidelines">Code Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="project/contributing.html#pull-request-checklist">Pull Request Checklist</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#local-development">Local Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#preview-these-docs-locally">Preview These Docs Locally</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="autoapi/src/admin/database/index.html">src.admin.database</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/src/admin/database/index.html#module-contents">Module Contents</a><ul>
@@ -259,6 +278,7 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DOCS_SCAFFOLD_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_SCAFFOLD_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.DOCS_ASSET_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_ASSET_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_DOCSTRING_THRESHOLD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.SPHINX_CONF_CANDIDATES"><code class="docutils literal notranslate"><span class="pre">SPHINX_CONF_CANDIDATES</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS"><code class="docutils literal notranslate"><span class="pre">SAMPLE_DOCS_FALLBACK_TEXTS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_START"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_START</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_END"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_END</span></code></a></li>
@@ -301,8 +321,15 @@
 <li class="toctree-l3"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_OPENAI_MODEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_OPENAI_MODEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CODEX_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CODEX_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CLAUDE_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CLAUDE_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.CLI_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">CLI_TIMEOUT_SECONDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.SUPPORTED_AI_PROVIDERS"><code class="docutils literal notranslate"><span class="pre">SUPPORTED_AI_PROVIDERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.resolve_ai_provider"><code class="docutils literal notranslate"><span class="pre">resolve_ai_provider()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.configure_openai"><code class="docutils literal notranslate"><span class="pre">configure_openai()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.create_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_docstring_prompt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.create_openai_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_openai_docstring_prompt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstring"><code class="docutils literal notranslate"><span class="pre">generate_docstring()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstring_with_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstring_with_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstrings_for_code_blocks_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/docstring_generation/index.html#src.utils.docstring_generation.format_docstring_for_language"><code class="docutils literal notranslate"><span class="pre">format_docstring_for_language()</span></code></a></li>
@@ -331,6 +358,7 @@
 <li class="toctree-l2"><a class="reference internal" href="autoapi/src/utils/git_utils/index.html">src.utils.git_utils</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/src/utils/git_utils/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.DEFAULT_GIT_CLONE_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_GIT_CLONE_TIMEOUT_SECONDS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.GitHubApiError"><code class="docutils literal notranslate"><span class="pre">GitHubApiError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.RepositoryAccessError"><code class="docutils literal notranslate"><span class="pre">RepositoryAccessError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="autoapi/src/utils/git_utils/index.html#src.utils.git_utils.extract_repo_path"><code class="docutils literal notranslate"><span class="pre">extract_repo_path()</span></code></a></li>
@@ -388,13 +416,6 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Documentation Notes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#application-setup">Application setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#run-the-application-locally">Run the application locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#run-with-docker">Run with Docker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#build-these-docs-locally">Build these docs locally</a></li>
-</ul>
-</li>
 </ul>
 
         </div>
@@ -411,7 +432,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Documentation Notes</li>
+      <li class="breadcrumb-item active">Installation Guide</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/README.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -421,78 +442,40 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="documentation-notes">
-<h1>Documentation Notes<a class="headerlink" href="#documentation-notes" title="Link to this heading"></a></h1>
-<p>This project includes two related setups:</p>
-<ul class="simple">
-<li><p>running the Auto Doc API service</p></li>
-<li><p>building these Sphinx documentation pages locally</p></li>
-</ul>
-<section id="application-setup">
-<h2>Application setup<a class="headerlink" href="#application-setup" title="Link to this heading"></a></h2>
-<p>Requirements:</p>
-<ul class="simple">
-<li><p>Python 3.11 or newer</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">uv</span></code></p></li>
-<li><p>an OpenAI API key, or an authenticated <code class="docutils literal notranslate"><span class="pre">codex</span></code>/<code class="docutils literal notranslate"><span class="pre">claude</span></code> CLI</p></li>
-<li><p>a GitHub or GitLab access token for the target repository</p></li>
-<li><p>Docker, if you want to run the service in a container</p></li>
-</ul>
-<p>Create a virtual environment and install dependencies:</p>
+  <section id="installation-guide">
+<h1>Installation Guide<a class="headerlink" href="#installation-guide" title="Link to this heading"></a></h1>
+<p>For the hosted Auto Doc service, use:</p>
+<p><a class="reference external" href="https://autodoc.humanmetabolism.org">https://autodoc.humanmetabolism.org</a></p>
+<section id="local-development">
+<h2>Local Development<a class="headerlink" href="#local-development" title="Link to this heading"></a></h2>
+<p>Use the local setup only when developing or testing Auto Doc from this
+repository.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev<span class="w"> </span>--no-install-project
 </pre></div>
 </div>
-<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file in the project root:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span># Optional when using OpenAI directly.
+<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file with local admin settings and any AI provider credentials
+needed for your workflow:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ADMIN_PASSWORD=choose-a-strong-password
+ADMIN_SECRET_KEY=choose-a-long-random-secret
 OPENAI_API_KEY=your-openai-api-key
-
-# Optional AI backend selection: openai, codex, or claude.
-AUTODOC_AI_PROVIDER=codex
-AUTODOC_AI_CLI_PROVIDER=codex
-AUTODOC_AI_MODEL=your-cli-supported-model
-
-# Optional, only needed if Auto Doc should trigger GitLab pipelines.
-CI_TRIGGER_PIPELINE_TOKEN=your-gitlab-trigger-token
 </pre></div>
 </div>
-<p>If <code class="docutils literal notranslate"><span class="pre">OPENAI_API_KEY</span></code> is not set, Auto Doc uses the configured CLI provider for
-docstring generation. The default fallback is <code class="docutils literal notranslate"><span class="pre">codex</span></code>. Saved repository model
-values can also use prefixes such as <code class="docutils literal notranslate"><span class="pre">codex:your-supported-model</span></code> or
-<code class="docutils literal notranslate"><span class="pre">claude:sonnet</span></code>.
-For CLI backends, leave the model unset unless you know the model name is
-supported by your authenticated CLI account.</p>
-</section>
-<section id="run-the-application-locally">
-<h2>Run the application locally<a class="headerlink" href="#run-the-application-locally" title="Link to this heading"></a></h2>
-<p>Start the FastAPI service with auto-reload:</p>
+<p>Run Auto Doc locally:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>main:app<span class="w"> </span>--app-dir<span class="w"> </span>src<span class="w"> </span>--reload
 </pre></div>
 </div>
-<p>The service runs at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code>.
-Interactive API docs are available at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000/docs</span></code>.</p>
-<p>You can also run the app directly:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>src/main.py
-</pre></div>
-</div>
+<p>The local app is available at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code>. The admin dashboard is
+available at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000/admin</span></code>.</p>
 </section>
-<section id="run-with-docker">
-<h2>Run with Docker<a class="headerlink" href="#run-with-docker" title="Link to this heading"></a></h2>
-<p>Build and start the containerised service:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>--build
+<section id="preview-these-docs-locally">
+<h2>Preview These Docs Locally<a class="headerlink" href="#preview-these-docs-locally" title="Link to this heading"></a></h2>
+<p>Build the Sphinx HTML preview from the project root:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>env<span class="w"> </span><span class="nv">UV_CACHE_DIR</span><span class="o">=</span>/tmp/uv-cache<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>--group<span class="w"> </span>docs<span class="w"> </span>sphinx-build<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span>docs<span class="w"> </span>docs/_build/html-preview
 </pre></div>
 </div>
-<p>The compose file exposes port <code class="docutils literal notranslate"><span class="pre">8000</span></code> and mounts the local <code class="docutils literal notranslate"><span class="pre">logs/</span></code> directory into the container.</p>
-</section>
-<section id="build-these-docs-locally">
-<h2>Build these docs locally<a class="headerlink" href="#build-these-docs-locally" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
-make<span class="w"> </span>clean<span class="w"> </span>html
-</pre></div>
-</div>
-<p>Open <code class="docutils literal notranslate"><span class="pre">docs/_build/html/index.html</span></code> in your browser.</p>
+<p>Then open <code class="docutils literal notranslate"><span class="pre">docs/_build/html-preview/index.html</span></code> in your browser.</p>
 </section>
 </section>
 
@@ -500,7 +483,8 @@ make<span class="w"> </span>clean<span class="w"> </span>html
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="autoapi/src/utils/update_conf_content/index.html" class="btn btn-neutral float-left" title="src.utils.update_conf_content" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="project/contributing.html" class="btn btn-neutral float-left" title="How to Contribute" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_reference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

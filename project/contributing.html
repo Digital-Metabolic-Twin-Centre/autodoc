@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Results &mdash; Auto Doc  documentation</title>
+  <title>How to Contribute &mdash; Auto Doc  documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -23,8 +23,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="How to Contribute" href="contributing.html" />
-    <link rel="prev" title="Project Plan" href="plan.html" /> 
+    <link rel="next" title="Installation Guide" href="../README.html" />
+    <link rel="prev" title="Results" href="results.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -70,20 +70,20 @@
 <li class="toctree-l2"><a class="reference internal" href="plan.html#milestones">Milestones</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Results</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#evaluation-approach">Evaluation approach</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#evaluation-criteria">Evaluation criteria</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#how-success-will-be-measured">How success will be measured</a></li>
+<li class="toctree-l1"><a class="reference internal" href="results.html">Results</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="results.html#evaluation-approach">Evaluation approach</a></li>
+<li class="toctree-l2"><a class="reference internal" href="results.html#evaluation-criteria">Evaluation criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="results.html#how-success-will-be-measured">How success will be measured</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">How to Contribute</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#set-up-the-project">Set Up the Project</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#development-workflow">Development Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#run-the-application-locally">Run the Application Locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#run-tests-and-checks">Run Tests and Checks</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#documentation-guidelines">Documentation Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#code-guidelines">Code Guidelines</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html#pull-request-checklist">Pull Request Checklist</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How to Contribute</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#set-up-the-project">Set Up the Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#development-workflow">Development Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-the-application-locally">Run the Application Locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#run-tests-and-checks">Run Tests and Checks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#documentation-guidelines">Documentation Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#code-guidelines">Code Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pull-request-checklist">Pull Request Checklist</a></li>
 </ul>
 </li>
 </ul>
@@ -432,9 +432,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Results</li>
+      <li class="breadcrumb-item active">How to Contribute</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/project/results.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/project/contributing.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -442,34 +442,102 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="results">
-<h1>Results<a class="headerlink" href="#results" title="Link to this heading"></a></h1>
-<section id="evaluation-approach">
-<h2>Evaluation approach<a class="headerlink" href="#evaluation-approach" title="Link to this heading"></a></h2>
-<p>Pending completion of the project, the success of Auto Doc will be evaluated
-against a clear set of technical and workflow-based outcomes.</p>
+  <section id="how-to-contribute">
+<h1>How to Contribute<a class="headerlink" href="#how-to-contribute" title="Link to this heading"></a></h1>
+<p>Contributions to Auto Doc should keep the project focused on reliable,
+reviewable documentation automation. The safest changes are small, tested, and
+clearly connected to repository analysis, docstring suggestions, Sphinx
+generation, publishing, or the admin workflow.</p>
+<section id="set-up-the-project">
+<h2>Set Up the Project<a class="headerlink" href="#set-up-the-project" title="Link to this heading"></a></h2>
+<p>Start from a local checkout and install the development dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>&lt;repository-url&gt;
+<span class="nb">cd</span><span class="w"> </span>autodoc
+uv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev<span class="w"> </span>--no-install-project
+</pre></div>
+</div>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file for local development. At minimum, configure the admin
+settings:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ADMIN_PASSWORD=choose-a-strong-password
+ADMIN_SECRET_KEY=choose-a-long-random-secret
+</pre></div>
+</div>
+<p>Add an OpenAI key or configure a local AI CLI provider if your change needs to
+exercise docstring generation.</p>
 </section>
-<section id="evaluation-criteria">
-<h2>Evaluation criteria<a class="headerlink" href="#evaluation-criteria" title="Link to this heading"></a></h2>
+<section id="development-workflow">
+<h2>Development Workflow<a class="headerlink" href="#development-workflow" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Create a feature branch from the current main branch.</p></li>
+<li><p>Make a focused change with matching tests or documentation updates.</p></li>
+<li><p>Run the relevant checks locally.</p></li>
+<li><p>Review generated files before committing, especially Sphinx output, logs, and
+AutoAPI artifacts.</p></li>
+<li><p>Open a pull request with a short summary, testing notes, and any known
+limitations.</p></li>
+</ol>
+</section>
+<section id="run-the-application-locally">
+<h2>Run the Application Locally<a class="headerlink" href="#run-the-application-locally" title="Link to this heading"></a></h2>
+<p>Use this command while developing API or admin dashboard changes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>uvicorn<span class="w"> </span>main:app<span class="w"> </span>--app-dir<span class="w"> </span>src<span class="w"> </span>--reload
+</pre></div>
+</div>
+<p>The local service runs at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code>. The admin dashboard is
+available at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000/admin</span></code> and the FastAPI OpenAPI interface is
+available at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000/docs</span></code>.</p>
+</section>
+<section id="run-tests-and-checks">
+<h2>Run Tests and Checks<a class="headerlink" href="#run-tests-and-checks" title="Link to this heading"></a></h2>
+<p>Run the automated test suite:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>pytest
+</pre></div>
+</div>
+<p>Run linting:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>ruff<span class="w"> </span>check<span class="w"> </span>.
+</pre></div>
+</div>
+<p>If your change affects documentation rendering, rebuild the Sphinx preview:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>env<span class="w"> </span><span class="nv">UV_CACHE_DIR</span><span class="o">=</span>/tmp/uv-cache<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>--group<span class="w"> </span>docs<span class="w"> </span>sphinx-build<span class="w"> </span>-b<span class="w"> </span>html<span class="w"> </span>docs<span class="w"> </span>docs/_build/html-preview
+</pre></div>
+</div>
+<p>Then open <code class="docutils literal notranslate"><span class="pre">docs/_build/html-preview/index.html</span></code> and inspect the affected
+pages.</p>
+</section>
+<section id="documentation-guidelines">
+<h2>Documentation Guidelines<a class="headerlink" href="#documentation-guidelines" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>The service can successfully Analyse a target GitHub or GitLab repository and
-identify documentation coverage for supported source files.</p></li>
-<li><p>The system produces useful docstring suggestions that are clear, relevant,
-and suitable for developer review before adoption.</p></li>
-<li><p>Auto Doc generates a working Sphinx documentation scaffold that can be built
-locally and extended by the team.</p></li>
-<li><p>The reviewed documentation site can be published successfully to GitHub Pages
-as static HTML.</p></li>
-<li><p>The overall workflow reduces the amount of manual effort needed to document
-and publish technical project information.</p></li>
+<li><p>Keep documentation aligned with the current application behavior.</p></li>
+<li><p>Prefer concrete commands and paths over vague setup notes.</p></li>
+<li><p>Update Sphinx pages when API behavior, environment variables, publishing
+behavior, or developer workflow changes.</p></li>
+<li><p>Avoid committing generated logs or temporary run artifacts unless they are
+intentional fixtures.</p></li>
 </ul>
 </section>
-<section id="how-success-will-be-measured">
-<h2>How success will be measured<a class="headerlink" href="#how-success-will-be-measured" title="Link to this heading"></a></h2>
-<p>These outcomes will be measured through a combination of automated tests, user
-feedback, and documentation quality assessments. Success will be determined by
-the extent to which Auto Doc meets these criteria and delivers practical value
-to development teams seeking to improve their documentation processes.</p>
+<section id="code-guidelines">
+<h2>Code Guidelines<a class="headerlink" href="#code-guidelines" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Keep changes small and easy to review.</p></li>
+<li><p>Follow the existing project structure under <code class="docutils literal notranslate"><span class="pre">src/</span></code>.</p></li>
+<li><p>Add tests when behavior changes or when fixing a bug.</p></li>
+<li><p>Preserve the review-first workflow for generated documentation.</p></li>
+<li><p>Handle repository, publishing, and AI-provider failures with clear errors and
+useful logs.</p></li>
+</ul>
+</section>
+<section id="pull-request-checklist">
+<h2>Pull Request Checklist<a class="headerlink" href="#pull-request-checklist" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>The change has been tested locally.</p></li>
+<li><p>Relevant documentation has been updated.</p></li>
+<li><p>New behavior is covered by tests where practical.</p></li>
+<li><p>Generated artifacts have been reviewed before commit.</p></li>
+<li><p>The pull request explains what changed, why it changed, and how it was
+verified.</p></li>
+</ul>
 </section>
 </section>
 
@@ -477,8 +545,8 @@ to development teams seeking to improve their documentation processes.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="plan.html" class="btn btn-neutral float-left" title="Project Plan" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="contributing.html" class="btn btn-neutral float-right" title="How to Contribute" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="results.html" class="btn btn-neutral float-left" title="Results" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../README.html" class="btn btn-neutral float-right" title="Installation Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

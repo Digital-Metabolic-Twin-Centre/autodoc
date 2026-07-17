@@ -17,6 +17,29 @@ Module Contents
    :value: 'gpt-4o-mini'
 
 
+.. py:data:: DEFAULT_CODEX_COMMAND
+   :value: 'codex exec --skip-git-repo-check -'
+
+
+.. py:data:: DEFAULT_CLAUDE_COMMAND
+   :value: 'claude -p --output-format text'
+
+
+.. py:data:: CLI_TIMEOUT_SECONDS
+   :value: 120
+
+
+.. py:data:: SUPPORTED_AI_PROVIDERS
+
+.. py:function:: resolve_ai_provider(model: str | None = None, api_key: str | None = None) -> tuple[str, str | None]
+
+   Resolve the AI provider and model from explicit model prefixes, environment, and API key state.
+
+   Model values may be prefixed with ``openai:``, ``codex:``, or ``claude:``. Without a prefix,
+   ``AUTODOC_AI_PROVIDER`` chooses the backend. If OpenAI is not configured, the CLI fallback is
+   used so local Codex or Claude authentication can handle generation.
+
+
 .. py:function:: configure_openai(api_key: str | None = None)
 
    Configure OpenAI API with the provided API key.
@@ -25,7 +48,7 @@ Module Contents
    :type api_key: str, optional
 
 
-.. py:function:: create_openai_docstring_prompt(code: str, language: str | None = 'python') -> str
+.. py:function:: create_docstring_prompt(code: str, language: str | None = 'python') -> str
 
    Create a prompt for ChatGPT to generate a concise docstring.
 
@@ -38,32 +61,39 @@ Module Contents
    :rtype: str
 
 
-.. py:function:: generate_docstring_with_openai(code: str, language: str | None = 'python', api_key: str | None = None, model: str | None = DEFAULT_OPENAI_MODEL) -> Optional[str]
+.. py:function:: create_openai_docstring_prompt(code: str, language: str | None = 'python') -> str
 
-   Generate a concise docstring for the given code using OpenAI ChatGPT.
+.. py:function:: generate_docstring(code: str, language: str | None = 'python', api_key: str | None = None, model: str | None = DEFAULT_OPENAI_MODEL) -> Optional[str]
+
+   Generate a concise docstring for the given code using the configured AI backend.
 
    :param code: The code block for which to generate docstring.
    :type code: str
    :param language: Programming language of the code (default: "python").
    :type language: str
-   :param api_key: OpenAI API key.
+   :param api_key: OpenAI API key, used only for the OpenAI backend.
    :type api_key: str, optional
-   :param model: OpenAI model name.
+   :param model: Optional model name. Prefix with openai:, codex:, or claude: to select a provider.
    :type model: str
 
    :returns: Generated docstring or None if generation fails.
    :rtype: str
 
 
-.. py:function:: generate_docstrings_for_code_blocks_openai(code_blocks_data: list, language: str = 'python', model: str = 'gpt-3.5-turbo') -> list
+.. py:function:: generate_docstring_with_openai(code: str, language: str | None = 'python', api_key: str | None = None, model: str | None = DEFAULT_OPENAI_MODEL) -> Optional[str]
 
-   Generate docstrings for multiple code blocks using OpenAI ChatGPT.
+   Backward-compatible wrapper for callers/tests that still use the old OpenAI-specific name.
+
+
+.. py:function:: generate_docstrings_for_code_blocks_openai(code_blocks_data: list, language: str = 'python', model: str = DEFAULT_OPENAI_MODEL) -> list
+
+   Generate docstrings for multiple code blocks using the configured AI backend.
 
    :param code_blocks_data: List of dictionaries containing code block information.
    :type code_blocks_data: list
    :param language: Programming language of the code blocks.
    :type language: str
-   :param model: OpenAI model name.
+   :param model: Optional AI model name or provider-prefixed model.
    :type model: str
 
    :returns: Updated list with generated docstrings.

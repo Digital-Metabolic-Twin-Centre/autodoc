@@ -60,11 +60,12 @@ Auto Doc
    project/objectives
    project/plan
    project/results
+   project/contributing
 
 .. toctree::
    :hidden:
    :maxdepth: 1
    :caption: Reference
 
-   api_reference
    README
+   api_reference

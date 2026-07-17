@@ -10,19 +10,19 @@
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=f639152d" />
 
   
-    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+    <link rel="shortcut icon" href="../../../../_static/logo.png"/>
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
       <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/sidebar-scroll.js?v=de4f24a2"></script>
     <script src="../../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
-    <link rel="next" title="Documentation Notes" href="../../../../README.html" />
     <link rel="prev" title="src.utils.output_paths" href="../output_paths/index.html" /> 
 </head>
 
@@ -36,6 +36,7 @@
           
           <a href="../../../../index.html" class="icon icon-home">
             Auto Doc
+              <img src="../../../../_static/logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
@@ -48,10 +49,11 @@
               <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#summary">Summary</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#scope">Scope</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-value">Project value</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#architecture-documentation-workflow">Architecture documentation workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-context">Project Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#problem-statement">Problem Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#core-workflow">Core Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#key-capabilities">Key Capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#technology-summary">Technology Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a><ul>
@@ -73,9 +75,24 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#how-success-will-be-measured">How success will be measured</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/contributing.html">How to Contribute</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#set-up-the-project">Set Up the Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#development-workflow">Development Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#run-the-application-locally">Run the Application Locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#run-tests-and-checks">Run Tests and Checks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#documentation-guidelines">Documentation Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#code-guidelines">Code Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#pull-request-checklist">Pull Request Checklist</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#local-development">Local Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#preview-these-docs-locally">Preview These Docs Locally</a></li>
+</ul>
+</li>
 <li class="toctree-l1 current"><a class="reference internal" href="../../../../api_reference.html">API Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../../admin/database/index.html">src.admin.database</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../admin/database/index.html#module-contents">Module Contents</a><ul>
@@ -260,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../services/sphinx_services/index.html#src.services.sphinx_services.DOCS_SCAFFOLD_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_SCAFFOLD_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../services/sphinx_services/index.html#src.services.sphinx_services.DOCS_ASSET_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_ASSET_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_DOCSTRING_THRESHOLD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../services/sphinx_services/index.html#src.services.sphinx_services.SPHINX_CONF_CANDIDATES"><code class="docutils literal notranslate"><span class="pre">SPHINX_CONF_CANDIDATES</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../services/sphinx_services/index.html#src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS"><code class="docutils literal notranslate"><span class="pre">SAMPLE_DOCS_FALLBACK_TEXTS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_START"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_START</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../services/sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_END"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_END</span></code></a></li>
@@ -302,8 +320,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../docstring_generation/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_OPENAI_MODEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_OPENAI_MODEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CODEX_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CODEX_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CLAUDE_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CLAUDE_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.CLI_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">CLI_TIMEOUT_SECONDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.SUPPORTED_AI_PROVIDERS"><code class="docutils literal notranslate"><span class="pre">SUPPORTED_AI_PROVIDERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.resolve_ai_provider"><code class="docutils literal notranslate"><span class="pre">resolve_ai_provider()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.configure_openai"><code class="docutils literal notranslate"><span class="pre">configure_openai()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.create_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_docstring_prompt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.create_openai_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_openai_docstring_prompt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.generate_docstring"><code class="docutils literal notranslate"><span class="pre">generate_docstring()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.generate_docstring_with_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstring_with_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstrings_for_code_blocks_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../docstring_generation/index.html#src.utils.docstring_generation.format_docstring_for_language"><code class="docutils literal notranslate"><span class="pre">format_docstring_for_language()</span></code></a></li>
@@ -332,6 +357,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../git_utils/index.html">src.utils.git_utils</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../git_utils/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../git_utils/index.html#src.utils.git_utils.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../git_utils/index.html#src.utils.git_utils.DEFAULT_GIT_CLONE_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_GIT_CLONE_TIMEOUT_SECONDS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../git_utils/index.html#src.utils.git_utils.GitHubApiError"><code class="docutils literal notranslate"><span class="pre">GitHubApiError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../git_utils/index.html#src.utils.git_utils.RepositoryAccessError"><code class="docutils literal notranslate"><span class="pre">RepositoryAccessError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../git_utils/index.html#src.utils.git_utils.extract_repo_path"><code class="docutils literal notranslate"><span class="pre">extract_repo_path()</span></code></a></li>
@@ -387,13 +413,6 @@
 </li>
 </ul>
 </li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#application-setup">Application setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-the-application-locally">Run the application locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-with-docker">Run with Docker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#build-these-docs-locally">Build these docs locally</a></li>
 </ul>
 </li>
 </ul>
@@ -467,7 +486,6 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../output_paths/index.html" class="btn btn-neutral float-left" title="src.utils.output_paths" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../../../../README.html" class="btn btn-neutral float-right" title="Documentation Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

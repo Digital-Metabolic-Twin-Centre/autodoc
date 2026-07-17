@@ -10,15 +10,16 @@
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=74cdff9b" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom-wide.css?v=f639152d" />
 
   
-    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+    <link rel="shortcut icon" href="../../../../_static/logo.png"/>
       <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../../../_static/documentation_options.js?v=5929fcd5"></script>
       <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/sidebar-scroll.js?v=de4f24a2"></script>
     <script src="../../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
@@ -36,6 +37,7 @@
           
           <a href="../../../../index.html" class="icon icon-home">
             Auto Doc
+              <img src="../../../../_static/logo.png" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
@@ -48,10 +50,11 @@
               <p class="caption" role="heading"><span class="caption-text">Project</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../project/overview.html">Project Overview</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#summary">Summary</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#scope">Scope</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-value">Project value</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#architecture-documentation-workflow">Architecture documentation workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#project-context">Project Context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#problem-statement">Problem Statement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#core-workflow">Core Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#key-capabilities">Key Capabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/overview.html#technology-summary">Technology Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../project/objectives.html">Objectives</a><ul>
@@ -73,9 +76,24 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../project/results.html#how-success-will-be-measured">How success will be measured</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../project/contributing.html">How to Contribute</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#set-up-the-project">Set Up the Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#development-workflow">Development Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#run-the-application-locally">Run the Application Locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#run-tests-and-checks">Run Tests and Checks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#documentation-guidelines">Documentation Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#code-guidelines">Code Guidelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../project/contributing.html#pull-request-checklist">Pull Request Checklist</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#local-development">Local Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#preview-these-docs-locally">Preview These Docs Locally</a></li>
+</ul>
+</li>
 <li class="toctree-l1 current"><a class="reference internal" href="../../../../api_reference.html">API Reference</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../../admin/database/index.html">src.admin.database</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../admin/database/index.html#module-contents">Module Contents</a><ul>
@@ -260,6 +278,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../sphinx_services/index.html#src.services.sphinx_services.DOCS_SCAFFOLD_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_SCAFFOLD_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sphinx_services/index.html#src.services.sphinx_services.DOCS_ASSET_DIR"><code class="docutils literal notranslate"><span class="pre">DOCS_ASSET_DIR</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_DOCSTRING_THRESHOLD"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_DOCSTRING_THRESHOLD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sphinx_services/index.html#src.services.sphinx_services.SPHINX_CONF_CANDIDATES"><code class="docutils literal notranslate"><span class="pre">SPHINX_CONF_CANDIDATES</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sphinx_services/index.html#src.services.sphinx_services.SAMPLE_DOCS_FALLBACK_TEXTS"><code class="docutils literal notranslate"><span class="pre">SAMPLE_DOCS_FALLBACK_TEXTS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_START"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_START</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sphinx_services/index.html#src.services.sphinx_services.AUTOAPI_CONF_MARKER_END"><code class="docutils literal notranslate"><span class="pre">AUTOAPI_CONF_MARKER_END</span></code></a></li>
@@ -302,8 +321,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../../utils/docstring_generation/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_OPENAI_MODEL"><code class="docutils literal notranslate"><span class="pre">DEFAULT_OPENAI_MODEL</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CODEX_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CODEX_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.DEFAULT_CLAUDE_COMMAND"><code class="docutils literal notranslate"><span class="pre">DEFAULT_CLAUDE_COMMAND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.CLI_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">CLI_TIMEOUT_SECONDS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.SUPPORTED_AI_PROVIDERS"><code class="docutils literal notranslate"><span class="pre">SUPPORTED_AI_PROVIDERS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.resolve_ai_provider"><code class="docutils literal notranslate"><span class="pre">resolve_ai_provider()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.configure_openai"><code class="docutils literal notranslate"><span class="pre">configure_openai()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.create_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_docstring_prompt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.create_openai_docstring_prompt"><code class="docutils literal notranslate"><span class="pre">create_openai_docstring_prompt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstring"><code class="docutils literal notranslate"><span class="pre">generate_docstring()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstring_with_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstring_with_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.generate_docstrings_for_code_blocks_openai"><code class="docutils literal notranslate"><span class="pre">generate_docstrings_for_code_blocks_openai()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/docstring_generation/index.html#src.utils.docstring_generation.format_docstring_for_language"><code class="docutils literal notranslate"><span class="pre">format_docstring_for_language()</span></code></a></li>
@@ -332,6 +358,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../utils/git_utils/index.html">src.utils.git_utils</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../utils/git_utils/index.html#module-contents">Module Contents</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/git_utils/index.html#src.utils.git_utils.logger"><code class="docutils literal notranslate"><span class="pre">logger</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../utils/git_utils/index.html#src.utils.git_utils.DEFAULT_GIT_CLONE_TIMEOUT_SECONDS"><code class="docutils literal notranslate"><span class="pre">DEFAULT_GIT_CLONE_TIMEOUT_SECONDS</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/git_utils/index.html#src.utils.git_utils.GitHubApiError"><code class="docutils literal notranslate"><span class="pre">GitHubApiError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/git_utils/index.html#src.utils.git_utils.RepositoryAccessError"><code class="docutils literal notranslate"><span class="pre">RepositoryAccessError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../utils/git_utils/index.html#src.utils.git_utils.extract_repo_path"><code class="docutils literal notranslate"><span class="pre">extract_repo_path()</span></code></a></li>
@@ -389,13 +416,6 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Documentation Notes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#application-setup">Application setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-the-application-locally">Run the application locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#run-with-docker">Run with Docker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../README.html#build-these-docs-locally">Build these docs locally</a></li>
-</ul>
-</li>
 </ul>
 
         </div>
@@ -430,7 +450,11 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="src.services.workflow_service.WorkflowRunResult">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.services.workflow_service.</span></span><span class="sig-name descname"><span class="pre">WorkflowRunResult</span></span><a class="headerlink" href="#src.services.workflow_service.WorkflowRunResult" title="Link to this definition"></a></dt>
-<dd><dl class="py attribute">
+<dd><p>Store metadata and outputs from a workflow run.
+Args: response (dict): Raw workflow response; summary_output (str): Generated summary; optional
+fields include artifact paths, branches, URL, metrics, and draft ID.
+Returns: WorkflowRunResult: Container with workflow results and related metadata.</p>
+<dl class="py attribute">
 <dt class="sig sig-object py" id="src.services.workflow_service.WorkflowRunResult.response">
 <span class="sig-name descname"><span class="pre">response</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#src.services.workflow_service.WorkflowRunResult.response" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -490,27 +514,80 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="src.services.workflow_service.execute_generate_request">
 <span class="sig-prename descclassname"><span class="pre">src.services.workflow_service.</span></span><span class="sig-name descname"><span class="pre">execute_generate_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../models/repo_request/index.html#src.models.repo_request.RepoRequest" title="src.models.repo_request.RepoRequest"><span class="pre">models.repo_request.RepoRequest</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult"><span class="pre">WorkflowRunResult</span></a></span></span><a class="headerlink" href="#src.services.workflow_service.execute_generate_request" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Execute a repository documentation generation workflow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>req</strong> (<a class="reference internal" href="../../models/repo_request/index.html#src.models.repo_request.RepoRequest" title="src.models.repo_request.RepoRequest"><em>RepoRequest</em></a>) – Request containing repository access, branch, model, and generation</p></li>
+<li><p><strong>settings.</strong></p></li>
+<li><p><strong>progress_callback</strong> (<em>Callable</em><em> | </em><em>None</em>) – Optional callback for workflow progress updates.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Workflow response, artifact paths, source branch, and generation metrics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult">WorkflowRunResult</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.services.workflow_service.execute_docstring_pr_request">
 <span class="sig-prename descclassname"><span class="pre">src.services.workflow_service.</span></span><span class="sig-name descname"><span class="pre">execute_docstring_pr_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../models/repo_request/index.html#src.models.repo_request.DocstringPullRequestRequest" title="src.models.repo_request.DocstringPullRequestRequest"><span class="pre">models.repo_request.DocstringPullRequestRequest</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult"><span class="pre">WorkflowRunResult</span></a></span></span><a class="headerlink" href="#src.services.workflow_service.execute_docstring_pr_request" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Create a pull request containing generated Python docstring suggestions.
+:param req: Pull request configuration, repository access, and
+:type req: DocstringPullRequestRequest
+:param generation limits.:
+:param progress_callback: Optional callback for workflow progress updates.
+:type progress_callback: Callable | None</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Pull request response, summary metrics, and artifact/log paths.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult">WorkflowRunResult</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.services.workflow_service.execute_publish_request">
 <span class="sig-prename descclassname"><span class="pre">src.services.workflow_service.</span></span><span class="sig-name descname"><span class="pre">execute_publish_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../models/repo_request/index.html#src.models.repo_request.PublishPagesRequest" title="src.models.repo_request.PublishPagesRequest"><span class="pre">models.repo_request.PublishPagesRequest</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult"><span class="pre">WorkflowRunResult</span></a></span></span><a class="headerlink" href="#src.services.workflow_service.execute_publish_request" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Publishes repository documentation to GitHub Pages and returns workflow metadata.</p>
+<p>Args: req (PublishPagesRequest): Publish request configuration; progress_callback (Callable |
+None): Optional progress notifier.
+Returns: WorkflowRunResult: Publish result with response data, artifacts, logs, branches, and
+documentation URL.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.services.workflow_service.execute_architecture_generation_request">
 <span class="sig-prename descclassname"><span class="pre">src.services.workflow_service.</span></span><span class="sig-name descname"><span class="pre">execute_architecture_generation_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../models/repo_request/index.html#src.models.repo_request.ArchitectureGenerationRequest" title="src.models.repo_request.ArchitectureGenerationRequest"><span class="pre">models.repo_request.ArchitectureGenerationRequest</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult"><span class="pre">WorkflowRunResult</span></a></span></span><a class="headerlink" href="#src.services.workflow_service.execute_architecture_generation_request" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Execute an architecture generation workflow and package its result.
+:param req: Request containing repository, provider, branch, and
+:type req: ArchitectureGenerationRequest
+:param output options; progress_callback: Callback for progress updates.
+:type output options; progress_callback: callable, optional</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Workflow response, summary, artifact paths, and draft metadata.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult">WorkflowRunResult</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="src.services.workflow_service.execute_architecture_approval_request">
 <span class="sig-prename descclassname"><span class="pre">src.services.workflow_service.</span></span><span class="sig-name descname"><span class="pre">execute_architecture_approval_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">req</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../models/repo_request/index.html#src.models.repo_request.ArchitectureApprovalRequest" title="src.models.repo_request.ArchitectureApprovalRequest"><span class="pre">models.repo_request.ArchitectureApprovalRequest</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_callback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.services.workflow_service.WorkflowRunResult" title="src.services.workflow_service.WorkflowRunResult"><span class="pre">WorkflowRunResult</span></a></span></span><a class="headerlink" href="#src.services.workflow_service.execute_architecture_approval_request" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Apply an approved architecture document and return workflow metadata.
+Args: req (ArchitectureApprovalRequest): Approval request details; progress_callback (Callable |
+None): Optional progress notifier.
+Returns: WorkflowRunResult: Result containing response, summary, artifacts, log path, branch,
+and draft ID.</p>
+</dd></dl>
 
 </section>
 </section>

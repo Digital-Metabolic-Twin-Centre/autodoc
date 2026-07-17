@@ -11,25 +11,124 @@ Module Contents
 
 .. py:function:: admin_auth_config_error() -> str | None
 
+   Validate required admin authentication configuration.
+
+   :param None.:
+
+   :returns: Error message if configuration is missing, otherwise None.
+   :rtype: str | None
+
+
 .. py:function:: encrypt_token(token: str) -> str
+
+   Encrypt a token using the configured Fernet key.
+
+   :param token: Plaintext token to encrypt.
+   :type token: str
+
+   :returns: Encrypted token encoded as a UTF-8 string.
+   :rtype: str
+
 
 .. py:function:: decrypt_token(token: str) -> str
 
+   Decrypt an encrypted token string.
+
+   :param token: Encrypted token to decrypt.
+   :type token: str
+
+   :returns: Decrypted token value.
+   :rtype: str
+
+
 .. py:function:: validate_admin_credentials(username: str, password: str) -> str
+
+   Validate administrator credentials against configured values.
+
+   Args: username (str): Admin username; password (str): Admin password.
+   Returns: str: The validated admin username.
+
 
 .. py:function:: create_admin_session(username: str) -> str
 
+   Create a signed admin session token for a username.
+
+   :param username: Username to include in the session payload.
+   :type username: str
+
+   :returns: URL-safe signed session token.
+   :rtype: str
+
+
 .. py:function:: read_admin_session(session_value: str | None) -> str | None
+
+   Validate and read a signed admin session token.
+
+   :param session_value: Encoded session payload and signature.
+   :type session_value: str | None
+
+   :returns: Admin username if valid and unexpired, otherwise None.
+   :rtype: str | None
+
 
 .. py:function:: set_admin_session(response: fastapi.Response, username: str) -> None
 
+   Set the admin session cookie on the response.
+
+   :param response: HTTP response to update; username (str): Admin username for the
+   :type response: Response
+   :param session.:
+
+   :returns: This function does not return a value.
+   :rtype: None
+
+
 .. py:function:: clear_admin_session(response: fastapi.Response) -> None
+
+   Clear the admin session cookie from the response.
+
+   :param response: HTTP response whose admin session cookie is deleted.
+   :type response: Response
+
+   :returns: This function does not return a value.
+   :rtype: None
+
 
 .. py:function:: require_admin(request: fastapi.Request) -> str
 
+   Validate the admin session and return the authenticated username.
+
+   :param request: Incoming request containing admin session cookies.
+   :type request: Request
+
+   :returns: Authenticated admin username.
+   :rtype: str
+
+
 .. py:function:: ensure_csrf_token(request: fastapi.Request, response: fastapi.Response, csrf_token: str | None = None) -> str
 
+   Ensure a CSRF token exists and set it as a response cookie.
+
+   :param request: Incoming request used to retrieve or create the token.
+   :type request: Request
+   :param response: Response on which to set the CSRF cookie.
+   :type response: Response
+   :param csrf_token: Optional token to use instead of generating one.
+   :type csrf_token: str | None
+
+   :returns: The CSRF token set on the response.
+   :rtype: str
+
+
 .. py:function:: get_or_create_csrf_token(request: fastapi.Request) -> str
+
+   Get an existing CSRF token from cookies or generate a new one.
+   :param request: Incoming request containing cookie data.
+   :type request: Request
+
+   :returns: Existing admin CSRF token or a newly generated token.
+   :rtype: str
+
 
 .. py:function:: verify_csrf(request: fastapi.Request, csrf_token: str = Form(default='')) -> None
    :async:

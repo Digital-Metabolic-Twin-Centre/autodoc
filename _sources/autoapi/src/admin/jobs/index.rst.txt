@@ -71,5 +71,23 @@ Module Contents
 
 .. py:function:: enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None
 
+   Enqueue a run job and notify the dispatcher.
+
+   :param run_id: Unique run identifier. endpoint (str): Target endpoint. payload (dict[str,
+   :type run_id: int
+   :param Any]): Job payload.
+
+   :returns: This function does not return a value.
+   :rtype: None
+
+
 .. py:function:: request_run_cancellation(run_id: int) -> str
+
+   Cancel a queued or running run by ID.
+   :param run_id: Identifier of the run to cancel.
+   :type run_id: int
+
+   :returns: Resulting run status, typically "cancelled", "running", or the existing status.
+   :rtype: str
+
 

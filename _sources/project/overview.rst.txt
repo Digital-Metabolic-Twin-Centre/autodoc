@@ -1,44 +1,72 @@
 Project Overview
 ================
 
-Summary
--------
+Auto Doc is a FastAPI-based documentation automation service for teams working
+with GitHub and GitLab repositories. It analyses a target repository, identifies
+missing or weak documentation, generates reviewable docstring suggestions, and
+scaffolds a Sphinx documentation site that can be built locally or published as
+static HTML.
 
-Auto Doc is a FastAPI service that analyses GitHub and GitLab repositories,
-detects missing or incomplete documentation, generates docstring suggestions
-with OpenAI, Codex CLI, or Claude CLI, scaffolds a Sphinx documentation site,
-and publishes reviewed HTML to GitHub Pages. The project is designed to reduce
-the manual effort involved in documenting software systems by combining
-repository analysis, AI-assisted documentation generation, and automated
-documentation publishing in one workflow.
+The project is designed to reduce the repetitive work involved in moving from an
+under-documented codebase to a navigable documentation site. Rather than treating
+documentation as a one-off manual task, Auto Doc brings repository analysis,
+AI-assisted writing, Sphinx generation, review artifacts, and publishing support
+into a single workflow.
 
-Scope
------
+Project Context
+---------------
 
-The system supports Python, JavaScript, TypeScript, and MATLAB repositories,
-making it suitable for a wide range of modern development teams. It focuses on
-improving documentation quality, accelerating Sphinx setup, and helping teams
-move from undocumented source code to a structured, reviewable documentation
-site with less manual configuration.
+- **Project title:** Auto Doc
+- **Project type:** Automated documentation generator and publishing workflow
+- **Primary audience:** Developers, research software teams, and maintainers who
+  need to improve documentation coverage across active repositories.
+- **Supported repository providers:** GitHub and GitLab
+- **Supported source languages:** Python, JavaScript, TypeScript, and MATLAB
+- **Documentation output:** Sphinx documentation with AutoAPI support and
+  publishable HTML
 
-Project value
+Problem Statement
+-----------------
+
+Many software projects accumulate useful code faster than they accumulate useful
+documentation. Existing functions, modules, services, and workflows may be hard
+to understand because docstrings are missing, architecture notes are scattered,
+or publishing a documentation site requires too much manual setup.
+
+Auto Doc addresses this by inspecting repository structure, measuring
+documentation coverage, suggesting missing Python docstrings, and preparing a
+Sphinx site that teams can review before publishing.
+
+Core Workflow
 -------------
 
-Auto Doc addresses a common problem in software projects: documentation is often
-incomplete, outdated, or postponed because it takes time to produce and maintain.
-By automating repository inspection, highlighting documentation gaps, and
-preparing a publishable documentation scaffold, Auto Doc helps teams improve
-clarity, maintainability, onboarding, and long-term project knowledge sharing.
+1. A user selects a target repository and branch through the API or admin
+   dashboard.
+2. Auto Doc clones and analyses the repository, scanning supported source files
+   for documentation coverage.
+3. The system generates reviewable documentation artifacts, including docstring
+   suggestions and Sphinx scaffold files.
+4. Developers review and refine the generated output before adoption.
+5. Reviewed documentation can be built as HTML and published to GitHub Pages.
 
-Architecture documentation workflow
-------------------------------------
+Key Capabilities
+----------------
 
-In addition to docstring generation, Auto Doc can analyse a repository and produce a
-reviewable architecture documentation draft covering project overview, entry points,
-services, routers, modules, dependencies, data flow, background jobs, database models,
-configuration, environment variables, authentication flow, API endpoints, diagrams,
-repository structure, and technology stack. Observed facts are distinguished from
-inferred relationships, and inferred findings include a confidence level. Generation
-never commits or publishes; a maintainer must explicitly approve a draft before it is
-applied to the repository's documentation tree, and existing manual documentation is
-preserved unless overwrite is confirmed.
+- Repository analysis for GitHub and GitLab projects.
+- Documentation coverage checks at module, class, and function level.
+- AI-assisted Python docstring suggestions using OpenAI, Codex CLI, or Claude
+  CLI.
+- Reuse of previous suggestion artifacts when appropriate.
+- Sphinx scaffold generation with AutoAPI integration.
+- Review-first publishing to GitHub Pages.
+- Runtime logs and generated artifacts for traceability.
+- Admin dashboard support for saved repositories, workflow triggers, run
+  history, and generated outputs.
+
+Technology Summary
+------------------
+
+Auto Doc is built with FastAPI, Sphinx, AutoAPI, Jinja2, HTMX, SQLite,
+SQLAlchemy, Docker, and ``uv``. AI-generated suggestions can be provided through
+the OpenAI API or authenticated local CLI providers such as Codex CLI and Claude
+CLI.

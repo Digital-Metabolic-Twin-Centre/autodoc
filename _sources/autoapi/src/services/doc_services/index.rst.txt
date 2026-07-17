@@ -43,8 +43,11 @@ Module Contents
    :type branch: str
    :param target_folders: Optional repository folders to limit analysis to.
    :type target_folders: list[str] | None
-   :param model: Optional OpenAI model override for generated docstrings.
+   :param model: Optional AI model override for generated docstrings.
    :type model: str | None
+   :param reuse_doc: When True, reuse cached docstring suggestions from the most recent
+                     prior run instead of regenerating them.
+   :type reuse_doc: bool
 
    :returns:     - files_missing_docstring (list): List of dicts for files/items missing docstring.
                  - file_present_docstring (list): List of dicts for files/items with docstring.

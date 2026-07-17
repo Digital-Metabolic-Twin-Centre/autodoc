@@ -92,6 +92,14 @@ Module Contents
 
    .. py:method:: to_dict() -> dict
 
+      Convert the documentation gap to a dictionary.
+      :param self: Instance containing gap details.
+      :type self: DocumentationGap
+
+      :returns: Serialized gap fields for review.
+      :rtype: dict
+
+
 
 .. py:class:: AnalysisGap
 
@@ -117,6 +125,13 @@ Module Contents
 
 
    .. py:method:: to_dict() -> dict
+
+      Return a dictionary representation of the finding.
+
+      :returns: Serialized finding fields, including type, name, classification, evidence paths,
+                and confidence level.
+      :rtype: dict
+
 
 
 .. py:class:: ArchitectureSection
@@ -158,13 +173,31 @@ Module Contents
       :type: int
 
 
+      Return the number of findings classified as observed.
+
+      :returns: Count of findings with classification set to "observed".
+      :rtype: int
+
 
    .. py:property:: inferred_count
       :type: int
 
 
+      Return the number of findings classified as inferred.
+
+      :param None.:
+
+      :returns: Count of findings with classification set to "inferred".
+      :rtype: int
+
 
    .. py:method:: to_summary_dict() -> dict
+
+      Return a compact summary representation of this section.
+
+      :returns: Mapping containing section name, status, confidence level, and observation counts.
+      :rtype: dict
+
 
 
 .. py:function:: generate_draft_id() -> str
