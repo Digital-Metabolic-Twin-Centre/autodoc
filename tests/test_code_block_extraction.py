@@ -36,3 +36,17 @@ function greet(name) {
 
     assert len(blocks) == 1
     assert "function greet(name)" in blocks[0]
+
+
+def test_matlab_source_extensions_are_detected_as_matlab():
+    content = """
+function result = add_one(value)
+  result = value + 1;
+end
+""".strip()
+
+    for file_name in ("sample.m", "sample.matlab"):
+        extractor = GenericCodeBlockExtractor(content, file_name)
+
+        assert extractor.language == "matlab"
+        assert "function result = add_one(value)" in extractor.code_block_extractor()[0]

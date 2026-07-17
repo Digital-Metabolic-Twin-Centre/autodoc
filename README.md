@@ -12,8 +12,9 @@ https://autodoc.humanmetabolism.org
 ## What It Does
 
 - Analyses GitHub and GitLab repositories
-- Scans Python, JavaScript, TypeScript, and MATLAB source files
-- Generates Python docstring suggestions with OpenAI, Codex CLI, or Claude CLI
+- Scans Python, JavaScript, TypeScript, and MATLAB source files (`.m`/`.matlab`)
+- Generates reviewable docstring suggestions with OpenAI, Codex CLI, or Claude CLI
+- Creates Python-only docstring insertion pull requests for GitHub repositories
 - Creates Sphinx documentation with AutoAPI support
 - Supports review-first publishing to GitHub Pages
 - Provides an admin dashboard for repositories, runs, logs, and generated artifacts
