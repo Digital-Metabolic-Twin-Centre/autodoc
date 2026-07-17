@@ -295,7 +295,13 @@ def analyse_repo(
     # Fetch repo tree - now using git clone + local filesystem
     try:
         with clone_repository(repo_url, token, branch, provider) as temp_dir:
-            file_list = fetch_repo_tree(repo_url, token, branch=branch, provider=provider.lower())
+            file_list = fetch_repo_tree(
+                repo_url,
+                token,
+                branch=branch,
+                provider=provider.lower(),
+                local_repo_path=temp_dir,
+            )
             logger.info(f"Fetched repo tree, {len(file_list)} files found.")
             # Determine file type key for provider
             file_type_key = "blob" if provider.lower() == "gitlab" else "file"

@@ -76,6 +76,49 @@ def test_fetch_repo_tree_reports_inaccessible_repo(monkeypatch):
         fetch_repo_tree("example/project", "secret", branch="main", provider="github")
 
 
+def test_fetch_repo_tree_uses_partial_single_branch_clone_with_configurable_timeout(monkeypatch):
+    import subprocess
+
+    captured = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["timeout"] = kwargs["timeout"]
+        captured["env"] = kwargs["env"]
+        return subprocess.CompletedProcess(command, 0, stdout=b"", stderr=b"")
+
+    monkeypatch.setenv("AUTODOC_GIT_CLONE_TIMEOUT", "2400")
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    assert fetch_repo_tree("example/project", "secret", branch="main", provider="github") == []
+
+    assert captured["command"][:7] == [
+        "git",
+        "clone",
+        "--depth",
+        "1",
+        "--single-branch",
+        "--filter=blob:none",
+        "--branch",
+    ]
+    assert captured["command"][7] == "main"
+    assert captured["timeout"] == 2400
+    assert captured["env"]["GIT_LFS_SKIP_SMUDGE"] == "1"
+
+
+def test_fetch_repo_tree_clone_timeout_message_mentions_large_repo_option(monkeypatch):
+    import subprocess
+
+    def fake_run(*args, **kwargs):
+        raise subprocess.TimeoutExpired("git clone", timeout=2400)
+
+    monkeypatch.setenv("AUTODOC_GIT_CLONE_TIMEOUT", "2400")
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    with pytest.raises(RepositoryAccessError, match="AUTODOC_GIT_CLONE_TIMEOUT"):
+        fetch_repo_tree("example/project", "secret", branch="main", provider="github")
+
+
 def test_fetch_content_from_github_preserves_empty_file(monkeypatch):
     monkeypatch.setattr("utils.git_utils.requests.get", lambda *args, **kwargs: DummyResponse(200, text=""))
 

@@ -88,6 +88,7 @@ ADMIN_SECRET_KEY=choose-a-long-random-secret
 # AUTODOC_CODEX_COMMAND=codex exec --skip-git-repo-check -
 # AUTODOC_CLAUDE_COMMAND=claude -p --output-format text
 # AUTODOC_AI_CLI_TIMEOUT=120
+# AUTODOC_GIT_CLONE_TIMEOUT=1800
 # ADMIN_USERNAME=admin
 # ADMIN_SQLITE_PATH=/app/data/admin.db
 # ADMIN_DEFAULT_MODEL=gpt-4o-mini
@@ -105,6 +106,9 @@ Docstring generation chooses an AI backend in this order:
 
 Repository access still uses GitHub/GitLab tokens. The Codex and Claude CLI providers only replace the AI text-generation section.
 For CLI backends, leave the model unset unless you know the model name is supported by your authenticated CLI account.
+
+Large repositories are cloned with a shallow, single-branch, partial clone by default. `AUTODOC_GIT_CLONE_TIMEOUT`
+controls how long repository clones may run before failing; increase it for repositories over 1GB or slow networks.
 
 ## Local Setup
 

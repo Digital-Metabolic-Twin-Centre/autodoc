@@ -20,6 +20,8 @@ from utils.docstring_validation import analyse_docstring_in_blocks
 
 logger = get_logger(__name__)
 
+DEFAULT_GIT_CLONE_TIMEOUT_SECONDS = 1800
+
 
 class GitHubApiError(RuntimeError):
     """Raised when a GitHub API request fails."""
@@ -156,6 +158,49 @@ def extract_repo_path(repo_url: str, provider: str = "github") -> str:
     return repo_url
 
 
+def _git_clone_timeout_seconds() -> int:
+    raw_timeout = os.getenv("AUTODOC_GIT_CLONE_TIMEOUT")
+    if not raw_timeout:
+        return DEFAULT_GIT_CLONE_TIMEOUT_SECONDS
+    try:
+        timeout = int(raw_timeout)
+    except ValueError:
+        logger.warning(
+            "Invalid AUTODOC_GIT_CLONE_TIMEOUT=%r; using %s seconds",
+            raw_timeout,
+            DEFAULT_GIT_CLONE_TIMEOUT_SECONDS,
+        )
+        return DEFAULT_GIT_CLONE_TIMEOUT_SECONDS
+    if timeout <= 0:
+        logger.warning(
+            "AUTODOC_GIT_CLONE_TIMEOUT must be positive; using %s seconds",
+            DEFAULT_GIT_CLONE_TIMEOUT_SECONDS,
+        )
+        return DEFAULT_GIT_CLONE_TIMEOUT_SECONDS
+    return timeout
+
+
+def _git_clone_command(clone_url: str, branch: str, destination: str) -> List[str]:
+    return [
+        "git",
+        "clone",
+        "--depth",
+        "1",
+        "--single-branch",
+        "--filter=blob:none",
+        "--branch",
+        branch,
+        clone_url,
+        destination,
+    ]
+
+
+def _git_clone_env() -> Dict[str, str]:
+    env = os.environ.copy()
+    env.setdefault("GIT_LFS_SKIP_SMUDGE", "1")
+    return env
+
+
 @contextmanager
 def clone_repository(
     repo_url: str, token: str, branch: str = "main", provider: str = "github"
@@ -205,17 +250,20 @@ def clone_repository(
         else:
             git_url_with_token = clone_url
 
+        clone_timeout = _git_clone_timeout_seconds()
         subprocess.run(
-            ["git", "clone", "--depth", "1", "--branch", branch, git_url_with_token, temp_dir],
+            _git_clone_command(git_url_with_token, branch, temp_dir),
             check=True,
-            timeout=300,
+            timeout=clone_timeout,
             capture_output=True,
+            env=_git_clone_env(),
         )
         logger.info(f"Successfully cloned repository to {temp_dir}")
         yield temp_dir
     except subprocess.TimeoutExpired as e:
         raise RepositoryAccessError(
-            f"Clone operation timed out after 300 seconds for {repo_url}",
+            f"Clone operation timed out after {_git_clone_timeout_seconds()} seconds for {repo_url}. "
+            "For very large repositories, increase AUTODOC_GIT_CLONE_TIMEOUT or reduce repository size.",
             status_code=408,
         ) from e
     except subprocess.CalledProcessError as e:
@@ -586,11 +634,13 @@ def fetch_repo_tree(
                 elif provider.lower() == "gitlab":
                     clone_url = clone_url.replace("https://", f"https://oauth2:{access_token}@")
 
+                clone_timeout = _git_clone_timeout_seconds()
                 subprocess.run(
-                    ["git", "clone", "--depth", "1", "--branch", branch, clone_url, temp_dir],
+                    _git_clone_command(clone_url, branch, temp_dir),
                     check=True,
-                    timeout=300,
+                    timeout=clone_timeout,
                     capture_output=True,
+                    env=_git_clone_env(),
                 )
                 logger.info(f"Successfully cloned repository to {temp_dir}")
                 files = list_repository_files(temp_dir, branch, provider)
@@ -599,7 +649,8 @@ def fetch_repo_tree(
             except subprocess.TimeoutExpired as e:
                 shutil.rmtree(temp_dir, ignore_errors=True)
                 raise RepositoryAccessError(
-                    f"Clone operation timed out after 300 seconds for {repo_url}",
+                    f"Clone operation timed out after {_git_clone_timeout_seconds()} seconds for {repo_url}. "
+                    "For very large repositories, increase AUTODOC_GIT_CLONE_TIMEOUT or reduce repository size.",
                     status_code=408,
                 ) from e
             except subprocess.CalledProcessError as e:
