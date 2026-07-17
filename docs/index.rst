@@ -57,7 +57,6 @@ Auto Doc
    :caption: Project
 
    project/overview
-   project/installation
    project/objectives
    project/plan
    project/results
@@ -68,5 +67,5 @@ Auto Doc
    :maxdepth: 1
    :caption: Reference
 
-   api_reference
    README
+   api_reference
