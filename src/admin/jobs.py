@@ -30,6 +30,16 @@ from services.workflow_service import (
 
 @dataclass
 class QueuedJob:
+    """
+    Represents a job queued for delivery to an external endpoint.
+
+    Attributes:
+        run_id (int): Unique identifier of the associated run.
+        endpoint (str): Target endpoint URL or name to send the payload to.
+        payload (dict[str, Any]): Data to be delivered with the job.
+
+    """
+
     run_id: int
     endpoint: str
     payload: dict[str, Any]
@@ -53,6 +63,17 @@ CANCEL_GRACE_SECONDS = 10.0
 
 
 def _update_run(run_id: int, updater) -> None:
+    """
+    Apply an update function to a run record and persist the change.
+
+    Args:
+        run_id (int): The ID of the run record to update.
+        updater (Callable[[RunRecord], None]): A function that mutates the run record in place.
+
+    Returns:
+        None: Returns nothing; silently exits if the run record is not found.
+
+    """
     with SessionLocal() as session:
         run = session.get(RunRecord, run_id)
         if run is None:
@@ -63,9 +84,31 @@ def _update_run(run_id: int, updater) -> None:
 
 
 def _set_run_progress(run_id: int, percent: float, message: str) -> None:
+    """
+    Update the progress percentage and message for a run, clamping the percent to [0, 100].
+
+    Args:
+        run_id (int): Identifier of the run to update.
+        percent (float): Progress percentage; clamped to the range [0.0, 100.0].
+        message (str): Progress message to associate with the run.
+
+    Returns:
+        None
+
+    """
     normalized_percent = max(0.0, min(100.0, percent))
 
     def apply(run: RunRecord) -> None:
+        """
+        Mark a run as cancelled and update its status fields in place.
+
+        Args:
+            run (RunRecord): The run record to update.
+
+        Returns:
+            None: The run object is mutated directly.
+
+        """
         run.progress_percent = normalized_percent
         run.progress_message = message
 
@@ -76,6 +119,18 @@ def _duration_seconds(
     started_at: datetime | None,
     finished_at: datetime | None,
 ) -> float:
+    """
+    Compute the duration in seconds between two datetimes, normalizing timezone awareness if they
+    differ.
+
+    Args:
+        started_at (datetime | None): Start time, may be naive or timezone-aware.
+        finished_at (datetime | None): End time, may be naive or timezone-aware.
+
+    Returns:
+        float: Duration in seconds between the two times, or 0.0 if either is None.
+
+    """
     if started_at is None or finished_at is None:
         return 0.0
     normalized_started_at = started_at
@@ -94,9 +149,30 @@ def _duration_seconds(
 
 
 def _mark_cancelled(run_id: int, message: str) -> None:
+    """
+    Mark a run as cancelled and update its progress and completion metadata.
+
+    Args:
+        run_id (int): Identifier of the run to mark as cancelled.
+        message (str): Error/cancellation message to record for the run.
+
+    Returns:
+        None
+
+    """
     cancelled_at = datetime.now(UTC)
 
     def apply(run: RunRecord) -> None:
+        """
+        Update a run record's progress fields in place.
+
+        Args:
+            run (RunRecord): The run record whose progress state will be updated.
+
+        Returns:
+            None
+
+        """
         run.status = "cancelled"
         run.progress_percent = 100.0
         run.progress_message = "Cancelled"
@@ -108,6 +184,16 @@ def _mark_cancelled(run_id: int, message: str) -> None:
 
 
 def reconcile_interrupted_runs() -> int:
+    """
+    Mark all interrupted (queued/running) runs as failed and record recovery metadata.
+
+    Args:
+        None.
+
+    Returns:
+        int: The number of interrupted runs that were reconciled.
+
+    """
     recovered_at = datetime.now(UTC)
 
     with SessionLocal() as session:

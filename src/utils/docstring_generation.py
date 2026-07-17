@@ -23,6 +23,17 @@ SUPPORTED_AI_PROVIDERS = {"openai", "codex", "claude"}
 
 
 def _normalize_ai_provider(provider: str | None) -> str | None:
+    """
+    Normalize an AI provider name to a canonical identifier.
+
+    Args:
+        provider (str | None): Raw provider name, possibly with hyphens or mixed case.
+
+    Returns:
+        str | None: Canonical provider name ('openai', 'codex', 'claude'), the normalized
+        input if unrecognized, or None if no provider was given.
+
+    """
     if not provider:
         return None
     normalized = provider.strip().lower().replace("-", "_")
@@ -36,6 +47,17 @@ def _normalize_ai_provider(provider: str | None) -> str | None:
 
 
 def _split_provider_model(model: str | None) -> tuple[str | None, str | None]:
+    """
+    Split a model identifier into its provider and model components.
+
+    Args:
+        model (str | None): Raw model identifier, optionally in "provider:model" format.
+
+    Returns:
+        tuple[str | None, str | None]: A (provider, model) pair; provider is None if unspecified or
+        unsupported.
+
+    """
     if not model:
         return None, None
     raw_model = model.strip()
@@ -48,7 +70,9 @@ def _split_provider_model(model: str | None) -> tuple[str | None, str | None]:
     return None, raw_model
 
 
-def resolve_ai_provider(model: str | None = None, api_key: str | None = None) -> tuple[str, str | None]:
+def resolve_ai_provider(
+    model: str | None = None, api_key: str | None = None
+) -> tuple[str, str | None]:
     """
     Resolve the AI provider and model from explicit model prefixes, environment, and API key state.
 
@@ -58,7 +82,9 @@ def resolve_ai_provider(model: str | None = None, api_key: str | None = None) ->
     """
     prefixed_provider, requested_model = _split_provider_model(model)
     configured_provider = _normalize_ai_provider(os.getenv("AUTODOC_AI_PROVIDER"))
-    configured_cli_provider = _normalize_ai_provider(os.getenv("AUTODOC_AI_CLI_PROVIDER")) or "codex"
+    configured_cli_provider = (
+        _normalize_ai_provider(os.getenv("AUTODOC_AI_CLI_PROVIDER")) or "codex"
+    )
     configured_model = os.getenv("AUTODOC_AI_MODEL")
     openai_key = api_key or os.getenv("OPENAI_API_KEY")
 
@@ -158,10 +184,33 @@ Generate only the JSON response without any additional text or markdown formatti
 
 
 def create_openai_docstring_prompt(code: str, language: str | None = "python") -> str:
+    """
+    Create a docstring generation prompt formatted for OpenAI models.
+
+    Args:
+        code (str): The source code to generate a docstring for.
+        language (str | None): The programming language of the code. Defaults to "python".
+
+    Returns:
+        str: The formatted prompt string for docstring generation.
+
+    """
     return create_docstring_prompt(code, language)
 
 
 def _extract_json_object(response_text: str) -> dict:
+    """
+    Parse a JSON object from a possibly noisy or fenced response string, falling back to extracting
+    the outermost braces if direct parsing fails.
+
+    Args:
+        response_text (str): Raw response text potentially containing a JSON object, possibly
+        wrapped in code fences or extra text.
+
+    Returns:
+        dict: The parsed JSON object.
+
+    """
     cleaned = _clean_json_block(response_text)
     try:
         return json.loads(cleaned)
@@ -174,6 +223,18 @@ def _extract_json_object(response_text: str) -> dict:
 
 
 def _build_cli_command(provider: str, model: str | None) -> list[str]:
+    """
+    Build the CLI command list for invoking the given AI provider, optionally injecting a model
+    flag.
+
+    Args:
+        provider (str): The CLI AI provider name ("codex" or "claude").
+        model (str | None): Optional model name to pass via "--model" flag.
+
+    Returns:
+        list[str]: The tokenized command ready for subprocess execution.
+
+    """
     if provider == "codex":
         template = os.getenv("AUTODOC_CODEX_COMMAND", DEFAULT_CODEX_COMMAND)
     elif provider == "claude":
@@ -191,7 +252,21 @@ def _build_cli_command(provider: str, model: str | None) -> list[str]:
     return command
 
 
-def _generate_docstring_with_cli(provider: str, prompt: str, model: str | None = None) -> Optional[str]:
+def _generate_docstring_with_cli(
+    provider: str, prompt: str, model: str | None = None
+) -> Optional[str]:
+    """
+    Generate a docstring by invoking a provider's CLI tool with the given prompt.
+
+    Args:
+        provider (str): Name of the CLI provider to invoke.
+        prompt (str): The prompt text to send to the CLI via stdin.
+        model (str | None): Optional model name to use for generation.
+
+    Returns:
+        Optional[str]: The generated docstring text, or None if the CLI call fails.
+
+    """
     command = _build_cli_command(provider, model)
     try:
         result = subprocess.run(
@@ -210,7 +285,9 @@ def _generate_docstring_with_cli(provider: str, prompt: str, model: str | None =
 
     if result.returncode != 0:
         stderr = _trim_cli_error(result.stderr or "")
-        logger.error("%s CLI docstring generation failed: %s", provider, stderr or "no stderr")
+        logger.error(
+            "%s CLI docstring generation failed: %s", provider, stderr or "no stderr"
+        )
         return None
 
     try:
@@ -385,7 +462,10 @@ def format_docstring_for_language(docstring: str, language: str | None) -> str:
                 lines.append("")
                 continue
             leading_spaces = stripped[: len(stripped) - len(stripped.lstrip())]
-            lines.extend(textwrap.wrap(stripped, width=96, subsequent_indent=leading_spaces) or [""])
+            lines.extend(
+                textwrap.wrap(stripped, width=96, subsequent_indent=leading_spaces)
+                or [""]
+            )
         if any(line.startswith((" ", "\t")) for line in lines):
             lines.append("")
         indented_lines = ["    " + line if line.strip() else "" for line in lines]
@@ -394,7 +474,9 @@ def format_docstring_for_language(docstring: str, language: str | None) -> str:
     elif language.lower() in ["javascript", "typescript"]:
         # JSDoc format
         lines = docstring.split("\n")
-        formatted_lines = ["    /**"] + [f"     * {line}" for line in lines] + ["     */"]
+        formatted_lines = (
+            ["    /**"] + [f"     * {line}" for line in lines] + ["     */"]
+        )
         return "\n".join(formatted_lines)
 
     elif language.lower() == "matlab":
