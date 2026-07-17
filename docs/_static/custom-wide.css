@@ -3,23 +3,27 @@
     --autodoc-muted: #52606d;
     --autodoc-accent: #0f766e;
     --autodoc-border: #d9e2ec;
-    --autodoc-surface: rgba(255, 253, 248, 0.9);
-    --autodoc-surface-strong: #f4efe4;
+    --autodoc-surface: rgba(255, 255, 255, 0.94);
+    --autodoc-surface-strong: #eef7f6;
+    --autodoc-sidebar: #f8fbfb;
+    --autodoc-sidebar-active: #e6f4f1;
 }
 
 .wy-body-for-nav {
-    background:
-        radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 28%),
-        linear-gradient(180deg, #fcfbf7 0%, #f3efe5 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #f5faf9 100%);
 }
 
 .wy-nav-side {
-    background: linear-gradient(180deg, #163a39 0%, #102a2c 100%);
+    background: var(--autodoc-sidebar);
+    border-right: 1px solid var(--autodoc-border);
+    box-shadow: 8px 0 24px rgba(16, 42, 67, 0.04);
 }
 
 .wy-side-nav-search,
 .wy-nav-top {
-    background: #0f766e;
+    background: #ffffff;
+    border-bottom: 1px solid var(--autodoc-border);
+    color: var(--autodoc-ink);
 }
 
 .wy-side-nav-search {
@@ -28,30 +32,70 @@
 
 .wy-side-nav-search > a {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.75rem;
+    gap: 0.45rem;
+    margin-bottom: 0.85rem;
+    color: var(--autodoc-ink);
+    font-size: 0;
+    font-weight: 700;
+}
+
+.wy-side-nav-search > a::after {
+    content: "Auto Doc";
+    display: block;
+    font-size: 1rem;
+    line-height: 1.25;
 }
 
 .wy-side-nav-search > a img.logo,
 .wy-side-nav-search .wy-dropdown > a img.logo {
-    max-height: 72px;
+    max-height: 118px;
+    max-width: 82%;
     width: auto;
-    padding: 0.55rem 0.8rem;
-    border-radius: 16px;
-    background: rgba(255, 253, 248, 0.96);
-    box-shadow: 0 10px 24px rgba(16, 42, 67, 0.18);
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.wy-side-nav-search > a,
+.wy-side-nav-search .wy-dropdown > a {
+    color: var(--autodoc-ink);
+}
+
+.wy-side-nav-search input[type="text"] {
+    border: 1px solid var(--autodoc-border);
+    border-radius: 6px;
+    box-shadow: none;
 }
 
 .wy-menu-vertical a {
-    color: #d9f3ee;
+    color: #334e68;
 }
 
 .wy-menu-vertical a:hover,
 .wy-menu-vertical a:focus,
 .wy-menu-vertical li.current>a {
-    background: rgba(190, 198, 205, 0.22);
-    color: #000000;
+    background: var(--autodoc-sidebar-active);
+    color: #0b5d57;
+}
+
+.wy-menu-vertical li.current {
+    background: #ffffff;
+}
+
+.wy-menu-vertical li.current > a,
+.wy-menu-vertical li.on a {
+    border-color: var(--autodoc-accent);
+}
+
+.wy-menu-vertical li.toctree-l2.current > a,
+.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a {
+    background: #ffffff;
+    color: #334e68;
 }
 
 .wy-nav-content-wrap {
@@ -97,9 +141,9 @@
     margin: 0 0 2rem;
     padding: 2rem;
     border: 1px solid rgba(15, 118, 110, 0.14);
-    border-radius: 24px;
+    border-radius: 8px;
     background:
-        linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(255, 255, 255, 0.82)),
+        linear-gradient(135deg, rgba(15, 118, 110, 0.07), rgba(255, 255, 255, 0.88)),
         var(--autodoc-surface);
     box-shadow: 0 18px 45px rgba(16, 42, 67, 0.08);
     display: grid;
@@ -143,9 +187,8 @@
 .feature-card,
 .map-card {
     border: 1px solid rgba(15, 118, 110, 0.12);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    background: #ffffff;
     box-shadow: 0 10px 24px rgba(16, 42, 67, 0.05);
 }
 
@@ -200,7 +243,7 @@
 
 .rst-content table.docutils,
 .rst-content table.field-list {
-    border-radius: 16px;
+    border-radius: 8px;
     overflow: hidden;
     border: 1px solid var(--autodoc-border);
     box-shadow: 0 10px 30px rgba(16, 42, 67, 0.05);
@@ -230,9 +273,8 @@ footer {
 
 .toctree-l1:hover>a {
     font-weight: 500;
-    font-style: bold;
-    background-color: gray;
-    color: white;
+    background-color: var(--autodoc-sidebar-active);
+    color: #0b5d57;
 }
 
 @media screen and (max-width: 768px) {
