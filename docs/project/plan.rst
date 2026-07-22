@@ -13,8 +13,9 @@ Completed and active capabilities
 1. A FastAPI service has been implemented to coordinate repository analysis,
    documentation generation, and publishing workflows.
 2. Repository access has been integrated for both GitHub and GitLab.
-3. The system can scan Python, JavaScript, TypeScript, and MATLAB files and
-   assess documentation coverage across supported source code blocks.
+3. The system can scan Python, JavaScript, TypeScript, and MATLAB source files
+   (``.m``/``.matlab``) and assess documentation coverage across supported
+   source code blocks.
 4. AI-powered docstring suggestion generation is available for missing
    documentation through OpenAI, Codex CLI, or Claude CLI, with support for reuse
    of previously generated suggestions.

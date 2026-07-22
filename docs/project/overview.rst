@@ -22,6 +22,7 @@ Project Context
   need to improve documentation coverage across active repositories.
 - **Supported repository providers:** GitHub and GitLab
 - **Supported source languages:** Python, JavaScript, TypeScript, and MATLAB
+  source files (``.m``/``.matlab``)
 - **Documentation output:** Sphinx documentation with AutoAPI support and
   publishable HTML
 
@@ -34,8 +35,8 @@ to understand because docstrings are missing, architecture notes are scattered,
 or publishing a documentation site requires too much manual setup.
 
 Auto Doc addresses this by inspecting repository structure, measuring
-documentation coverage, suggesting missing Python docstrings, and preparing a
-Sphinx site that teams can review before publishing.
+documentation coverage, suggesting missing docstrings for supported source
+files, and preparing a Sphinx site that teams can review before publishing.
 
 Core Workflow
 -------------
@@ -54,8 +55,8 @@ Key Capabilities
 
 - Repository analysis for GitHub and GitLab projects.
 - Documentation coverage checks at module, class, and function level.
-- AI-assisted Python docstring suggestions using OpenAI, Codex CLI, or Claude
-  CLI.
+- AI-assisted docstring suggestions using OpenAI, Codex CLI, or Claude CLI,
+  with Python-only insertion pull requests for GitHub repositories.
 - Reuse of previous suggestion artifacts when appropriate.
 - Sphinx scaffold generation with AutoAPI integration.
 - Review-first publishing to GitHub Pages.

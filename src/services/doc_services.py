@@ -318,7 +318,7 @@ def analyse_repo(
                     language = "javascript"
                 elif file_name.endswith((".ts", ".tsx")):
                     language = "typescript"
-                elif file_name.endswith((".m", ".mat")):
+                elif file_name.endswith((".m", ".matlab")):
                     language = "matlab"
                 # File type not supported
                 else:
@@ -549,7 +549,7 @@ def analyse_repo(
         if supported_files_found == 0:
             raise RepoAnalysisError(
                 "Repository was reachable, but no supported source files were found. "
-                "Auto Doc currently analyses .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .mat files.",
+                "Auto Doc currently analyses .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .matlab source files.",
                 status_code=404,
             )
         if normalized_target_folders and supported_files_in_scope == 0:
