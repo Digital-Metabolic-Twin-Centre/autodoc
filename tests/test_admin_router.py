@@ -2,8 +2,9 @@ import json
 from asyncio import run
 from datetime import UTC, datetime
 from types import SimpleNamespace
+from typing import cast
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from admin.database import SessionLocal
 from admin.models import RepositoryConfig, RunRecord
@@ -60,6 +61,10 @@ class _FakeRequest:
         self.url = SimpleNamespace(path="/admin/test")
 
 
+def _fake_request(headers=None, cookies=None) -> Request:
+    return cast(Request, _FakeRequest(headers=headers, cookies=cookies))
+
+
 def _make_repository(name, **overrides):
     defaults = dict(
         name=name,
@@ -108,7 +113,7 @@ def test_login_page_renders_form_when_signed_out(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_PASSWORD", "secret")
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(login_page(request=_FakeRequest()))
+    response = run(login_page(request=_fake_request()))
 
     assert response.status_code == 200
 
@@ -117,7 +122,7 @@ def test_login_page_redirects_when_already_signed_in(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
     session_value = create_admin_session("admin")
 
-    response = run(login_page(request=_FakeRequest(cookies={"autodoc_admin_session": session_value})))
+    response = run(login_page(request=_fake_request(cookies={"autodoc_admin_session": session_value})))
 
     assert response.status_code == 303
     assert response.headers["location"] == "/admin"
@@ -129,7 +134,7 @@ def test_login_submit_rejects_invalid_credentials(monkeypatch):
 
     response = run(
         login_submit(
-            request=_FakeRequest(),
+            request=_fake_request(),
             _=None,
             username="admin",
             password="wrong-password",
@@ -146,7 +151,7 @@ def test_login_submit_sets_session_cookie_on_success(monkeypatch):
 
     response = run(
         login_submit(
-            request=_FakeRequest(),
+            request=_fake_request(),
             _=None,
             username="admin",
             password="secret",
@@ -163,7 +168,7 @@ def test_login_submit_reports_config_error_as_http_exception(monkeypatch):
 
     response = run(
         login_submit(
-            request=_FakeRequest(),
+            request=_fake_request(),
             _=None,
             username="admin",
             password="secret",
@@ -176,7 +181,7 @@ def test_login_submit_reports_config_error_as_http_exception(monkeypatch):
 def test_logout_clears_session_cookie(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(logout(request=_FakeRequest(), _=None))
+    response = run(logout(request=_fake_request(), _=None))
 
     assert response.status_code == 303
     set_cookie = response.headers.get("set-cookie", "")
@@ -186,7 +191,7 @@ def test_logout_clears_session_cookie(monkeypatch):
 def test_redirect_returns_hx_redirect_header_for_htmx_requests(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(logout(request=_FakeRequest(headers={"HX-Request": "true"}), _=None))
+    response = run(logout(request=_fake_request(headers={"HX-Request": "true"}), _=None))
 
     assert response.status_code == 200
     assert response.headers["HX-Redirect"] == "/admin/login"
@@ -195,7 +200,7 @@ def test_redirect_returns_hx_redirect_header_for_htmx_requests(monkeypatch):
 def test_dashboard_renders_with_no_repositories(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(dashboard(request=_FakeRequest(), admin_user="tester"))
+    response = run(dashboard(request=_fake_request(), admin_user="tester"))
 
     assert response.status_code == 200
 
@@ -203,7 +208,7 @@ def test_dashboard_renders_with_no_repositories(monkeypatch):
 def test_recent_activity_fragment_renders(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(recent_activity_fragment(request=_FakeRequest(), admin_user="tester"))
+    response = run(recent_activity_fragment(request=_fake_request(), admin_user="tester"))
 
     assert response.status_code == 200
 
@@ -211,7 +216,7 @@ def test_recent_activity_fragment_renders(monkeypatch):
 def test_repositories_page_renders(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(repositories_page(request=_FakeRequest(), admin_user="tester"))
+    response = run(repositories_page(request=_fake_request(), admin_user="tester"))
 
     assert response.status_code == 200
 
@@ -219,7 +224,7 @@ def test_repositories_page_renders(monkeypatch):
 def test_repository_new_form_renders(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(repository_new_form(request=_FakeRequest(), admin_user="tester"))
+    response = run(repository_new_form(request=_fake_request(), admin_user="tester"))
 
     assert response.status_code == 200
 
@@ -227,7 +232,7 @@ def test_repository_new_form_renders(monkeypatch):
 def test_runs_page_renders(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
-    response = run(runs_page(request=_FakeRequest(), repository_id=None, admin_user="tester"))
+    response = run(runs_page(request=_fake_request(), repository_id=None, admin_user="tester"))
 
     assert response.status_code == 200
 
@@ -237,7 +242,7 @@ def test_runs_page_filters_by_repository_id(monkeypatch):
     repository_id = _make_repository("Runs Filter Repo")
 
     try:
-        response = run(runs_page(request=_FakeRequest(), repository_id=repository_id, admin_user="tester"))
+        response = run(runs_page(request=_fake_request(), repository_id=repository_id, admin_user="tester"))
         assert response.status_code == 200
     finally:
         _delete_repository_and_runs(repository_id)
@@ -252,7 +257,7 @@ def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
 
     create_response = run(
         create_repository(
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             name="CRUD Lifecycle Repo",
@@ -268,23 +273,25 @@ def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
         )
     )
     assert create_response.status_code == 303
-    repository_id = int(create_response.headers["location"].rsplit("/", 1)[-1])
+    location = create_response.headers.get("location")
+    assert location is not None
+    repository_id = int(location.rsplit("/", 1)[-1])
 
     try:
         detail_response = run(
-            repository_detail(repository_id=repository_id, request=_FakeRequest(), admin_user="tester")
+            repository_detail(repository_id=repository_id, request=_fake_request(), admin_user="tester")
         )
         assert detail_response.status_code == 200
 
         edit_form_response = run(
-            repository_edit_form(repository_id=repository_id, request=_FakeRequest(), admin_user="tester")
+            repository_edit_form(repository_id=repository_id, request=_fake_request(), admin_user="tester")
         )
         assert edit_form_response.status_code == 200
 
         update_response = run(
             update_repository(
                 repository_id=repository_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 name="CRUD Lifecycle Repo Renamed",
@@ -310,7 +317,7 @@ def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
         delete_response = run(
             delete_repository(
                 repository_id=repository_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
             )
@@ -330,7 +337,7 @@ def test_create_repository_rejects_missing_token(monkeypatch):
 
     _assert_raises_http_exception(
         create_repository(
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             name="No Token Repo",
@@ -355,7 +362,7 @@ def test_create_repository_rejects_duplicate_name(monkeypatch):
     try:
         _assert_raises_http_exception(
             create_repository(
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 name="Duplicate Name Repo",
@@ -377,13 +384,13 @@ def test_create_repository_rejects_duplicate_name(monkeypatch):
 
 def test_repository_detail_raises_404_for_missing_repository():
     _assert_raises_http_exception(
-        repository_detail(repository_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+        repository_detail(repository_id=999_999_999, request=_fake_request(), admin_user="tester"), 404
     )
 
 
 def test_repository_edit_form_raises_404_for_missing_repository():
     _assert_raises_http_exception(
-        repository_edit_form(repository_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+        repository_edit_form(repository_id=999_999_999, request=_fake_request(), admin_user="tester"), 404
     )
 
 
@@ -393,7 +400,7 @@ def test_update_repository_raises_404_for_missing_repository(monkeypatch):
     _assert_raises_http_exception(
         update_repository(
             repository_id=999_999_999,
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             name="Ghost Repo",
@@ -415,7 +422,7 @@ def test_delete_repository_raises_404_for_missing_repository(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
     _assert_raises_http_exception(
-        delete_repository(repository_id=999_999_999, request=_FakeRequest(), admin_user="tester", _=None), 404
+        delete_repository(repository_id=999_999_999, request=_fake_request(), admin_user="tester", _=None), 404
     )
 
 
@@ -425,7 +432,7 @@ def test_trigger_generate_raises_404_for_missing_repository(monkeypatch):
     _assert_raises_http_exception(
         trigger_generate(
             repository_id=999_999_999,
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             branch="",
@@ -475,7 +482,7 @@ def test_trigger_publish_enqueues_run(monkeypatch):
         response = run(
             trigger_publish(
                 repository_id=repository_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 branch="",
@@ -499,7 +506,7 @@ def test_trigger_publish_raises_404_for_missing_repository(monkeypatch):
     _assert_raises_http_exception(
         trigger_publish(
             repository_id=999_999_999,
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             branch="",
@@ -538,7 +545,7 @@ def test_trigger_suggest_pr_rejects_non_github_repository(monkeypatch):
         _assert_raises_http_exception(
             trigger_suggest_pr(
                 repository_id=repository_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 base_branch="",
@@ -560,7 +567,7 @@ def test_trigger_suggest_pr_raises_404_for_missing_repository(monkeypatch):
     _assert_raises_http_exception(
         trigger_suggest_pr(
             repository_id=999_999_999,
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             base_branch="",
@@ -588,7 +595,7 @@ def test_trigger_suggest_pr_enqueues_run_for_github_repository(monkeypatch):
         response = run(
             trigger_suggest_pr(
                 repository_id=repository_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 base_branch="",
@@ -611,7 +618,7 @@ def test_trigger_generate_architecture_docs_raises_404_for_missing_repository(mo
     _assert_raises_http_exception(
         trigger_generate_architecture_docs(
             repository_id=999_999_999,
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             branch="",
@@ -634,7 +641,7 @@ def test_clear_runs_deletes_all_runs_when_no_repository_selected():
 
     response = run(
         clear_runs(
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             repository_id=None,
@@ -662,7 +669,7 @@ def test_clear_runs_deletes_only_selected_repository(monkeypatch):
     try:
         response = run(
             clear_runs(
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 repository_id=repository_id,
@@ -688,7 +695,7 @@ def test_run_detail_renders_for_existing_run(monkeypatch):
         run_id = run_record.id
 
     try:
-        response = run(run_detail(run_id=run_id, request=_FakeRequest(), admin_user="tester"))
+        response = run(run_detail(run_id=run_id, request=_fake_request(), admin_user="tester"))
         assert response.status_code == 200
     finally:
         with SessionLocal() as session:
@@ -697,7 +704,7 @@ def test_run_detail_renders_for_existing_run(monkeypatch):
 
 
 def test_run_detail_raises_404_for_missing_run():
-    _assert_raises_http_exception(run_detail(run_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404)
+    _assert_raises_http_exception(run_detail(run_id=999_999_999, request=_fake_request(), admin_user="tester"), 404)
 
 
 def test_run_status_fragment_renders_and_404s(monkeypatch):
@@ -711,7 +718,7 @@ def test_run_status_fragment_renders_and_404s(monkeypatch):
         run_id = run_record.id
 
     try:
-        response = run(run_status_fragment(run_id=run_id, request=_FakeRequest(), admin_user="tester"))
+        response = run(run_status_fragment(run_id=run_id, request=_fake_request(), admin_user="tester"))
         assert response.status_code == 200
     finally:
         with SessionLocal() as session:
@@ -719,7 +726,7 @@ def test_run_status_fragment_renders_and_404s(monkeypatch):
             session.commit()
 
     _assert_raises_http_exception(
-        run_status_fragment(run_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+        run_status_fragment(run_id=999_999_999, request=_fake_request(), admin_user="tester"), 404
     )
 
 
@@ -734,7 +741,7 @@ def test_run_row_fragment_renders_and_404s(monkeypatch):
         run_id = run_record.id
 
     try:
-        response = run(run_row_fragment(run_id=run_id, request=_FakeRequest(), admin_user="tester"))
+        response = run(run_row_fragment(run_id=run_id, request=_fake_request(), admin_user="tester"))
         assert response.status_code == 200
     finally:
         with SessionLocal() as session:
@@ -742,7 +749,7 @@ def test_run_row_fragment_renders_and_404s(monkeypatch):
             session.commit()
 
     _assert_raises_http_exception(
-        run_row_fragment(run_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+        run_row_fragment(run_id=999_999_999, request=_fake_request(), admin_user="tester"), 404
     )
 
 
@@ -754,7 +761,7 @@ def test_run_log_entries_prioritize_key_logs(tmp_path):
     (artifact_dir / "skipped_autoapi_files.txt").write_text("skip\n", encoding="utf-8")
     (artifact_dir / "notes.json").write_text("{}", encoding="utf-8")
 
-    run = SimpleNamespace(
+    run = RunRecord(
         artifact_dir=str(artifact_dir),
         log_path=str(artifact_dir / "app.log"),
     )
@@ -774,7 +781,7 @@ def test_run_log_entries_includes_non_prioritized_log_and_txt_files(tmp_path):
     (artifact_dir / "extra_debug.log").write_text("extra\n", encoding="utf-8")
     (artifact_dir / "notes.json").write_text("{}", encoding="utf-8")
 
-    run = SimpleNamespace(artifact_dir=str(artifact_dir), log_path=None)
+    run = RunRecord(artifact_dir=str(artifact_dir), log_path=None)
 
     entries = _run_log_entries(run)
 
@@ -827,7 +834,7 @@ def test_download_artifact_serves_file_within_artifact_dir(tmp_path):
             download_artifact(
                 run_id=run_id,
                 artifact_name="report.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             )
         )
@@ -844,7 +851,7 @@ def test_download_artifact_raises_404_for_missing_run():
         download_artifact(
             run_id=999_999_999,
             artifact_name="report.txt",
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
         ),
         404,
@@ -872,7 +879,7 @@ def test_download_artifact_raises_404_for_missing_file(tmp_path):
             download_artifact(
                 run_id=run_id,
                 artifact_name="missing.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             ),
             404,
@@ -910,7 +917,7 @@ def test_download_artifact_rejects_sibling_directory_sharing_a_name_prefix(tmp_p
             download_artifact(
                 run_id=run_id,
                 artifact_name="../run12/secret.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             ),
             403,
@@ -939,7 +946,7 @@ def test_download_artifact_rejects_missing_artifact_dir():
             download_artifact(
                 run_id=run_id,
                 artifact_name="report.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             ),
             403,
@@ -974,7 +981,7 @@ def test_preview_artifact_rejects_sibling_directory_sharing_a_name_prefix(tmp_pa
             preview_artifact(
                 run_id=run_id,
                 artifact_name="../run12/secret.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             ),
             403,
@@ -990,7 +997,7 @@ def test_preview_artifact_raises_404_for_missing_run():
         preview_artifact(
             run_id=999_999_999,
             artifact_name="report.txt",
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
         ),
         404,
@@ -1015,7 +1022,7 @@ def test_preview_artifact_raises_403_for_missing_artifact_dir():
             preview_artifact(
                 run_id=run_id,
                 artifact_name="report.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             ),
             403,
@@ -1048,13 +1055,13 @@ def test_preview_artifact_renders_content_for_small_file(tmp_path):
             preview_artifact(
                 run_id=run_id,
                 artifact_name="report.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             )
         )
 
         assert response.status_code == 200
-        body = response.body.decode("utf-8")
+        body = bytes(response.body).decode("utf-8")
         assert "hello &lt;world&gt;" in body
         assert "Preview truncated" not in body
     finally:
@@ -1086,13 +1093,13 @@ def test_preview_artifact_shows_truncated_note_for_large_file(tmp_path, monkeypa
             preview_artifact(
                 run_id=run_id,
                 artifact_name="report.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             )
         )
 
         assert response.status_code == 200
-        assert "Preview truncated" in response.body.decode("utf-8")
+        assert "Preview truncated" in bytes(response.body).decode("utf-8")
     finally:
         with SessionLocal() as session:
             session.query(RunRecord).filter(RunRecord.id == run_id).delete()
@@ -1148,6 +1155,7 @@ def test_build_pr_request_falls_back_to_repository_defaults(monkeypatch):
 
     assert req.base_branch == "main"
     assert req.title == "Add suggested docstrings"
+    assert req.suggestion_branch is not None
     assert req.suggestion_branch.startswith("autodocs-docstring-suggestions-")
 
 
@@ -1313,7 +1321,7 @@ def test_trigger_generate_stores_sanitized_payload_and_enqueues_secret(monkeypat
         response = run(
             trigger_generate(
                 repository_id=repository_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 branch="",
@@ -1332,6 +1340,7 @@ def test_trigger_generate_stores_sanitized_payload_and_enqueues_secret(monkeypat
         with SessionLocal() as session:
             run_record = session.get(RunRecord, captured["run_id"])
             assert run_record is not None
+            assert run_record.request_payload is not None
             stored_payload = json.loads(run_record.request_payload)
             assert "token" not in stored_payload
     finally:
@@ -1378,7 +1387,7 @@ def test_trigger_generate_architecture_docs_enqueues_run(monkeypatch):
         response = run(
             trigger_generate_architecture_docs(
                 repository_id=repository_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 branch="",
@@ -1397,6 +1406,7 @@ def test_trigger_generate_architecture_docs_enqueues_run(monkeypatch):
             run_record = session.get(RunRecord, captured["run_id"])
             assert run_record is not None
             assert run_record.endpoint == "/generate-architecture-docs"
+            assert run_record.request_payload is not None
             stored_payload = json.loads(run_record.request_payload)
             assert "token" not in stored_payload
     finally:
@@ -1410,7 +1420,7 @@ def test_trigger_approve_architecture_docs_raises_404_for_missing_run():
     _assert_raises_http_exception(
         trigger_approve_architecture_docs(
             run_id=999_999_999,
-            request=_FakeRequest(),
+            request=_fake_request(),
             admin_user="tester",
             _=None,
             overwrite_existing=False,
@@ -1432,7 +1442,7 @@ def test_trigger_approve_architecture_docs_requires_generation_run():
         _assert_raises_http_exception(
             trigger_approve_architecture_docs(
                 run_id=run_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 overwrite_existing=False,
@@ -1468,7 +1478,7 @@ def test_trigger_approve_architecture_docs_requires_draft_id(monkeypatch):
         _assert_raises_http_exception(
             trigger_approve_architecture_docs(
                 run_id=run_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 overwrite_existing=False,
@@ -1532,7 +1542,7 @@ def test_trigger_approve_architecture_docs_enqueues_approval_run(monkeypatch):
         response = run(
             trigger_approve_architecture_docs(
                 run_id=run_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
                 overwrite_existing=True,
@@ -1547,6 +1557,7 @@ def test_trigger_approve_architecture_docs_enqueues_approval_run(monkeypatch):
         with SessionLocal() as session:
             run_record = session.get(RunRecord, captured["run_id"])
             assert run_record is not None
+            assert run_record.request_payload is not None
             stored_payload = json.loads(run_record.request_payload)
             assert "token" not in stored_payload
     finally:
@@ -1616,7 +1627,7 @@ def test_retry_run_rehydrates_token_from_repository(monkeypatch):
         response = run(
             retry_run(
                 run_id=run_id,
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
                 _=None,
             )
@@ -1629,6 +1640,7 @@ def test_retry_run_rehydrates_token_from_repository(monkeypatch):
         with SessionLocal() as session:
             retry_record = session.get(RunRecord, captured["run_id"])
             assert retry_record is not None
+            assert retry_record.request_payload is not None
             retry_payload = json.loads(retry_record.request_payload)
             assert "token" not in retry_payload
     finally:
@@ -1640,7 +1652,7 @@ def test_retry_run_rehydrates_token_from_repository(monkeypatch):
 
 def test_retry_run_raises_404_for_missing_run():
     _assert_raises_http_exception(
-        retry_run(run_id=999_999_999, request=_FakeRequest(), admin_user="tester", _=None), 404
+        retry_run(run_id=999_999_999, request=_fake_request(), admin_user="tester", _=None), 404
     )
 
 
@@ -1656,7 +1668,7 @@ def test_retry_run_raises_422_when_payload_unavailable():
 
     try:
         _assert_raises_http_exception(
-            retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None), 422
+            retry_run(run_id=run_id, request=_fake_request(), admin_user="tester", _=None), 422
         )
     finally:
         with SessionLocal() as session:
@@ -1681,7 +1693,7 @@ def test_retry_run_raises_422_for_non_retryable_endpoint():
 
     try:
         _assert_raises_http_exception(
-            retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None), 422
+            retry_run(run_id=run_id, request=_fake_request(), admin_user="tester", _=None), 422
         )
     finally:
         with SessionLocal() as session:
@@ -1714,7 +1726,7 @@ def test_retry_run_replays_publish_pages_endpoint(monkeypatch):
         run_id = run_record.id
 
     try:
-        response = run(retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None))
+        response = run(retry_run(run_id=run_id, request=_fake_request(), admin_user="tester", _=None))
 
         assert response.status_code == 303
         assert captured["endpoint"] == "/publish-pages"
@@ -1757,7 +1769,7 @@ def test_retry_run_replays_suggest_python_docstrings_pr_endpoint(monkeypatch):
         run_id = run_record.id
 
     try:
-        response = run(retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None))
+        response = run(retry_run(run_id=run_id, request=_fake_request(), admin_user="tester", _=None))
 
         assert response.status_code == 303
         assert captured["endpoint"] == "/suggest-python-docstrings-pr"
@@ -1768,7 +1780,7 @@ def test_retry_run_replays_suggest_python_docstrings_pr_endpoint(monkeypatch):
 
 def test_cancel_run_raises_404_for_unknown_run():
     _assert_raises_http_exception(
-        cancel_run(run_id=999_999_999, request=_FakeRequest(), admin_user="tester", _=None, fragment="redirect"),
+        cancel_run(run_id=999_999_999, request=_fake_request(), admin_user="tester", _=None, fragment="redirect"),
         404,
     )
 
@@ -1788,7 +1800,7 @@ def test_cancel_run_rejects_non_cancellable_outcome():
 
     try:
         _assert_raises_http_exception(
-            cancel_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None, fragment="redirect"),
+            cancel_run(run_id=run_id, request=_fake_request(), admin_user="tester", _=None, fragment="redirect"),
             422,
         )
     finally:
@@ -1807,7 +1819,7 @@ def test_cancel_run_redirects_for_non_htmx_request():
 
     try:
         response = run(
-            cancel_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None, fragment="redirect")
+            cancel_run(run_id=run_id, request=_fake_request(), admin_user="tester", _=None, fragment="redirect")
         )
 
         assert response.status_code == 303
@@ -1831,7 +1843,7 @@ def test_cancel_run_returns_status_fragment_for_htmx_request(monkeypatch):
         response = run(
             cancel_run(
                 run_id=run_id,
-                request=_FakeRequest(headers={"HX-Request": "true"}),
+                request=_fake_request(headers={"HX-Request": "true"}),
                 admin_user="tester",
                 _=None,
                 fragment="status",
@@ -1859,7 +1871,7 @@ def test_cancel_run_returns_row_fragment_for_htmx_request(monkeypatch):
         response = run(
             cancel_run(
                 run_id=run_id,
-                request=_FakeRequest(headers={"HX-Request": "true"}),
+                request=_fake_request(headers={"HX-Request": "true"}),
                 admin_user="tester",
                 _=None,
                 fragment="row",
@@ -1879,7 +1891,7 @@ def test_cancel_run_raises_404_when_run_vanishes_before_htmx_refetch(monkeypatch
     _assert_raises_http_exception(
         cancel_run(
             run_id=999_999_999,
-            request=_FakeRequest(headers={"HX-Request": "true"}),
+            request=_fake_request(headers={"HX-Request": "true"}),
             admin_user="tester",
             _=None,
             fragment="status",
@@ -1909,7 +1921,7 @@ def test_preview_artifact_raises_404_for_missing_file(tmp_path):
             preview_artifact(
                 run_id=run_id,
                 artifact_name="missing.txt",
-                request=_FakeRequest(),
+                request=_fake_request(),
                 admin_user="tester",
             ),
             404,
