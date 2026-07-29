@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950">
+<html lang="en" class="h-full bg-slate-100">
 
 <head>
   <meta charset="utf-8">
@@ -26,10 +26,10 @@
         }
       }
     };
-    if (localStorage.getItem('autodoc-theme') === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
+    if (localStorage.getItem('autodoc-theme') === 'dark') {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
 
     function openArtifactModal() {
