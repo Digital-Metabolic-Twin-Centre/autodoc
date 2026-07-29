@@ -173,6 +173,7 @@ def test_scrub_sensitive_run_payloads_removes_existing_tokens():
     with SessionLocal() as session:
         stored_run = session.get(RunRecord, run_id)
         assert stored_run is not None
+        assert stored_run.request_payload is not None
         payload = json.loads(stored_run.request_payload)
         assert payload == {
             "repo_url": "example/project",
@@ -330,6 +331,7 @@ def test_execute_run_process_redacts_token_from_failure_error_message(monkeypatc
         stored_run = session.get(RunRecord, run_id)
         assert stored_run is not None
         assert stored_run.status == "failed"
+        assert stored_run.error_message is not None
         assert "ghp_abcdefghijklmnopqrstuvwxyz123456" not in stored_run.error_message
         assert "https://***:***@github.com" in stored_run.error_message
 
@@ -356,6 +358,7 @@ def test_redact_leaked_secrets_from_run_records_cleans_stored_error_messages():
     with SessionLocal() as session:
         stored_run = session.get(RunRecord, run_id)
         assert stored_run is not None
+        assert stored_run.error_message is not None
         assert "ghp_abcdefghijklmnopqrstuvwxyz123456" not in stored_run.error_message
         assert "https://***:***@github.com" in stored_run.error_message
 
