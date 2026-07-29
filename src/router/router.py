@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 
 from config.log_config import get_logger
@@ -11,6 +11,7 @@ from models.repo_request import (
     PublishPagesRequest,
     RepoRequest,
 )
+from router.security import enforce_rate_limit, require_api_key
 from services.workflow_service import (
     ArchitectureAnalysisError,
     ArchitectureApprovalError,
@@ -25,6 +26,8 @@ from services.workflow_service import (
     execute_publish_request,
 )
 from utils.docstring_generation import DEFAULT_OPENAI_MODEL
+
+PROTECTED_ROUTE_DEPENDENCIES = [Depends(require_api_key), Depends(enforce_rate_limit)]
 
 logger = get_logger(__name__)
 
@@ -55,7 +58,7 @@ async def root():
     return RedirectResponse(url="/admin", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 
-@router.post("/generate")
+@router.post("/generate", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
 async def generate_docs(req: RepoRequest):
     logger.info(
         "/generate endpoint called with provider=%s, repo_url=%s, branch=%s, "
@@ -95,7 +98,7 @@ async def generate_docs(req: RepoRequest):
         )
 
 
-@router.post("/suggest-python-docstrings-pr")
+@router.post("/suggest-python-docstrings-pr", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
 async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
     suggestion_branch = req.suggestion_branch or _default_docstring_suggestion_branch()
     logger.info(
@@ -124,7 +127,7 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
         )
 
 
-@router.post("/generate-architecture-docs")
+@router.post("/generate-architecture-docs", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
 async def generate_architecture_docs(req: ArchitectureGenerationRequest):
     logger.info(
         "/generate-architecture-docs endpoint called with provider=%s, repo_url=%s, branch=%s, output_path=%s",
@@ -156,7 +159,7 @@ async def generate_architecture_docs(req: ArchitectureGenerationRequest):
         )
 
 
-@router.post("/approve-architecture-docs")
+@router.post("/approve-architecture-docs", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
 async def approve_architecture_docs(req: ArchitectureApprovalRequest):
     logger.info(
         "/approve-architecture-docs endpoint called with provider=%s, repo_url=%s, branch=%s, draft_id=%s",
@@ -191,7 +194,7 @@ async def approve_architecture_docs(req: ArchitectureApprovalRequest):
         )
 
 
-@router.post("/publish-pages")
+@router.post("/publish-pages", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
 async def publish_pages(req: PublishPagesRequest):
     logger.info(
         "/publish-pages endpoint called with repo_url=%s, branch=%s, low_content_min_lines=%s",

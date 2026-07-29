@@ -1,6 +1,7 @@
 from asyncio import run
 
 import httpx
+import pytest
 
 from main import app
 from services.doc_services import RepoAnalysisError
@@ -26,12 +27,25 @@ from services.sphinx_services import (
 )
 from utils.git_utils import GitHubApiError
 
+TEST_API_KEY = "test-api-key"
+
+
+@pytest.fixture(autouse=True)
+def _configure_public_api_auth(monkeypatch):
+    import router.security as security
+
+    monkeypatch.setattr(security, "AUTODOC_API_KEY", TEST_API_KEY)
+    monkeypatch.setattr(security, "RATE_LIMIT_MAX_REQUESTS", 10_000)
+    security._request_log.clear()
+
 
 def request(method, url, **kwargs):
+    headers = {"X-API-Key": TEST_API_KEY, **kwargs.pop("headers", {})}
+
     async def _request():
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-            return await client.request(method, url, **kwargs)
+            return await client.request(method, url, headers=headers, **kwargs)
 
     return run(_request())
 
@@ -1289,3 +1303,84 @@ def test_approve_architecture_docs_requires_draft_id():
     )
 
     assert response.status_code == 400
+
+
+def test_generate_endpoint_rejects_missing_api_key():
+    response = request(
+        "POST",
+        "/generate",
+        headers={"X-API-Key": ""},
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 401
+
+
+def test_generate_endpoint_rejects_wrong_api_key():
+    response = request(
+        "POST",
+        "/generate",
+        headers={"X-API-Key": "not-the-right-key"},
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 401
+
+
+def test_generate_endpoint_returns_503_when_api_key_not_configured(monkeypatch):
+    import router.security as security
+
+    monkeypatch.setattr(security, "AUTODOC_API_KEY", "")
+
+    response = request(
+        "POST",
+        "/generate",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 503
+
+
+def test_generate_endpoint_enforces_rate_limit(monkeypatch):
+    import router.security as security
+
+    monkeypatch.setattr(security, "RATE_LIMIT_MAX_REQUESTS", 1)
+    monkeypatch.setattr(
+        "services.workflow_service.analyse_repo",
+        lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
+            "analysis.csv",
+            [{"file_name": "a.py"}],
+        ),
+    )
+    monkeypatch.setattr(
+        "services.workflow_service.create_sphinx_setup",
+        lambda provider, repo_url, token, branch, analysis_file, docstring_threshold, low_content_min_lines: True,
+    )
+    payload = {
+        "provider": "github",
+        "repo_url": "example/project",
+        "token": "secret",
+        "branch": "main",
+    }
+
+    first_response = request("POST", "/generate", json=payload)
+    second_response = request("POST", "/generate", json=payload)
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 429
+    assert "Retry-After" in second_response.headers

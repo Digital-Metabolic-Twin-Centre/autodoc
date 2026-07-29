@@ -42,7 +42,14 @@ Create a `.env` file:
 ADMIN_PASSWORD=choose-a-strong-password
 ADMIN_SECRET_KEY=choose-a-long-random-secret
 OPENAI_API_KEY=your-openai-api-key
+AUTODOC_API_KEY=choose-a-long-random-secret
 ```
+
+`AUTODOC_API_KEY` gates the public `/generate`, `/publish-pages`, `/suggest-python-docstrings-pr`,
+`/generate-architecture-docs`, and `/approve-architecture-docs` endpoints in [router/router.py](src/router/router.py).
+Callers must send it as an `X-API-Key` header; requests are also rate-limited per caller
+(`AUTODOC_RATE_LIMIT_MAX_REQUESTS` per `AUTODOC_RATE_LIMIT_WINDOW_SECONDS`, default 20 requests/hour).
+Without `AUTODOC_API_KEY` configured, those endpoints respond `503` instead of running unauthenticated.
 
 Run the app:
 
