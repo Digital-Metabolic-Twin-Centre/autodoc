@@ -1,5 +1,5 @@
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 from starlette.requests import Request
 
 from admin.router import _validate_repo_form
@@ -7,8 +7,10 @@ from admin.security import (
     create_admin_session,
     decrypt_token,
     encrypt_token,
+    ensure_csrf_token,
     read_admin_session,
     require_admin,
+    set_admin_session,
     validate_admin_credentials,
 )
 
@@ -48,6 +50,48 @@ def test_require_admin_redirects_when_session_missing(monkeypatch):
 
     assert exc_info.value.status_code == 303
     assert exc_info.value.headers == {"Location": "/admin/login"}
+
+
+def test_set_admin_session_marks_cookie_secure_by_default(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    monkeypatch.setattr("admin.security.ADMIN_COOKIE_SECURE", True)
+    response = Response()
+
+    set_admin_session(response, "admin")
+
+    assert "secure" in response.headers.get("set-cookie", "").lower()
+
+
+def test_set_admin_session_respects_disabled_secure_flag(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    monkeypatch.setattr("admin.security.ADMIN_COOKIE_SECURE", False)
+    response = Response()
+
+    set_admin_session(response, "admin")
+
+    assert "secure" not in response.headers.get("set-cookie", "").lower()
+
+
+def test_ensure_csrf_token_marks_cookie_secure_by_default(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_COOKIE_SECURE", True)
+    scope = {"type": "http", "method": "GET", "path": "/admin", "headers": []}
+    request = Request(scope)
+    response = Response()
+
+    ensure_csrf_token(request, response)
+
+    assert "secure" in response.headers.get("set-cookie", "").lower()
+
+
+def test_ensure_csrf_token_respects_disabled_secure_flag(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_COOKIE_SECURE", False)
+    scope = {"type": "http", "method": "GET", "path": "/admin", "headers": []}
+    request = Request(scope)
+    response = Response()
+
+    ensure_csrf_token(request, response)
+
+    assert "secure" not in response.headers.get("set-cookie", "").lower()
 
 
 def test_validate_repo_form_normalizes_target_folders():

@@ -5,6 +5,23 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+
+def _env_flag(name: str, default: bool) -> bool:
+    """
+    Parse a boolean environment variable with a default fallback.
+
+    Args:
+        name (str): Environment variable name. default (bool): Value to use when unset.
+    Returns:
+        bool: True unless the variable is explicitly set to a falsy value.
+
+    """
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    return raw_value.strip().lower() not in {"0", "false", "no", "off", ""}
+
+
 TEMPLATES_DIR = Path(__file__).resolve().parents[1] / "templates"
 SQLITE_PATH = os.getenv("ADMIN_SQLITE_PATH", str(DATA_DIR / "admin.db"))
 DATABASE_URL = f"sqlite:///{SQLITE_PATH}"
@@ -15,6 +32,8 @@ ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")
 ADMIN_CSRF_COOKIE = "autodoc_csrf"
 ADMIN_SESSION_COOKIE = "autodoc_admin_session"
 ADMIN_SESSION_MAX_AGE = int(os.getenv("ADMIN_SESSION_MAX_AGE", str(60 * 60 * 12)))
+# Cookies are HTTPS-only by default; only disable for local HTTP development.
+ADMIN_COOKIE_SECURE = _env_flag("ADMIN_COOKIE_SECURE", default=True)
 
 DEFAULT_OPENAI_MODEL = os.getenv("ADMIN_DEFAULT_MODEL", "gpt-4o-mini")
 MAX_ACTIVITY_ITEMS = int(os.getenv("ADMIN_ACTIVITY_ITEMS", "8"))

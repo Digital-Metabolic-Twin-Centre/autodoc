@@ -9,6 +9,7 @@ from cryptography.fernet import Fernet
 from fastapi import Form, HTTPException, Request, Response, status
 
 from admin.settings import (
+    ADMIN_COOKIE_SECURE,
     ADMIN_CSRF_COOKIE,
     ADMIN_PASSWORD,
     ADMIN_SECRET_KEY,
@@ -194,7 +195,7 @@ def set_admin_session(response: Response, username: str) -> None:
         ADMIN_SESSION_COOKIE,
         create_admin_session(username),
         httponly=True,
-        secure=False,
+        secure=ADMIN_COOKIE_SECURE,
         samesite="lax",
         max_age=ADMIN_SESSION_MAX_AGE,
     )
@@ -253,7 +254,7 @@ def ensure_csrf_token(
         ADMIN_CSRF_COOKIE,
         csrf_token,
         httponly=False,
-        secure=False,
+        secure=ADMIN_COOKIE_SECURE,
         samesite="lax",
     )
     return csrf_token

@@ -51,6 +51,11 @@ Callers must send it as an `X-API-Key` header; requests are also rate-limited pe
 (`AUTODOC_RATE_LIMIT_MAX_REQUESTS` per `AUTODOC_RATE_LIMIT_WINDOW_SECONDS`, default 20 requests/hour).
 Without `AUTODOC_API_KEY` configured, those endpoints respond `503` instead of running unauthenticated.
 
+The admin session and CSRF cookies are `Secure` by default (`ADMIN_COOKIE_SECURE`, default `true`), so
+they are only sent over HTTPS. Local development over plain `http://localhost:8000` needs
+`ADMIN_COOKIE_SECURE=false` in `.env`, or the browser will refuse to store/send them and admin login
+will silently fail to persist a session. Leave it unset (or `true`) for any deployment served over HTTPS.
+
 Run the app:
 
 ```sh
