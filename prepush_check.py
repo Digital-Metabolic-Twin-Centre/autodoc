@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parent
 def run_step(title: str, command: list[str], env: dict[str, str] | None = None) -> None:
     print(f"\n==> {title}")
     print(" ".join(command))
-    subprocess.run(command, cwd=ROOT, env=env, check=True)
+    subprocess.run(command, cwd=ROOT, env=env, check=True)  # noqa: S603
 
 
 def ensure_tool(tool_name: str) -> None:

@@ -25,6 +25,6 @@ logger.info("FastAPI app started and router included.")
 if recovered_runs:
     logger.warning("Recovered %s interrupted admin run(s) after server startup.", recovered_runs)
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # Binding all interfaces is required to be reachable inside the Docker container; see Dockerfile/docker-compose.
     uvicorn.run(app, host="0.0.0.0", port=8000)  # noqa: S104

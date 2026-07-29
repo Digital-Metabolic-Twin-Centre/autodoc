@@ -1384,3 +1384,329 @@ def test_generate_endpoint_enforces_rate_limit(monkeypatch):
     assert first_response.status_code == 200
     assert second_response.status_code == 429
     assert "Retry-After" in second_response.headers
+
+
+def test_generate_endpoint_rejects_missing_required_fields():
+    response = request(
+        "POST",
+        "/generate",
+        json={"provider": "github", "repo_url": "", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 400
+
+
+def test_generate_endpoint_reraises_http_exception_from_service(monkeypatch):
+    from fastapi import HTTPException
+
+    def fail_analysis(provider, repo_url, token, branch, target_folders, model, reuse_doc):
+        raise HTTPException(status_code=418, detail="teapot")
+
+    monkeypatch.setattr("services.workflow_service.analyse_repo", fail_analysis)
+
+    response = request(
+        "POST",
+        "/generate",
+        json={"provider": "github", "repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 418
+
+
+def test_generate_endpoint_returns_422_for_value_error(monkeypatch):
+    def fail_analysis(provider, repo_url, token, branch, target_folders, model, reuse_doc):
+        raise ValueError("bad value")
+
+    monkeypatch.setattr("services.workflow_service.analyse_repo", fail_analysis)
+
+    response = request(
+        "POST",
+        "/generate",
+        json={"provider": "github", "repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "bad value"
+
+
+def test_generate_endpoint_returns_403_for_permission_error(monkeypatch):
+    def fail_analysis(provider, repo_url, token, branch, target_folders, model, reuse_doc):
+        raise PermissionError("no access")
+
+    monkeypatch.setattr("services.workflow_service.analyse_repo", fail_analysis)
+
+    response = request(
+        "POST",
+        "/generate",
+        json={"provider": "github", "repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_generate_endpoint_returns_500_for_unexpected_exception(monkeypatch):
+    def fail_analysis(provider, repo_url, token, branch, target_folders, model, reuse_doc):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("services.workflow_service.analyse_repo", fail_analysis)
+
+    response = request(
+        "POST",
+        "/generate",
+        json={"provider": "github", "repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 500
+
+
+def test_suggest_python_docstrings_pr_returns_422_for_docstring_pull_request_error(monkeypatch):
+    from services.docstring_pr_services import DocstringPullRequestError
+
+    def fail_pr(*args, **kwargs):
+        raise DocstringPullRequestError("no suggestions available")
+
+    monkeypatch.setattr("services.workflow_service.create_python_docstring_pull_request", fail_pr)
+
+    response = request(
+        "POST",
+        "/suggest-python-docstrings-pr",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "base_branch": "main",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "no suggestions available"
+
+
+def test_suggest_python_docstrings_pr_returns_500_for_unexpected_exception(monkeypatch):
+    def fail_pr(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("services.workflow_service.create_python_docstring_pull_request", fail_pr)
+
+    response = request(
+        "POST",
+        "/suggest-python-docstrings-pr",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "base_branch": "main",
+        },
+    )
+
+    assert response.status_code == 500
+
+
+def test_generate_architecture_docs_reraises_http_exception_from_service(monkeypatch):
+    from fastapi import HTTPException
+
+    def fail_generation(*args, **kwargs):
+        raise HTTPException(status_code=418, detail="teapot")
+
+    monkeypatch.setattr("services.workflow_service.generate_architecture_draft", fail_generation)
+
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={"provider": "github", "repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 418
+
+
+def test_generate_architecture_docs_returns_400_for_value_error(monkeypatch):
+    def fail_generation(*args, **kwargs):
+        raise ValueError("bad value")
+
+    monkeypatch.setattr("services.workflow_service.generate_architecture_draft", fail_generation)
+
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={"provider": "github", "repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 400
+
+
+def test_generate_architecture_docs_returns_500_for_unexpected_exception(monkeypatch):
+    def fail_generation(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("services.workflow_service.generate_architecture_draft", fail_generation)
+
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={"provider": "github", "repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 500
+
+
+def test_approve_architecture_docs_reraises_http_exception_from_service(monkeypatch):
+    from fastapi import HTTPException
+
+    def fail_approval(*args, **kwargs):
+        raise HTTPException(status_code=418, detail="teapot")
+
+    monkeypatch.setattr("services.workflow_service.apply_architecture_approval", fail_approval)
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 418
+
+
+def test_approve_architecture_docs_returns_409_for_overwrite_required(monkeypatch):
+    from services.architecture_services import ArchitectureOverwriteRequiredError
+
+    def fail_approval(*args, **kwargs):
+        raise ArchitectureOverwriteRequiredError("manual edits would be overwritten")
+
+    monkeypatch.setattr("services.workflow_service.apply_architecture_approval", fail_approval)
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 409
+
+
+def test_approve_architecture_docs_returns_status_code_for_approval_error(monkeypatch):
+    from services.architecture_services import ArchitectureApprovalError
+
+    def fail_approval(*args, **kwargs):
+        raise ArchitectureApprovalError("approval failed", status_code=422)
+
+    monkeypatch.setattr("services.workflow_service.apply_architecture_approval", fail_approval)
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_approve_architecture_docs_returns_400_for_value_error(monkeypatch):
+    def fail_approval(*args, **kwargs):
+        raise ValueError("bad value")
+
+    monkeypatch.setattr("services.workflow_service.apply_architecture_approval", fail_approval)
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 400
+
+
+def test_approve_architecture_docs_returns_500_for_unexpected_exception(monkeypatch):
+    def fail_approval(*args, **kwargs):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("services.workflow_service.apply_architecture_approval", fail_approval)
+
+    response = request(
+        "POST",
+        "/approve-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "example/project",
+            "token": "secret",
+            "branch": "main",
+            "draft_id": "arch_123",
+            "output_path": "docs/project/architecture.rst",
+            "overwrite_existing": False,
+        },
+    )
+
+    assert response.status_code == 500
+
+
+def test_publish_pages_rejects_missing_required_fields():
+    response = request(
+        "POST",
+        "/publish-pages",
+        json={"repo_url": "", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 400
+
+
+def test_publish_pages_reraises_http_exception_from_service(monkeypatch):
+    from fastapi import HTTPException
+
+    def fail_publish(*args, **kwargs):
+        raise HTTPException(status_code=418, detail="teapot")
+
+    monkeypatch.setattr("services.workflow_service.publish_github_pages", fail_publish)
+
+    response = request(
+        "POST",
+        "/publish-pages",
+        json={"repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 418
+
+
+def test_publish_pages_returns_403_for_permission_error(monkeypatch):
+    def fail_publish(*args, **kwargs):
+        raise PermissionError("no access")
+
+    monkeypatch.setattr("services.workflow_service.publish_github_pages", fail_publish)
+
+    response = request(
+        "POST",
+        "/publish-pages",
+        json={"repo_url": "example/project", "token": "secret", "branch": "main"},
+    )
+
+    assert response.status_code == 403

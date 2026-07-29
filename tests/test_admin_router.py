@@ -9,9 +9,21 @@ from admin.database import SessionLocal
 from admin.models import RepositoryConfig, RunRecord
 from admin.router import (
     _build_architecture_generation_request,
+    _build_pr_request,
+    _database_label,
+    _default_suggestion_branch,
+    _fmt_duration,
+    _json_loads,
+    _log_snippet,
+    _parse_target_folders,
+    _queue_payload_with_repository_secret,
     _read_artifact_preview,
     _run_log_entries,
     _safe_request_payload,
+    _status_badge_classes,
+    _validate_provider,
+    _validate_repo_form,
+    cancel_run,
     clear_runs,
     create_repository,
     dashboard,
@@ -21,10 +33,15 @@ from admin.router import (
     login_submit,
     logout,
     preview_artifact,
+    recent_activity_fragment,
     repositories_page,
     repository_detail,
+    repository_edit_form,
+    repository_new_form,
     retry_run,
     run_detail,
+    run_row_fragment,
+    run_status_fragment,
     runs_page,
     trigger_approve_architecture_docs,
     trigger_generate,
@@ -41,6 +58,50 @@ class _FakeRequest:
         self.headers = headers or {}
         self.cookies = cookies or {}
         self.url = SimpleNamespace(path="/admin/test")
+
+
+def _make_repository(name, **overrides):
+    defaults = dict(
+        name=name,
+        provider="github",
+        repo_url="example/project",
+        repo_path="example/project",
+        default_branch="main",
+        preferred_model="gpt-4o-mini",
+        reuse_doc=False,
+        docstring_threshold=0.5,
+        low_content_min_lines=4,
+        encrypted_token=encrypt_token("secret-token"),
+        token_last4="oken",
+    )
+    defaults.update(overrides)
+    with SessionLocal() as session:
+        session.query(RepositoryConfig).filter(RepositoryConfig.name == name).delete()
+        session.commit()
+        repository = RepositoryConfig(**defaults)
+        repository.target_folders = []
+        session.add(repository)
+        session.commit()
+        session.refresh(repository)
+        return repository.id
+
+
+def _delete_repository_and_runs(repository_id):
+    with SessionLocal() as session:
+        session.query(RunRecord).filter(RunRecord.repository_id == repository_id).delete()
+        session.query(RepositoryConfig).filter(RepositoryConfig.id == repository_id).delete()
+        session.commit()
+
+
+def _assert_raises_http_exception(coro, status_code):
+    raised = None
+    try:
+        run(coro)
+    except HTTPException as exc:
+        raised = exc
+    assert raised is not None
+    assert raised.status_code == status_code
+    return raised
 
 
 def test_login_page_renders_form_when_signed_out(monkeypatch):
@@ -96,6 +157,22 @@ def test_login_submit_sets_session_cookie_on_success(monkeypatch):
     assert "autodoc_admin_session" in response.headers.get("set-cookie", "")
 
 
+def test_login_submit_reports_config_error_as_http_exception(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_PASSWORD", "")
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "")
+
+    response = run(
+        login_submit(
+            request=_FakeRequest(),
+            _=None,
+            username="admin",
+            password="secret",
+        )
+    )
+
+    assert response.status_code == 503
+
+
 def test_logout_clears_session_cookie(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
@@ -106,10 +183,27 @@ def test_logout_clears_session_cookie(monkeypatch):
     assert "autodoc_admin_session=" in set_cookie
 
 
+def test_redirect_returns_hx_redirect_header_for_htmx_requests(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    response = run(logout(request=_FakeRequest(headers={"HX-Request": "true"}), _=None))
+
+    assert response.status_code == 200
+    assert response.headers["HX-Redirect"] == "/admin/login"
+
+
 def test_dashboard_renders_with_no_repositories(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
     response = run(dashboard(request=_FakeRequest(), admin_user="tester"))
+
+    assert response.status_code == 200
+
+
+def test_recent_activity_fragment_renders(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    response = run(recent_activity_fragment(request=_FakeRequest(), admin_user="tester"))
 
     assert response.status_code == 200
 
@@ -122,12 +216,31 @@ def test_repositories_page_renders(monkeypatch):
     assert response.status_code == 200
 
 
+def test_repository_new_form_renders(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    response = run(repository_new_form(request=_FakeRequest(), admin_user="tester"))
+
+    assert response.status_code == 200
+
+
 def test_runs_page_renders(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
     response = run(runs_page(request=_FakeRequest(), repository_id=None, admin_user="tester"))
 
     assert response.status_code == 200
+
+
+def test_runs_page_filters_by_repository_id(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    repository_id = _make_repository("Runs Filter Repo")
+
+    try:
+        response = run(runs_page(request=_FakeRequest(), repository_id=repository_id, admin_user="tester"))
+        assert response.status_code == 200
+    finally:
+        _delete_repository_and_runs(repository_id)
 
 
 def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
@@ -163,6 +276,11 @@ def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
         )
         assert detail_response.status_code == 200
 
+        edit_form_response = run(
+            repository_edit_form(repository_id=repository_id, request=_FakeRequest(), admin_user="tester")
+        )
+        assert edit_form_response.status_code == 200
+
         update_response = run(
             update_repository(
                 repository_id=repository_id,
@@ -178,7 +296,7 @@ def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
                 reuse_doc=False,
                 docstring_threshold=0.5,
                 low_content_min_lines=4,
-                token="",
+                token="rotated-token",
             )
         )
         assert update_response.status_code == 303
@@ -187,6 +305,7 @@ def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
             updated = session.get(RepositoryConfig, repository_id)
             assert updated is not None
             assert updated.name == "CRUD Lifecycle Repo Renamed"
+            assert updated.token_last4 == "oken"
     finally:
         delete_response = run(
             delete_repository(
@@ -200,6 +319,124 @@ def test_repository_crud_lifecycle_through_router_handlers(monkeypatch):
 
         with SessionLocal() as session:
             assert session.get(RepositoryConfig, repository_id) is None
+
+
+def test_create_repository_rejects_missing_token(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    with SessionLocal() as session:
+        session.query(RepositoryConfig).filter(RepositoryConfig.name == "No Token Repo").delete()
+        session.commit()
+
+    _assert_raises_http_exception(
+        create_repository(
+            request=_FakeRequest(),
+            admin_user="tester",
+            _=None,
+            name="No Token Repo",
+            provider="github",
+            repo_url="https://github.com/example/no-token",
+            default_branch="main",
+            target_folders="",
+            preferred_model="gpt-4o-mini",
+            reuse_doc=False,
+            docstring_threshold=0.5,
+            low_content_min_lines=4,
+            token="   ",
+        ),
+        422,
+    )
+
+
+def test_create_repository_rejects_duplicate_name(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    repository_id = _make_repository("Duplicate Name Repo")
+
+    try:
+        _assert_raises_http_exception(
+            create_repository(
+                request=_FakeRequest(),
+                admin_user="tester",
+                _=None,
+                name="Duplicate Name Repo",
+                provider="github",
+                repo_url="https://github.com/example/dup",
+                default_branch="main",
+                target_folders="",
+                preferred_model="gpt-4o-mini",
+                reuse_doc=False,
+                docstring_threshold=0.5,
+                low_content_min_lines=4,
+                token="secret-token",
+            ),
+            409,
+        )
+    finally:
+        _delete_repository_and_runs(repository_id)
+
+
+def test_repository_detail_raises_404_for_missing_repository():
+    _assert_raises_http_exception(
+        repository_detail(repository_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+    )
+
+
+def test_repository_edit_form_raises_404_for_missing_repository():
+    _assert_raises_http_exception(
+        repository_edit_form(repository_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+    )
+
+
+def test_update_repository_raises_404_for_missing_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    _assert_raises_http_exception(
+        update_repository(
+            repository_id=999_999_999,
+            request=_FakeRequest(),
+            admin_user="tester",
+            _=None,
+            name="Ghost Repo",
+            provider="github",
+            repo_url="https://github.com/example/ghost",
+            default_branch="main",
+            target_folders="",
+            preferred_model="gpt-4o-mini",
+            reuse_doc=False,
+            docstring_threshold=0.5,
+            low_content_min_lines=4,
+            token="",
+        ),
+        404,
+    )
+
+
+def test_delete_repository_raises_404_for_missing_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    _assert_raises_http_exception(
+        delete_repository(repository_id=999_999_999, request=_FakeRequest(), admin_user="tester", _=None), 404
+    )
+
+
+def test_trigger_generate_raises_404_for_missing_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    _assert_raises_http_exception(
+        trigger_generate(
+            repository_id=999_999_999,
+            request=_FakeRequest(),
+            admin_user="tester",
+            _=None,
+            branch="",
+            target_folders="",
+            preferred_model="",
+            reuse_doc=False,
+            docstring_threshold=0.5,
+            low_content_min_lines=4,
+        ),
+        404,
+    )
 
 
 def test_trigger_publish_enqueues_run(monkeypatch):
@@ -256,6 +493,22 @@ def test_trigger_publish_enqueues_run(monkeypatch):
             session.commit()
 
 
+def test_trigger_publish_raises_404_for_missing_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    _assert_raises_http_exception(
+        trigger_publish(
+            repository_id=999_999_999,
+            request=_FakeRequest(),
+            admin_user="tester",
+            _=None,
+            branch="",
+            low_content_min_lines=4,
+        ),
+        404,
+    )
+
+
 def test_trigger_suggest_pr_rejects_non_github_repository(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
@@ -282,28 +535,93 @@ def test_trigger_suggest_pr_rejects_non_github_repository(monkeypatch):
         repository_id = repository.id
 
     try:
-        raised = None
-        try:
-            run(
-                trigger_suggest_pr(
-                    repository_id=repository_id,
-                    request=_FakeRequest(),
-                    admin_user="tester",
-                    _=None,
-                    base_branch="",
-                    suggestion_branch="",
-                    title="Add suggested docstrings",
-                    max_docstrings=50,
-                )
-            )
-        except HTTPException as exc:
-            raised = exc
-        assert raised is not None
-        assert raised.status_code == 422
+        _assert_raises_http_exception(
+            trigger_suggest_pr(
+                repository_id=repository_id,
+                request=_FakeRequest(),
+                admin_user="tester",
+                _=None,
+                base_branch="",
+                suggestion_branch="",
+                title="Add suggested docstrings",
+                max_docstrings=50,
+            ),
+            422,
+        )
     finally:
         with SessionLocal() as session:
             session.query(RepositoryConfig).filter(RepositoryConfig.id == repository_id).delete()
             session.commit()
+
+
+def test_trigger_suggest_pr_raises_404_for_missing_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    _assert_raises_http_exception(
+        trigger_suggest_pr(
+            repository_id=999_999_999,
+            request=_FakeRequest(),
+            admin_user="tester",
+            _=None,
+            base_branch="",
+            suggestion_branch="",
+            title="Add suggested docstrings",
+            max_docstrings=50,
+        ),
+        404,
+    )
+
+
+def test_trigger_suggest_pr_enqueues_run_for_github_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    captured = {}
+
+    def fake_enqueue_run(run_id, endpoint, payload):
+        captured["run_id"] = run_id
+        captured["endpoint"] = endpoint
+        captured["payload"] = payload
+
+    monkeypatch.setattr("admin.router.enqueue_run", fake_enqueue_run)
+    repository_id = _make_repository("Suggest PR Github Repo")
+
+    try:
+        response = run(
+            trigger_suggest_pr(
+                repository_id=repository_id,
+                request=_FakeRequest(),
+                admin_user="tester",
+                _=None,
+                base_branch="",
+                suggestion_branch="",
+                title="Add suggested docstrings",
+                max_docstrings=50,
+            )
+        )
+
+        assert response.status_code == 303
+        assert captured["endpoint"] == "/suggest-python-docstrings-pr"
+        assert captured["payload"]["token"] == "secret-token"
+    finally:
+        _delete_repository_and_runs(repository_id)
+
+
+def test_trigger_generate_architecture_docs_raises_404_for_missing_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    _assert_raises_http_exception(
+        trigger_generate_architecture_docs(
+            repository_id=999_999_999,
+            request=_FakeRequest(),
+            admin_user="tester",
+            _=None,
+            branch="",
+            target_folders="",
+            output_path="docs/project/architecture.rst",
+            include_diagrams=True,
+            reuse_existing_docs=True,
+        ),
+        404,
+    )
 
 
 def test_clear_runs_deletes_all_runs_when_no_repository_selected():
@@ -328,6 +646,37 @@ def test_clear_runs_deletes_all_runs_when_no_repository_selected():
         assert session.get(RunRecord, run_id) is None
 
 
+def test_clear_runs_deletes_only_selected_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    repository_id = _make_repository("Clear Runs Repo")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            repository_id=repository_id, endpoint="/generate", status="completed", created_at=datetime.now(UTC)
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(
+            clear_runs(
+                request=_FakeRequest(),
+                admin_user="tester",
+                _=None,
+                repository_id=repository_id,
+            )
+        )
+
+        assert response.status_code == 303
+        assert response.headers["location"] == f"/admin/runs?repository_id={repository_id}"
+        with SessionLocal() as session:
+            assert session.get(RunRecord, run_id) is None
+    finally:
+        _delete_repository_and_runs(repository_id)
+
+
 def test_run_detail_renders_for_existing_run(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
@@ -348,13 +697,53 @@ def test_run_detail_renders_for_existing_run(monkeypatch):
 
 
 def test_run_detail_raises_404_for_missing_run():
-    raised = None
+    _assert_raises_http_exception(run_detail(run_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404)
+
+
+def test_run_status_fragment_renders_and_404s(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(endpoint="/generate", status="completed", created_at=datetime.now(UTC))
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
     try:
-        run(run_detail(run_id=999_999_999, request=_FakeRequest(), admin_user="tester"))
-    except HTTPException as exc:
-        raised = exc
-    assert raised is not None
-    assert raised.status_code == 404
+        response = run(run_status_fragment(run_id=run_id, request=_FakeRequest(), admin_user="tester"))
+        assert response.status_code == 200
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+    _assert_raises_http_exception(
+        run_status_fragment(run_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+    )
+
+
+def test_run_row_fragment_renders_and_404s(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(endpoint="/generate", status="completed", created_at=datetime.now(UTC))
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(run_row_fragment(run_id=run_id, request=_FakeRequest(), admin_user="tester"))
+        assert response.status_code == 200
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+    _assert_raises_http_exception(
+        run_row_fragment(run_id=999_999_999, request=_FakeRequest(), admin_user="tester"), 404
+    )
 
 
 def test_run_log_entries_prioritize_key_logs(tmp_path):
@@ -377,6 +766,33 @@ def test_run_log_entries_prioritize_key_logs(tmp_path):
         "sphinx_build.log",
         "skipped_autoapi_files.txt",
     ]
+
+
+def test_run_log_entries_includes_non_prioritized_log_and_txt_files(tmp_path):
+    artifact_dir = tmp_path / "artifacts"
+    artifact_dir.mkdir()
+    (artifact_dir / "extra_debug.log").write_text("extra\n", encoding="utf-8")
+    (artifact_dir / "notes.json").write_text("{}", encoding="utf-8")
+
+    run = SimpleNamespace(artifact_dir=str(artifact_dir), log_path=None)
+
+    entries = _run_log_entries(run)
+
+    assert [entry["name"] for entry in entries] == ["extra_debug.log"]
+
+
+def test_log_snippet_returns_tail_of_file(tmp_path):
+    log_path = tmp_path / "app.log"
+    log_path.write_text("\n".join(f"line {i}" for i in range(1, 11)) + "\n", encoding="utf-8")
+
+    snippet = _log_snippet(str(log_path), limit=3)
+
+    assert snippet == "line 8\nline 9\nline 10\n"
+
+
+def test_log_snippet_returns_empty_string_when_path_missing():
+    assert _log_snippet(None) == ""
+    assert _log_snippet("/nonexistent/path/app.log") == ""
 
 
 def test_read_artifact_preview_truncates_large_files(tmp_path):
@@ -423,6 +839,50 @@ def test_download_artifact_serves_file_within_artifact_dir(tmp_path):
             session.commit()
 
 
+def test_download_artifact_raises_404_for_missing_run():
+    _assert_raises_http_exception(
+        download_artifact(
+            run_id=999_999_999,
+            artifact_name="report.txt",
+            request=_FakeRequest(),
+            admin_user="tester",
+        ),
+        404,
+    )
+
+
+def test_download_artifact_raises_404_for_missing_file(tmp_path):
+    artifact_dir = tmp_path / "run1"
+    artifact_dir.mkdir()
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="completed",
+            created_at=datetime.now(UTC),
+            artifact_dir=str(artifact_dir),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        _assert_raises_http_exception(
+            download_artifact(
+                run_id=run_id,
+                artifact_name="missing.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
+            ),
+            404,
+        )
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
 def test_download_artifact_rejects_sibling_directory_sharing_a_name_prefix(tmp_path):
     # Regression test: a naive `str(target).startswith(str(artifact_dir))` check
     # incorrectly treats "run12" as being inside "run1" because one string
@@ -446,20 +906,15 @@ def test_download_artifact_rejects_sibling_directory_sharing_a_name_prefix(tmp_p
         run_id = run_record.id
 
     try:
-        raised = None
-        try:
-            run(
-                download_artifact(
-                    run_id=run_id,
-                    artifact_name="../run12/secret.txt",
-                    request=_FakeRequest(),
-                    admin_user="tester",
-                )
-            )
-        except HTTPException as exc:
-            raised = exc
-        assert raised is not None
-        assert raised.status_code == 403
+        _assert_raises_http_exception(
+            download_artifact(
+                run_id=run_id,
+                artifact_name="../run12/secret.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
+            ),
+            403,
+        )
     finally:
         with SessionLocal() as session:
             session.query(RunRecord).filter(RunRecord.id == run_id).delete()
@@ -480,20 +935,15 @@ def test_download_artifact_rejects_missing_artifact_dir():
         run_id = run_record.id
 
     try:
-        raised = None
-        try:
-            run(
-                download_artifact(
-                    run_id=run_id,
-                    artifact_name="report.txt",
-                    request=_FakeRequest(),
-                    admin_user="tester",
-                )
-            )
-        except HTTPException as exc:
-            raised = exc
-        assert raised is not None
-        assert raised.status_code == 403
+        _assert_raises_http_exception(
+            download_artifact(
+                run_id=run_id,
+                artifact_name="report.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
+            ),
+            403,
+        )
     finally:
         with SessionLocal() as session:
             session.query(RunRecord).filter(RunRecord.id == run_id).delete()
@@ -520,20 +970,129 @@ def test_preview_artifact_rejects_sibling_directory_sharing_a_name_prefix(tmp_pa
         run_id = run_record.id
 
     try:
-        raised = None
-        try:
-            run(
-                preview_artifact(
-                    run_id=run_id,
-                    artifact_name="../run12/secret.txt",
-                    request=_FakeRequest(),
-                    admin_user="tester",
-                )
+        _assert_raises_http_exception(
+            preview_artifact(
+                run_id=run_id,
+                artifact_name="../run12/secret.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
+            ),
+            403,
+        )
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_preview_artifact_raises_404_for_missing_run():
+    _assert_raises_http_exception(
+        preview_artifact(
+            run_id=999_999_999,
+            artifact_name="report.txt",
+            request=_FakeRequest(),
+            admin_user="tester",
+        ),
+        404,
+    )
+
+
+def test_preview_artifact_raises_403_for_missing_artifact_dir():
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="failed",
+            created_at=datetime.now(UTC),
+            artifact_dir=None,
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        _assert_raises_http_exception(
+            preview_artifact(
+                run_id=run_id,
+                artifact_name="report.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
+            ),
+            403,
+        )
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_preview_artifact_renders_content_for_small_file(tmp_path):
+    artifact_dir = tmp_path / "run1"
+    artifact_dir.mkdir()
+    (artifact_dir / "report.txt").write_text("hello <world>", encoding="utf-8")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="completed",
+            created_at=datetime.now(UTC),
+            artifact_dir=str(artifact_dir),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(
+            preview_artifact(
+                run_id=run_id,
+                artifact_name="report.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
             )
-        except HTTPException as exc:
-            raised = exc
-        assert raised is not None
-        assert raised.status_code == 403
+        )
+
+        assert response.status_code == 200
+        body = response.body.decode("utf-8")
+        assert "hello &lt;world&gt;" in body
+        assert "Preview truncated" not in body
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_preview_artifact_shows_truncated_note_for_large_file(tmp_path, monkeypatch):
+    artifact_dir = tmp_path / "run1"
+    artifact_dir.mkdir()
+    (artifact_dir / "report.txt").write_text("x" * 50, encoding="utf-8")
+    monkeypatch.setattr("admin.router._read_artifact_preview", lambda path: ("x" * 10, True))
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="completed",
+            created_at=datetime.now(UTC),
+            artifact_dir=str(artifact_dir),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(
+            preview_artifact(
+                run_id=run_id,
+                artifact_name="report.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
+            )
+        )
+
+        assert response.status_code == 200
+        assert "Preview truncated" in response.body.decode("utf-8")
     finally:
         with SessionLocal() as session:
             session.query(RunRecord).filter(RunRecord.id == run_id).delete()
@@ -569,6 +1128,33 @@ def test_build_architecture_generation_request_uses_repository_defaults(monkeypa
     assert req.reuse_existing_docs is True
 
 
+def test_build_pr_request_falls_back_to_repository_defaults(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    repository = RepositoryConfig(
+        name="PR Builder Repo",
+        provider="github",
+        repo_url="example/project",
+        repo_path="example/project",
+        default_branch="main",
+        preferred_model="gpt-4o-mini",
+        reuse_doc=False,
+        docstring_threshold=0.5,
+        low_content_min_lines=4,
+        encrypted_token=encrypt_token("secret-token"),
+        token_last4="oken",
+    )
+
+    req = _build_pr_request(repository, base_branch=None, suggestion_branch=None, title=None, max_docstrings=50)
+
+    assert req.base_branch == "main"
+    assert req.title == "Add suggested docstrings"
+    assert req.suggestion_branch.startswith("autodocs-docstring-suggestions-")
+
+
+def test_default_suggestion_branch_has_expected_prefix():
+    assert _default_suggestion_branch().startswith("autodocs-docstring-suggestions-")
+
+
 def test_safe_request_payload_excludes_token():
     payload = {
         "repo_url": "example/project",
@@ -580,6 +1166,114 @@ def test_safe_request_payload_excludes_token():
         "repo_url": "example/project",
         "branch": "main",
     }
+
+
+def test_database_label_returns_raw_url_for_non_sqlite(monkeypatch):
+    monkeypatch.setattr("admin.router.DATABASE_URL", "postgresql://user:pass@host/db")
+
+    assert _database_label() == "postgresql://user:pass@host/db"
+
+
+def test_json_loads_parses_non_empty_string():
+    assert _json_loads('{"a": 1}') == {"a": 1}
+    assert _json_loads(None) is None
+    assert _json_loads("") is None
+
+
+def test_queue_payload_with_repository_secret_passes_through_non_token_endpoints():
+    payload = {"draft_id": "abc"}
+
+    result = _queue_payload_with_repository_secret("/approve-architecture-docs-not-real", payload, None)
+
+    assert result == payload
+    assert result is not payload
+
+
+def test_queue_payload_with_repository_secret_raises_without_repository():
+    try:
+        _queue_payload_with_repository_secret("/generate", {}, None)
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+
+
+def test_fmt_duration_formats_none_as_dash():
+    assert _fmt_duration(None) == "-"
+
+
+def test_fmt_duration_formats_sub_second_values():
+    assert _fmt_duration(0.5) == "0.50s"
+
+
+def test_fmt_duration_formats_sub_minute_values():
+    assert _fmt_duration(12.3) == "12.3s"
+
+
+def test_fmt_duration_formats_minutes_and_seconds():
+    assert _fmt_duration(125) == "2m 5s"
+
+
+def test_status_badge_classes_covers_all_states():
+    assert "emerald" in _status_badge_classes("completed")
+    assert "rose" in _status_badge_classes("failed")
+    assert "slate" in _status_badge_classes("cancelled")
+    assert "amber" in _status_badge_classes("running")
+
+
+def test_parse_target_folders_rejects_path_traversal():
+    try:
+        _parse_target_folders("src, ../outside")
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+
+
+def test_validate_provider_rejects_unknown_provider():
+    try:
+        _validate_provider("bitbucket")
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+
+
+def test_validate_repo_form_rejects_missing_name():
+    try:
+        _validate_repo_form("", "github", "example/project", "main", "", "", False, 0.5, 4)
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+
+
+def test_validate_repo_form_rejects_missing_repo_url():
+    try:
+        _validate_repo_form("Name", "github", "", "main", "", "", False, 0.5, 4)
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+
+
+def test_validate_repo_form_rejects_missing_default_branch():
+    try:
+        _validate_repo_form("Name", "github", "example/project", "", "", "", False, 0.5, 4)
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+
+
+def test_validate_repo_form_rejects_out_of_range_docstring_threshold():
+    try:
+        _validate_repo_form("Name", "github", "example/project", "main", "", "", False, 1.5, 4)
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+
+
+def test_validate_repo_form_rejects_negative_low_content_min_lines():
+    try:
+        _validate_repo_form("Name", "github", "example/project", "main", "", "", False, 0.5, -1)
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
 
 
 def test_trigger_generate_stores_sanitized_payload_and_enqueues_secret(monkeypatch):
@@ -712,9 +1406,21 @@ def test_trigger_generate_architecture_docs_enqueues_run(monkeypatch):
             session.commit()
 
 
-def test_trigger_approve_architecture_docs_requires_generation_run():
-    from fastapi import HTTPException
+def test_trigger_approve_architecture_docs_raises_404_for_missing_run():
+    _assert_raises_http_exception(
+        trigger_approve_architecture_docs(
+            run_id=999_999_999,
+            request=_FakeRequest(),
+            admin_user="tester",
+            _=None,
+            overwrite_existing=False,
+            approval_note="",
+        ),
+        404,
+    )
 
+
+def test_trigger_approve_architecture_docs_requires_generation_run():
     with SessionLocal() as session:
         run_record = RunRecord(endpoint="/generate", status="completed", created_at=datetime.now(UTC))
         session.add(run_record)
@@ -723,26 +1429,55 @@ def test_trigger_approve_architecture_docs_requires_generation_run():
         run_id = run_record.id
 
     try:
-        raised = None
-        try:
-            run(
-                trigger_approve_architecture_docs(
-                    run_id=run_id,
-                    request=_FakeRequest(),
-                    admin_user="tester",
-                    _=None,
-                    overwrite_existing=False,
-                    approval_note="",
-                )
-            )
-        except HTTPException as exc:
-            raised = exc
-        assert raised is not None
-        assert raised.status_code == 422
+        _assert_raises_http_exception(
+            trigger_approve_architecture_docs(
+                run_id=run_id,
+                request=_FakeRequest(),
+                admin_user="tester",
+                _=None,
+                overwrite_existing=False,
+                approval_note="",
+            ),
+            422,
+        )
     finally:
         with SessionLocal() as session:
             session.query(RunRecord).filter(RunRecord.id == run_id).delete()
             session.commit()
+
+
+def test_trigger_approve_architecture_docs_requires_draft_id(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    repository_id = _make_repository("Arch Approval No Draft Repo")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            repository_id=repository_id,
+            endpoint="/generate-architecture-docs",
+            status="completed",
+            source_branch="main",
+            created_at=datetime.now(UTC),
+            result_payload=json.dumps({"status": "success"}),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        _assert_raises_http_exception(
+            trigger_approve_architecture_docs(
+                run_id=run_id,
+                request=_FakeRequest(),
+                admin_user="tester",
+                _=None,
+                overwrite_existing=False,
+                approval_note="",
+            ),
+            422,
+        )
+    finally:
+        _delete_repository_and_runs(repository_id)
 
 
 def test_trigger_approve_architecture_docs_enqueues_approval_run(monkeypatch):
@@ -900,4 +1635,286 @@ def test_retry_run_rehydrates_token_from_repository(monkeypatch):
         with SessionLocal() as session:
             session.query(RunRecord).filter(RunRecord.repository_id == repository_id).delete()
             session.query(RepositoryConfig).filter(RepositoryConfig.id == repository_id).delete()
+            session.commit()
+
+
+def test_retry_run_raises_404_for_missing_run():
+    _assert_raises_http_exception(
+        retry_run(run_id=999_999_999, request=_FakeRequest(), admin_user="tester", _=None), 404
+    )
+
+
+def test_retry_run_raises_422_when_payload_unavailable():
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate", status="failed", created_at=datetime.now(UTC), request_payload=None
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        _assert_raises_http_exception(
+            retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None), 422
+        )
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_retry_run_raises_422_for_non_retryable_endpoint():
+    # An endpoint outside TOKEN_REQUIRED_ENDPOINTS so `_queue_payload_with_repository_secret`
+    # passes the payload through untouched and we actually reach retry_run's final `else`.
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/some-other-endpoint",
+            status="failed",
+            created_at=datetime.now(UTC),
+            request_payload=json.dumps({"provider": "github"}),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        _assert_raises_http_exception(
+            retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None), 422
+        )
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_retry_run_replays_publish_pages_endpoint(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    captured = {}
+
+    def fake_enqueue_run(run_id, endpoint, payload):
+        captured["endpoint"] = endpoint
+        captured["payload"] = payload
+
+    monkeypatch.setattr("admin.router.enqueue_run", fake_enqueue_run)
+    repository_id = _make_repository("Retry Publish Repo")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            repository_id=repository_id,
+            endpoint="/publish-pages",
+            status="failed",
+            created_at=datetime.now(UTC),
+            request_payload=json.dumps({"repo_url": "example/project", "branch": "main", "low_content_min_lines": 4}),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None))
+
+        assert response.status_code == 303
+        assert captured["endpoint"] == "/publish-pages"
+        assert captured["payload"]["token"] == "secret-token"
+    finally:
+        _delete_repository_and_runs(repository_id)
+
+
+def test_retry_run_replays_suggest_python_docstrings_pr_endpoint(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    captured = {}
+
+    def fake_enqueue_run(run_id, endpoint, payload):
+        captured["endpoint"] = endpoint
+        captured["payload"] = payload
+
+    monkeypatch.setattr("admin.router.enqueue_run", fake_enqueue_run)
+    repository_id = _make_repository("Retry Suggest PR Repo")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            repository_id=repository_id,
+            endpoint="/suggest-python-docstrings-pr",
+            status="failed",
+            created_at=datetime.now(UTC),
+            request_payload=json.dumps(
+                {
+                    "provider": "github",
+                    "repo_url": "example/project",
+                    "base_branch": "main",
+                    "suggestion_branch": "autodocs/suggestions",
+                    "title": "Add suggested docstrings",
+                    "max_docstrings": 50,
+                }
+            ),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(retry_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None))
+
+        assert response.status_code == 303
+        assert captured["endpoint"] == "/suggest-python-docstrings-pr"
+        assert captured["payload"]["token"] == "secret-token"
+    finally:
+        _delete_repository_and_runs(repository_id)
+
+
+def test_cancel_run_raises_404_for_unknown_run():
+    _assert_raises_http_exception(
+        cancel_run(run_id=999_999_999, request=_FakeRequest(), admin_user="tester", _=None, fragment="redirect"),
+        404,
+    )
+
+
+def test_cancel_run_rejects_non_cancellable_outcome():
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="completed",
+            created_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        _assert_raises_http_exception(
+            cancel_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None, fragment="redirect"),
+            422,
+        )
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_cancel_run_redirects_for_non_htmx_request():
+    with SessionLocal() as session:
+        run_record = RunRecord(endpoint="/generate", status="queued", created_at=datetime.now(UTC))
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(
+            cancel_run(run_id=run_id, request=_FakeRequest(), admin_user="tester", _=None, fragment="redirect")
+        )
+
+        assert response.status_code == 303
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_cancel_run_returns_status_fragment_for_htmx_request(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(endpoint="/generate", status="queued", created_at=datetime.now(UTC))
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(
+            cancel_run(
+                run_id=run_id,
+                request=_FakeRequest(headers={"HX-Request": "true"}),
+                admin_user="tester",
+                _=None,
+                fragment="status",
+            )
+        )
+
+        assert response.status_code == 200
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_cancel_run_returns_row_fragment_for_htmx_request(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(endpoint="/generate", status="queued", created_at=datetime.now(UTC))
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(
+            cancel_run(
+                run_id=run_id,
+                request=_FakeRequest(headers={"HX-Request": "true"}),
+                admin_user="tester",
+                _=None,
+                fragment="row",
+            )
+        )
+
+        assert response.status_code == 200
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_cancel_run_raises_404_when_run_vanishes_before_htmx_refetch(monkeypatch):
+    monkeypatch.setattr("admin.router.request_run_cancellation", lambda run_id: "cancelled")
+
+    _assert_raises_http_exception(
+        cancel_run(
+            run_id=999_999_999,
+            request=_FakeRequest(headers={"HX-Request": "true"}),
+            admin_user="tester",
+            _=None,
+            fragment="status",
+        ),
+        404,
+    )
+
+
+def test_preview_artifact_raises_404_for_missing_file(tmp_path):
+    artifact_dir = tmp_path / "run1"
+    artifact_dir.mkdir()
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="completed",
+            created_at=datetime.now(UTC),
+            artifact_dir=str(artifact_dir),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        _assert_raises_http_exception(
+            preview_artifact(
+                run_id=run_id,
+                artifact_name="missing.txt",
+                request=_FakeRequest(),
+                admin_user="tester",
+            ),
+            404,
+        )
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
             session.commit()
