@@ -19,14 +19,14 @@
               {% endfor %}
             </select>
           </label>
-          <button class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">Apply</button>
+          <button class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">Apply</button>
         </form>
         <form method="post" action="/admin/runs/clear">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           {% if selected_repository_id %}
           <input type="hidden" name="repository_id" value="{{ selected_repository_id }}">
           {% endif %}
-          <button class="rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-700 dark:border-rose-500/40 dark:text-rose-200">
+          <button class="rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-700 transition hover:border-rose-500 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-rose-500/40 dark:text-rose-200 dark:hover:border-rose-300 dark:hover:bg-rose-500/10">
             {% if selected_repository_id %}Clear filtered history{% else %}Clear all history{% endif %}
           </button>
         </form>

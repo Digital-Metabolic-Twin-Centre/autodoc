@@ -12,10 +12,10 @@
           SQLite admin store.</p>
       </div>
       <div class="flex flex-wrap gap-3">
-        <a href="/admin/repositories" class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white">Manage
+        <a href="/admin/repositories" class="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">Manage
           repositories</a>
         <a href="/admin/runs"
-          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium dark:border-slate-700">View runs</a>
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white">View runs</a>
       </div>
     </div>
   </section>
@@ -50,7 +50,7 @@
           <h3 class="text-lg font-semibold">Recent activity</h3>
           <p class="text-sm text-slate-500 dark:text-slate-400">Live feed of the latest workflow runs.</p>
         </div>
-        <button class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+        <button class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white"
           hx-get="/admin/activity" hx-target="#activity-feed" hx-swap="outerHTML">
           Refresh
         </button>

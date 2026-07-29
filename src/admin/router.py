@@ -1056,7 +1056,9 @@ async def preview_artifact(
         f'<p class="text-sm text-slate-500 dark:text-slate-400">{target}</p></div>'
         f'<a href="/admin/runs/{run_id}/artifacts/{escape(artifact_name)}" '
         f'class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium '
-        f'text-slate-700 dark:border-slate-700 dark:text-slate-200">Download</a></div>'
+        f'text-slate-700 transition hover:border-teal-500 hover:text-slate-950 '
+        f'focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 '
+        f'dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white">Download</a></div>'
         f'<div class="mt-4 rounded-xl bg-slate-950 p-4 text-xs text-slate-100">'
         f'{truncated_note}<pre class="overflow-x-auto whitespace-pre-wrap">{escaped_content}</pre></div>'
     )

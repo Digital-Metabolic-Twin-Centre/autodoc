@@ -20,48 +20,53 @@
         }
       }
     };
+    if (localStorage.getItem('autodoc-theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   </script>
 </head>
-<body class="min-h-full bg-slate-100 text-slate-900">
+<body class="min-h-full bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
   <main class="relative isolate min-h-screen overflow-hidden">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.16),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_52%,_#e2e8f0_100%)]"></div>
-    <div class="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(100,116,139,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(100,116,139,0.12)_1px,transparent_1px)] [background-size:36px_36px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(20,184,166,0.16),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_28%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_52%,_#e2e8f0_100%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.18),_transparent_26%),linear-gradient(180deg,_#020617_0%,_#0f172a_48%,_#111827_100%)]"></div>
+    <div class="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(100,116,139,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(100,116,139,0.12)_1px,transparent_1px)] [background-size:36px_36px] dark:opacity-30 dark:[background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)]"></div>
 
     <div class="relative mx-auto flex min-h-screen max-w-6xl items-center px-6 py-12">
       <div class="grid w-full gap-10 lg:grid-cols-[minmax(0,1.15fr)_420px]">
         <section class="flex flex-col justify-center">
-          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-teal-700">Internal Admin</p>
-          <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">Auto Doc operational control surface</h1>
-          <p class="mt-5 max-w-2xl text-base leading-7 text-slate-600">A lightweight engineering dashboard for repository configuration, generation runs, publish workflows, and artifact inspection. The admin store uses <span class="font-medium text-slate-950">{{ database_label }}</span>.</p>
+          <p class="text-sm font-semibold uppercase tracking-[0.28em] text-teal-700 dark:text-teal-300">Internal Admin</p>
+          <h1 class="mt-4 max-w-3xl text-4xl font-semibold tracking-tight text-slate-950 dark:text-white sm:text-5xl">Auto Doc operational control surface</h1>
+          <p class="mt-5 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">A lightweight engineering dashboard for repository configuration, generation runs, publish workflows, and artifact inspection. The admin store uses <span class="font-medium text-slate-950 dark:text-white">{{ database_label }}</span>.</p>
 
           <div class="mt-8 grid gap-4 sm:grid-cols-3">
-            <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-              <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Backend</p>
-              <p class="mt-2 font-medium text-slate-950">FastAPI + HTMX</p>
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Backend</p>
+              <p class="mt-2 font-medium text-slate-950 dark:text-white">FastAPI + HTMX</p>
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-              <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Auth</p>
-              <p class="mt-2 font-medium text-slate-950">Environment-managed admin credentials</p>
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Auth</p>
+              <p class="mt-2 font-medium text-slate-950 dark:text-white">Environment-managed admin credentials</p>
             </div>
-            <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur">
-              <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Data</p>
-              <p class="mt-2 font-medium text-slate-950">SQLite-backed run history</p>
+            <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
+              <p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Data</p>
+              <p class="mt-2 font-medium text-slate-950 dark:text-white">SQLite-backed run history</p>
             </div>
           </div>
         </section>
 
-        <section class="rounded-[28px] border border-slate-200 bg-white/90 p-7 shadow-2xl shadow-slate-200/80 backdrop-blur-xl">
+        <section class="rounded-[28px] border border-slate-200 bg-white/90 p-7 shadow-2xl shadow-slate-200/80 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:shadow-black/30">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <p class="text-sm font-medium uppercase tracking-[0.18em] text-teal-700">Sign In</p>
-              <h2 class="mt-2 text-2xl font-semibold text-slate-950">Admin access</h2>
-              <p class="mt-2 text-sm text-slate-600">Use the admin credentials configured in the environment for this service.</p>
+              <p class="text-sm font-medium uppercase tracking-[0.18em] text-teal-700 dark:text-teal-300">Sign In</p>
+              <h2 class="mt-2 text-2xl font-semibold text-slate-950 dark:text-white">Admin access</h2>
+              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Use the admin credentials configured in the environment for this service.</p>
             </div>
-            <a href="/docs" class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:border-teal-500 hover:text-slate-950">API docs</a>
+            <a href="/docs" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-white/15 dark:text-slate-200 dark:hover:border-teal-300 dark:hover:text-white">API docs</a>
           </div>
 
           {% if error_message %}
-          <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div class="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-400/30 dark:bg-rose-500/10 dark:text-rose-100">
             {{ error_message }}
           </div>
           {% endif %}
@@ -69,18 +74,18 @@
           <form method="post" action="/admin/login" class="mt-6 space-y-5">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <label class="block text-sm">
-              <span class="mb-2 block font-medium text-slate-700">Username</span>
-              <input name="username" autocomplete="username" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none" placeholder="admin" />
+              <span class="mb-2 block font-medium text-slate-700 dark:text-slate-200">Username</span>
+              <input name="username" autocomplete="username" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none dark:border-white/10 dark:bg-slate-950/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-teal-300" placeholder="admin" />
             </label>
             <label class="block text-sm">
-              <span class="mb-2 block font-medium text-slate-700">Password</span>
-              <input type="password" name="password" autocomplete="current-password" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none" placeholder="Enter admin password" />
+              <span class="mb-2 block font-medium text-slate-700 dark:text-slate-200">Password</span>
+              <input type="password" name="password" autocomplete="current-password" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none dark:border-white/10 dark:bg-slate-950/60 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-teal-300" placeholder="Enter admin password" />
             </label>
-            <button class="w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-500">Open admin dashboard</button>
+            <button class="w-full rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300">Open admin dashboard</button>
           </form>
 
-          <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            <p class="font-medium text-slate-950">Operational note</p>
+          <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-300">
+            <p class="font-medium text-slate-950 dark:text-white">Operational note</p>
             <p class="mt-2">Repository tokens are encrypted at rest. The admin UI never re-displays raw tokens after they are saved.</p>
           </div>
         </section>

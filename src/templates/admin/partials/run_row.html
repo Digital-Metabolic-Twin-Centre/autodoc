@@ -29,13 +29,13 @@
       >
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="fragment" value="row">
-        <button class="text-orange-600 dark:text-orange-300">{% if run.status == 'queued' %}Cancel{% else %}Request cancel{% endif %}</button>
+        <button class="font-medium text-orange-600 transition hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 dark:text-orange-300 dark:hover:text-orange-200">{% if run.status == 'queued' %}Cancel{% else %}Request cancel{% endif %}</button>
       </form>
       {% endif %}
       {% if run.status == 'failed' %}
       <form method="post" action="/admin/runs/{{ run.id }}/retry">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        <button class="text-rose-600 dark:text-rose-300">Retry</button>
+        <button class="font-medium text-rose-600 transition hover:text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:text-rose-300 dark:hover:text-rose-200">Retry</button>
       </form>
       {% endif %}
     </div>

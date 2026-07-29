@@ -66,7 +66,7 @@
           <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Operational dashboard for generation, publishing,
             and run history.</p>
         </div>
-        <button type="button" class="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700"
+        <button type="button" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white"
           onclick="document.documentElement.classList.toggle('dark'); localStorage.setItem('autodoc-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');">
           Theme
         </button>
@@ -89,7 +89,7 @@
         <form method="post" action="/admin/logout" class="mt-4">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <button
-            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:text-slate-200">Sign
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white">Sign
             out</button>
         </form>
       </div>
@@ -104,7 +104,7 @@
       <div class="max-h-[85vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
           <h2 class="text-lg font-semibold">Artifact preview</h2>
-          <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700" onclick="closeArtifactModal()">Close</button>
+          <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white" onclick="closeArtifactModal()">Close</button>
         </div>
         <div id="artifact-preview-body" class="max-h-[calc(85vh-5rem)] overflow-y-auto p-6 text-sm text-slate-900 dark:text-slate-100">
           <p class="text-slate-500 dark:text-slate-400">Select a log to preview it here.</p>
