@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from admin.settings import DATABASE_URL
+from utils.redaction import redact_secrets
 
 
 class Base(DeclarativeBase):
@@ -24,6 +25,7 @@ def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _ensure_run_record_columns()
     scrub_sensitive_run_payloads()
+    redact_leaked_secrets_from_run_records()
 
 
 def scrub_sensitive_run_payloads() -> int:
@@ -43,6 +45,36 @@ def scrub_sensitive_run_payloads() -> int:
             run.request_payload = json.dumps(payload, default=str, indent=2)
             session.add(run)
             scrubbed_count += 1
+        if scrubbed_count:
+            session.commit()
+    return scrubbed_count
+
+
+def redact_leaked_secrets_from_run_records() -> int:
+    """
+    Retroactively scrub any credentials already stored in run error messages.
+
+    Older runs may have persisted a git-clone error containing an embedded
+    access token before redaction was added; this cleans up rows already on
+    disk in addition to preventing new leaks.
+
+    Args:
+        None.
+    Returns:
+        int: Number of run records that were rewritten.
+
+    """
+    from admin.models import RunRecord
+
+    scrubbed_count = 0
+    with SessionLocal() as session:
+        runs = session.query(RunRecord).filter(RunRecord.error_message.is_not(None)).all()
+        for run in runs:
+            redacted = redact_secrets(run.error_message)
+            if redacted != run.error_message:
+                run.error_message = redacted
+                session.add(run)
+                scrubbed_count += 1
         if scrubbed_count:
             session.commit()
     return scrubbed_count

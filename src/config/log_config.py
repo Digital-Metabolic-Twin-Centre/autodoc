@@ -10,6 +10,8 @@ import logging
 import os
 from datetime import datetime
 
+from utils.redaction import redact_secrets
+
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "logs")
@@ -17,6 +19,18 @@ os.makedirs(LOG_DIR, exist_ok=True)
 RUN_TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
 RUN_LOG_DIR = None
 LOG_FILE = None
+
+
+class _SecretRedactingFilter(logging.Filter):
+    """Scrubs credentials out of a record's rendered message before it is emitted."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = redact_secrets(record.getMessage())
+        record.args = ()
+        return True
+
+
+_SECRET_FILTER = _SecretRedactingFilter()
 
 
 def _configure_root_logger() -> logging.Logger:
@@ -35,6 +49,7 @@ def _configure_root_logger() -> logging.Logger:
     if not root_logger.handlers:
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+        stream_handler.addFilter(_SECRET_FILTER)
         root_logger.addHandler(stream_handler)
     return root_logger
 
@@ -58,6 +73,7 @@ def bind_repo_log_dir(repo_log_dir: str) -> str:
 
     file_handler = logging.FileHandler(log_file)
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+    file_handler.addFilter(_SECRET_FILTER)
     _ROOT_LOGGER.addHandler(file_handler)
 
     RUN_LOG_DIR = repo_log_dir

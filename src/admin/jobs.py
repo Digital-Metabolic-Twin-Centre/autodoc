@@ -26,6 +26,7 @@ from services.workflow_service import (
     execute_generate_request,
     execute_publish_request,
 )
+from utils.redaction import redact_secrets
 
 
 @dataclass
@@ -365,7 +366,7 @@ def _execute_run_process(run_id: int, endpoint: str, payload: dict[str, Any]) ->
         _update_run(run_id, mark_completed)
     except Exception as exc:
         completed_at = datetime.now(UTC)
-        error_message = str(exc)
+        error_message = redact_secrets(str(exc))
 
         def mark_failed(run: RunRecord) -> None:
             if run.status == "cancelled":

@@ -76,6 +76,28 @@ def test_fetch_repo_tree_reports_inaccessible_repo(monkeypatch):
         fetch_repo_tree("example/project", "secret", branch="main", provider="github")
 
 
+def test_fetch_repo_tree_redacts_token_embedded_in_clone_error(monkeypatch):
+    import subprocess
+
+    def fake_run(*args, **kwargs):
+        raise subprocess.CalledProcessError(
+            1,
+            "git clone",
+            stderr=(
+                b"error: RPC failed; HTTP 403 curl 22 The requested URL returned error: 403 "
+                b"for 'https://x-access-token:ghp_abcdefghijklmnopqrstuvwxyz123456@github.com/example/project.git/'"
+            ),
+        )
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    with pytest.raises(RepositoryAccessError) as exc_info:
+        fetch_repo_tree("example/project", "secret", branch="main", provider="github")
+
+    assert "ghp_abcdefghijklmnopqrstuvwxyz123456" not in str(exc_info.value)
+    assert "https://***:***@github.com" in str(exc_info.value)
+
+
 def test_fetch_repo_tree_uses_partial_single_branch_clone_with_configurable_timeout(monkeypatch):
     import subprocess
 

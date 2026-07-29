@@ -1,7 +1,7 @@
 import json
 from datetime import UTC, datetime
 
-from admin.database import SessionLocal, scrub_sensitive_run_payloads
+from admin.database import SessionLocal, redact_leaked_secrets_from_run_records, scrub_sensitive_run_payloads
 from admin.jobs import _execute_endpoint, _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
 from services.workflow_service import WorkflowRunResult
@@ -230,6 +230,66 @@ def test_execute_run_process_updates_progress_and_completion(monkeypatch):
         assert stored_run.progress_percent == 100.0
         assert stored_run.progress_message == "Completed"
         assert stored_run.metrics_files_analyzed == 3
+
+
+def test_execute_run_process_redacts_token_from_failure_error_message(monkeypatch):
+    with SessionLocal() as session:
+        run = RunRecord(
+            endpoint="/generate",
+            status="queued",
+            progress_percent=5.0,
+            progress_message="Queued",
+            created_at=datetime.now(UTC),
+            request_payload="{}",
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+        run_id = run.id
+
+    def fake_execute_endpoint(endpoint, payload, progress_callback=None):
+        raise RuntimeError(
+            "Failed to clone repository 'example/project': fatal: unable to access "
+            "'https://x-access-token:ghp_abcdefghijklmnopqrstuvwxyz123456@github.com/example/project.git/'"
+        )
+
+    monkeypatch.setattr("admin.jobs._execute_endpoint", fake_execute_endpoint)
+    monkeypatch.setattr("admin.jobs.os.setsid", lambda: None)
+
+    _execute_run_process(run_id, "/generate", {})
+
+    with SessionLocal() as session:
+        stored_run = session.get(RunRecord, run_id)
+        assert stored_run is not None
+        assert stored_run.status == "failed"
+        assert "ghp_abcdefghijklmnopqrstuvwxyz123456" not in stored_run.error_message
+        assert "https://***:***@github.com" in stored_run.error_message
+
+
+def test_redact_leaked_secrets_from_run_records_cleans_stored_error_messages():
+    with SessionLocal() as session:
+        run = RunRecord(
+            endpoint="/generate",
+            status="failed",
+            created_at=datetime.now(UTC),
+            error_message=(
+                "fatal: unable to access "
+                "'https://x-access-token:ghp_abcdefghijklmnopqrstuvwxyz123456@github.com/o/r.git/'"
+            ),
+        )
+        session.add(run)
+        session.commit()
+        session.refresh(run)
+        run_id = run.id
+
+    scrubbed_count = redact_leaked_secrets_from_run_records()
+
+    assert scrubbed_count >= 1
+    with SessionLocal() as session:
+        stored_run = session.get(RunRecord, run_id)
+        assert stored_run is not None
+        assert "ghp_abcdefghijklmnopqrstuvwxyz123456" not in stored_run.error_message
+        assert "https://***:***@github.com" in stored_run.error_message
 
 
 def test_execute_endpoint_dispatches_generate_architecture_docs(monkeypatch):

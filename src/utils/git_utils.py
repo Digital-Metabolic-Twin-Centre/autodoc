@@ -17,6 +17,7 @@ from config.config import GITHUB_API_URL, GITLAB_API_URL
 from config.log_config import LOG_DIR, get_logger
 from utils.code_block_extraction import GenericCodeBlockExtractor
 from utils.docstring_validation import analyse_docstring_in_blocks
+from utils.redaction import redact_secrets
 
 logger = get_logger(__name__)
 
@@ -267,7 +268,7 @@ def clone_repository(
             status_code=408,
         ) from e
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.decode("utf-8", errors="replace") if e.stderr else str(e)
+        error_msg = redact_secrets(e.stderr.decode("utf-8", errors="replace") if e.stderr else str(e))
         if "Repository not found" in error_msg or "not found" in error_msg.lower():
             raise RepositoryAccessError(
                 f"Repository '{repo_url}' not found or is not accessible with provided token.",
@@ -285,7 +286,7 @@ def clone_repository(
             ) from e
     except Exception as e:
         raise RepositoryAccessError(
-            f"Unexpected error cloning repository '{repo_url}': {str(e)}",
+            f"Unexpected error cloning repository '{repo_url}': {redact_secrets(str(e))}",
             status_code=500,
         ) from e
     finally:
@@ -655,7 +656,7 @@ def fetch_repo_tree(
                 ) from e
             except subprocess.CalledProcessError as e:
                 shutil.rmtree(temp_dir, ignore_errors=True)
-                error_msg = e.stderr.decode("utf-8", errors="replace") if e.stderr else str(e)
+                error_msg = redact_secrets(e.stderr.decode("utf-8", errors="replace") if e.stderr else str(e))
                 if "Repository not found" in error_msg or "not found" in error_msg.lower():
                     raise RepositoryAccessError(
                         f"Repository '{repo_url}' not found or is not accessible with provided token.",
@@ -674,8 +675,10 @@ def fetch_repo_tree(
     except RepositoryAccessError:
         raise
     except Exception as e:
-        logger.error(f"Error fetching repo tree: {e}")
-        raise RepositoryAccessError(f"Failed to fetch repository tree: {str(e)}", status_code=500) from e
+        logger.error(f"Error fetching repo tree: {redact_secrets(str(e))}")
+        raise RepositoryAccessError(
+            f"Failed to fetch repository tree: {redact_secrets(str(e))}", status_code=500
+        ) from e
 
 
 def validate_docstring(
