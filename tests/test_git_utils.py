@@ -4,13 +4,20 @@ from utils.git_utils import (
     GitHubApiError,
     RepositoryAccessError,
     configure_github_pages,
+    create_a_file,
     create_directory_and_add_files,
+    create_github_blob,
     create_github_pull_request,
     download_github_branch_snapshot,
+    ensure_github_branch,
     extract_repo_path,
     fetch_content_bytes_from_github,
     fetch_content_from_github,
+    fetch_content_from_gitlab,
     fetch_repo_tree,
+    list_github_pull_request_files,
+    list_github_tree,
+    list_open_github_pull_requests,
     publish_local_directory_to_github_branch,
     request_github_pages_build,
     should_ignore,
@@ -183,10 +190,10 @@ def test_download_github_branch_snapshot_prefers_clone(monkeypatch, tmp_path):
 
 
 def test_configure_github_pages_raises_exact_github_error(monkeypatch):
-    def fake_get(url, headers=None):
+    def fake_get(url, headers=None, **kwargs):
         return DummyResponse(404, {"message": "Not Found"}, text='{"message":"Not Found"}')
 
-    def fake_post(url, headers=None, json=None):
+    def fake_post(url, headers=None, json=None, **kwargs):
         return DummyResponse(
             403,
             {"message": "Resource not accessible by personal access token"},
@@ -201,7 +208,7 @@ def test_configure_github_pages_raises_exact_github_error(monkeypatch):
 
 
 def test_request_github_pages_build_raises_exact_github_error(monkeypatch):
-    def fake_post(url, headers=None):
+    def fake_post(url, headers=None, **kwargs):
         return DummyResponse(
             403,
             {"message": "Resource not accessible by personal access token"},
@@ -219,14 +226,14 @@ def test_publish_local_directory_to_github_branch_raises_non_fast_forward_error(
     docs_dir.mkdir()
     (docs_dir / "index.html").write_text("<html></html>", encoding="utf-8")
 
-    def fake_get(url, headers=None, params=None):
+    def fake_get(url, headers=None, params=None, **kwargs):
         if url.endswith("/git/refs/heads/gh-pages"):
             return DummyResponse(200, {"object": {"sha": "commitsha"}})
         if url.endswith("/git/commits/commitsha"):
             return DummyResponse(200, {"tree": {"sha": "treesha"}})
         raise AssertionError(f"Unexpected GET {url}")
 
-    def fake_post(url, headers=None, json=None):
+    def fake_post(url, headers=None, json=None, **kwargs):
         if url.endswith("/git/blobs"):
             return DummyResponse(201, {"sha": "blobsha"})
         if url.endswith("/git/trees"):
@@ -235,7 +242,7 @@ def test_publish_local_directory_to_github_branch_raises_non_fast_forward_error(
             return DummyResponse(201, {"sha": "newcommit"})
         raise AssertionError(f"Unexpected POST {url}")
 
-    def fake_patch(url, headers=None, json=None):
+    def fake_patch(url, headers=None, json=None, **kwargs):
         return DummyResponse(
             422,
             {"message": "Update is not a fast forward"},
@@ -259,7 +266,7 @@ def test_publish_local_directory_to_github_branch_raises_non_fast_forward_error(
 
 
 def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkeypatch):
-    def fake_get(url, headers=None, params=None, timeout=None):
+    def fake_get(url, headers=None, params=None, timeout=None, **kwargs):
         if url.endswith("/git/refs/heads/main"):
             return DummyResponse(200, {"object": {"sha": "commitsha"}})
         if url.endswith("/git/commits/commitsha"):
@@ -268,7 +275,7 @@ def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkey
 
     captured = {}
 
-    def fake_post(url, headers=None, json=None):
+    def fake_post(url, headers=None, json=None, **kwargs):
         if json is None:
             json = {}
         if url.endswith("/git/trees"):
@@ -278,7 +285,7 @@ def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkey
             return DummyResponse(201, {"sha": "newcommit"})
         raise AssertionError(f"Unexpected POST {url}")
 
-    def fake_patch(url, headers=None, json=None):
+    def fake_patch(url, headers=None, json=None, **kwargs):
         return DummyResponse(200, {})
 
     monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
@@ -310,7 +317,7 @@ def test_create_directory_and_add_files_preserves_nested_paths_for_github(monkey
 
 
 def test_create_directory_and_add_files_removes_stale_flattened_github_files(monkeypatch):
-    def fake_get(url, headers=None, params=None, timeout=None):
+    def fake_get(url, headers=None, params=None, timeout=None, **kwargs):
         if url.endswith("/git/refs/heads/main"):
             return DummyResponse(200, {"object": {"sha": "commitsha"}})
         if url.endswith("/git/commits/commitsha"):
@@ -319,7 +326,7 @@ def test_create_directory_and_add_files_removes_stale_flattened_github_files(mon
 
     captured = {}
 
-    def fake_post(url, headers=None, json=None):
+    def fake_post(url, headers=None, json=None, **kwargs):
         if json is None:
             json = {}
         if url.endswith("/git/trees"):
@@ -362,11 +369,11 @@ def test_create_directory_and_add_files_removes_stale_flattened_github_files(mon
 def test_configure_github_pages_skips_update_when_source_is_already_correct(monkeypatch):
     calls = []
 
-    def fake_get(url, headers):
+    def fake_get(url, headers, **kwargs):
         calls.append(("get", url, headers))
         return DummyResponse(200, {"source": {"branch": "gh-pages", "path": "/"}})
 
-    def fake_put(url, headers, json):
+    def fake_put(url, headers, json, **kwargs):
         calls.append(("put", url, headers, json))
         return DummyResponse(403, text="should not update")
 
@@ -380,11 +387,11 @@ def test_configure_github_pages_skips_update_when_source_is_already_correct(monk
 def test_configure_github_pages_updates_when_source_differs(monkeypatch):
     calls = []
 
-    def fake_get(url, headers):
+    def fake_get(url, headers, **kwargs):
         calls.append(("get", url, headers))
         return DummyResponse(200, {"source": {"branch": "main", "path": "/"}})
 
-    def fake_put(url, headers, json):
+    def fake_put(url, headers, json, **kwargs):
         calls.append(("put", url, headers, json))
         return DummyResponse(204)
 
@@ -404,7 +411,7 @@ def test_append_extension_handles_empty_and_existing_extension_lists():
 
 
 def test_create_github_pull_request_raises_permission_error(monkeypatch):
-    def fake_post(url, headers, json):
+    def fake_post(url, headers, json, **kwargs):
         return DummyResponse(
             403,
             text='{"message":"Resource not accessible by personal access token"}',
@@ -459,3 +466,245 @@ def test_architecture_draft_generation_never_calls_provider_write_helper(monkeyp
 
     assert result["draft_id"]
     assert result["status"] in {"success", "partial"}
+
+
+def test_fetch_content_from_gitlab_returns_text_on_success(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        assert headers == {"PRIVATE-TOKEN": "secret"}
+        assert params == {"ref": "main"}
+        return DummyResponse(200, text="print('hello')\n")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    content = fetch_content_from_gitlab("group/project", "main", "app.py", "secret")
+
+    assert content == "print('hello')\n"
+
+
+def test_fetch_content_from_gitlab_returns_none_on_error(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(404, text="Not Found")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    assert fetch_content_from_gitlab("group/project", "main", "missing.py", "secret") is None
+
+
+def test_create_a_file_creates_new_file_on_github(monkeypatch):
+    calls = []
+
+    def fake_get(url, headers=None, params=None, **kwargs):
+        calls.append(("get", url))
+        return DummyResponse(404)
+
+    def fake_put(url, headers=None, json=None, **kwargs):
+        calls.append(("put", url, json))
+        return DummyResponse(201)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.put", fake_put)
+
+    result = create_a_file("example/project", "main", "docs/new.rst", "content", "secret", "github")
+
+    assert result is True
+    assert calls[0][0] == "get"
+    assert calls[1][0] == "put"
+    assert "sha" not in calls[1][2]
+
+
+def test_create_a_file_updates_existing_file_on_github(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(200, {"sha": "abc123"})
+
+    captured = {}
+
+    def fake_put(url, headers=None, json=None, **kwargs):
+        captured["json"] = json
+        return DummyResponse(200)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.put", fake_put)
+
+    result = create_a_file("example/project", "main", "docs/existing.rst", "content", "secret", "github")
+
+    assert result is True
+    assert captured["json"]["sha"] == "abc123"
+
+
+def test_create_a_file_returns_false_on_github_error(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(404)
+
+    def fake_put(url, headers=None, json=None, **kwargs):
+        return DummyResponse(422, text="validation failed")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.put", fake_put)
+
+    assert create_a_file("example/project", "main", "docs/new.rst", "content", "secret", "github") is False
+
+
+def test_create_a_file_creates_new_file_on_gitlab(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(404)
+
+    captured = {}
+
+    def fake_post(url, headers=None, json=None, **kwargs):
+        captured["json"] = json
+        return DummyResponse(201)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+
+    result = create_a_file("group/project", "main", "docs/new.rst", "content", "secret", "gitlab")
+
+    assert result is True
+    assert captured["json"]["commit_message"] == "Create docs/new.rst"
+
+
+def test_create_a_file_updates_existing_file_on_gitlab(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(200)
+
+    captured = {}
+
+    def fake_put(url, headers=None, json=None, **kwargs):
+        captured["json"] = json
+        return DummyResponse(200)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.put", fake_put)
+
+    result = create_a_file("group/project", "main", "docs/existing.rst", "content", "secret", "gitlab")
+
+    assert result is True
+    assert captured["json"]["commit_message"] == "Update docs/existing.rst"
+
+
+def test_create_a_file_returns_false_for_unsupported_provider():
+    assert create_a_file("example/project", "main", "docs/new.rst", "content", "secret", "bitbucket") is False
+
+
+def test_ensure_github_branch_returns_true_when_branch_already_exists(monkeypatch):
+    def fake_get(url, headers=None, **kwargs):
+        return DummyResponse(200)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    assert ensure_github_branch("example/project", "main", "gh-pages", "secret") is True
+
+
+def test_ensure_github_branch_creates_branch_from_source_when_missing(monkeypatch):
+    calls = []
+
+    def fake_get(url, headers=None, **kwargs):
+        if url.endswith("/heads/gh-pages"):
+            return DummyResponse(404)
+        calls.append("get-source")
+        return DummyResponse(200, {"object": {"sha": "source-sha"}})
+
+    captured = {}
+
+    def fake_post(url, headers=None, json=None, **kwargs):
+        captured["json"] = json
+        return DummyResponse(201)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+
+    assert ensure_github_branch("example/project", "main", "gh-pages", "secret") is True
+    assert calls == ["get-source"]
+    assert captured["json"] == {"ref": "refs/heads/gh-pages", "sha": "source-sha"}
+
+
+def test_ensure_github_branch_returns_false_when_source_branch_missing(monkeypatch):
+    def fake_get(url, headers=None, **kwargs):
+        if url.endswith("/heads/gh-pages"):
+            return DummyResponse(404)
+        return DummyResponse(404)
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    assert ensure_github_branch("example/project", "missing-source", "gh-pages", "secret") is False
+
+
+def test_list_github_tree_returns_entries_on_success(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        assert params == {"recursive": "1"}
+        return DummyResponse(200, {"tree": [{"path": "docs/index.rst", "type": "blob"}]})
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    tree = list_github_tree("example/project", "main", "secret")
+
+    assert tree == [{"path": "docs/index.rst", "type": "blob"}]
+
+
+def test_list_github_tree_returns_empty_list_on_error(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(404, text="Not Found")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    assert list_github_tree("example/project", "missing-ref", "secret") == []
+
+
+def test_create_github_blob_returns_sha_on_success(monkeypatch):
+    def fake_post(url, headers=None, json=None, **kwargs):
+        assert json == {"content": "hello", "encoding": "utf-8"}
+        return DummyResponse(201, {"sha": "blob-sha"})
+
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+
+    assert create_github_blob("example/project", "secret", b"hello") == "blob-sha"
+
+
+def test_create_github_blob_returns_none_on_error(monkeypatch):
+    def fake_post(url, headers=None, json=None, **kwargs):
+        return DummyResponse(422, text="validation failed")
+
+    monkeypatch.setattr("utils.git_utils.requests.post", fake_post)
+
+    assert create_github_blob("example/project", "secret", b"hello") is None
+
+
+def test_list_open_github_pull_requests_returns_list_on_success(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        assert params["base"] == "main"
+        return DummyResponse(200, [{"number": 1, "title": "Add docstrings"}])
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    prs = list_open_github_pull_requests("example/project", "main", "secret")
+
+    assert prs == [{"number": 1, "title": "Add docstrings"}]
+
+
+def test_list_open_github_pull_requests_returns_empty_list_on_error(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(500, text="server error")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    assert list_open_github_pull_requests("example/project", "main", "secret") == []
+
+
+def test_list_github_pull_request_files_returns_list_on_success(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(200, [{"filename": "src/app.py"}])
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    files = list_github_pull_request_files("example/project", 42, "secret")
+
+    assert files == [{"filename": "src/app.py"}]
+
+
+def test_list_github_pull_request_files_returns_empty_list_on_error(monkeypatch):
+    def fake_get(url, headers=None, params=None, **kwargs):
+        return DummyResponse(404, text="Not Found")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    assert list_github_pull_request_files("example/project", 42, "secret") == []

@@ -83,19 +83,19 @@ async def generate_docs(req: RepoRequest):
         raise
     except RepoAnalysisError as rae:
         logger.error("Repository analysis failed: %s", rae)
-        raise HTTPException(status_code=rae.status_code, detail=str(rae))
+        raise HTTPException(status_code=rae.status_code, detail=str(rae)) from rae
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve)) from ve
     except PermissionError as pe:
         logger.error(f"PermissionError: {pe}")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe)) from pe
     except Exception as e:
         logger.exception("Unhandled exception during /generate")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_error_detail(e),
-        )
+        ) from e
 
 
 @router.post("/suggest-python-docstrings-pr", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
@@ -118,13 +118,13 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
     try:
         return execute_docstring_pr_request(req.model_copy(update={"suggestion_branch": suggestion_branch})).response
     except DocstringPullRequestError as dpe:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe)) from dpe
     except Exception as e:
         logger.exception("Unhandled exception during /suggest-python-docstrings-pr")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_error_detail(e),
-        )
+        ) from e
 
 
 @router.post("/generate-architecture-docs", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
@@ -147,16 +147,16 @@ async def generate_architecture_docs(req: ArchitectureGenerationRequest):
         raise
     except ArchitectureAnalysisError as aae:
         logger.error("Architecture analysis failed: %s", aae)
-        raise HTTPException(status_code=aae.status_code, detail=str(aae))
+        raise HTTPException(status_code=aae.status_code, detail=str(aae)) from aae
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve)) from ve
     except Exception as e:
         logger.exception("Unhandled exception during /generate-architecture-docs")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_error_detail(e),
-        )
+        ) from e
 
 
 @router.post("/approve-architecture-docs", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
@@ -179,19 +179,19 @@ async def approve_architecture_docs(req: ArchitectureApprovalRequest):
         raise
     except ArchitectureOverwriteRequiredError as conflict:
         logger.warning("Architecture approval requires overwrite confirmation: %s", conflict)
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(conflict))
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(conflict)) from conflict
     except ArchitectureApprovalError as aae:
         logger.error("Architecture approval failed: %s", aae)
-        raise HTTPException(status_code=aae.status_code, detail=str(aae))
+        raise HTTPException(status_code=aae.status_code, detail=str(aae)) from aae
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve)) from ve
     except Exception as e:
         logger.exception("Unhandled exception during /approve-architecture-docs")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_error_detail(e),
-        )
+        ) from e
 
 
 @router.post("/publish-pages", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
@@ -213,12 +213,12 @@ async def publish_pages(req: PublishPagesRequest):
     except HTTPException:
         raise
     except PublishPagesError as pe:
-        raise HTTPException(status_code=pe.status_code, detail=str(pe))
+        raise HTTPException(status_code=pe.status_code, detail=str(pe)) from pe
     except PermissionError as pe:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe)) from pe
     except Exception as e:
         logger.exception("Unhandled exception during /publish-pages")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_error_detail(e),
-        )
+        ) from e

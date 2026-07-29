@@ -3,7 +3,9 @@ import re
 import shutil
 from datetime import datetime
 
-from config.log_config import LOG_DIR, bind_repo_log_dir
+from config.log_config import LOG_DIR, bind_repo_log_dir, get_logger
+
+logger = get_logger(__name__)
 
 _ACTIVE_RUN_DIRS: dict[tuple[str, str], str] = {}
 LOG_RETENTION_COUNT = 6  # Keep only the last 6 logs per project
@@ -58,9 +60,8 @@ def _cleanup_old_logs(repo_path: str, provider: str) -> None:
         for _, old_dir in log_dirs[:-LOG_RETENTION_COUNT]:
             try:
                 shutil.rmtree(old_dir, ignore_errors=True)
-            except Exception:
-                # Silently ignore errors during cleanup
-                pass
+            except Exception as cleanup_exc:
+                logger.debug(f"Failed to clean up old log directory {old_dir}: {cleanup_exc}")
 
 
 def _copy_previous_run_artifacts(previous_run_dir: str | None, output_dir: str) -> None:

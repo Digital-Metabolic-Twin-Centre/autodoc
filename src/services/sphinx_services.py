@@ -50,6 +50,7 @@ from utils.git_utils import (
     publish_local_directory_to_github_branch,
     request_github_pages_build,
 )
+from utils.update_conf_content import update_conf
 
 logger = get_logger(__name__)
 DOCS_SCAFFOLD_DIR = Path(__file__).resolve().parents[2] / "docs" / "scaffold"
@@ -748,7 +749,7 @@ def _build_sphinx_once(
     """
     source_arg = docs_source_dir or DOCS_SRC
     build_arg = build_dir or BUILD_DIR
-    return subprocess.run(
+    return subprocess.run(  # noqa: S603 - fixed argv list, no shell, no untrusted input
         [sys.executable, "-m", "sphinx", "-b", "html", source_arg, build_arg],
         cwd=temp_dir,
         capture_output=True,
@@ -1825,24 +1826,19 @@ def publish_github_pages(
         docs_source_dir = os.path.dirname(conf_py_path)
         index_path = os.path.join(docs_source_dir, "index.rst")
         build_dir = _build_dir_for_sphinx_source(docs_source_dir)
-        update_conf_path = os.path.join(temp_dir, CONFIGURATION_UPDATE_FILE)
 
         os.makedirs(docs_source_dir, exist_ok=True)
 
-        if os.path.exists(update_conf_path):
-            update_conf_result = subprocess.run(
-                [sys.executable, update_conf_path, conf_py_path],
-                cwd=temp_dir,
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-            if update_conf_result.returncode != 0:
-                logger.error("Updating conf.py failed: %s", update_conf_result.stderr)
-                _raise_publish_error(
-                    f"Updating Sphinx conf.py failed: {update_conf_result.stderr.strip()}",
-                    status_code=422,
-                )
+        # Apply AutoDoc's own trusted conf.py update logic in-process rather than
+        # executing whatever copy of update_conf.py currently sits in the cloned
+        # branch: that file is committed into the target repo, so a repo owner
+        # (or anyone with push access) could otherwise replace it with arbitrary
+        # code that this server would execute.
+        try:
+            update_conf(conf_py_path)
+        except ValueError as exc:
+            logger.error("Updating conf.py failed: %s", exc)
+            _raise_publish_error(f"Updating Sphinx conf.py failed: {exc}", status_code=422)
 
         _ensure_sphinx_project_name(conf_py_path, project_name)
         _ensure_api_index(index_path, project_name)

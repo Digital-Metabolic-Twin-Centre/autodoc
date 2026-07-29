@@ -976,8 +976,8 @@ async def cancel_run(
     del admin_user
     try:
         outcome = request_run_cancellation(run_id)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Run not found.")
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Run not found.") from exc
 
     if outcome not in {"queued", "running", "cancelled"}:
         raise HTTPException(status_code=422, detail="Only queued or running runs can be cancelled.")
@@ -1012,9 +1012,11 @@ async def download_artifact(
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
-    artifact_dir = Path(run.artifact_dir or "")
+    if not run.artifact_dir:
+        raise HTTPException(status_code=403, detail="Artifact path is invalid.")
+    artifact_dir = Path(run.artifact_dir).resolve()
     target = (artifact_dir / artifact_name).resolve()
-    if not artifact_dir or not str(target).startswith(str(artifact_dir.resolve())):
+    if not target.is_relative_to(artifact_dir):
         raise HTTPException(status_code=403, detail="Artifact path is invalid.")
     if not target.exists() or not target.is_file():
         raise HTTPException(status_code=404, detail="Artifact not found.")
@@ -1034,9 +1036,11 @@ async def preview_artifact(
         run = session.scalars(stmt).first()
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found.")
-    artifact_dir = Path(run.artifact_dir or "")
+    if not run.artifact_dir:
+        raise HTTPException(status_code=403, detail="Artifact path is invalid.")
+    artifact_dir = Path(run.artifact_dir).resolve()
     target = (artifact_dir / artifact_name).resolve()
-    if not artifact_dir or not str(target).startswith(str(artifact_dir.resolve())):
+    if not target.is_relative_to(artifact_dir):
         raise HTTPException(status_code=403, detail="Artifact path is invalid.")
     if not target.exists() or not target.is_file():
         raise HTTPException(status_code=404, detail="Artifact not found.")

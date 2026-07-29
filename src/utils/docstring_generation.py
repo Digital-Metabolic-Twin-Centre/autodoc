@@ -194,7 +194,9 @@ def _build_cli_command(provider: str, model: str | None) -> list[str]:
 def _generate_docstring_with_cli(provider: str, prompt: str, model: str | None = None) -> Optional[str]:
     command = _build_cli_command(provider, model)
     try:
-        result = subprocess.run(
+        # noqa justification: command comes from operator-controlled env vars
+        # (AUTODOC_CODEX_COMMAND / AUTODOC_CLAUDE_COMMAND), not repo/user input.
+        result = subprocess.run(  # noqa: S603
             command,
             input=prompt,
             capture_output=True,

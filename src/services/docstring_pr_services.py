@@ -420,7 +420,7 @@ def _run_ruff_on_patched_files(
             [sys.executable, "-m", "ruff", "format", *local_paths],
             [sys.executable, "-m", "ruff", "check", "--fix", *local_paths],
         ):
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603 - fixed argv list, no shell, no untrusted input
                 command,
                 cwd=temp_dir,
                 capture_output=True,

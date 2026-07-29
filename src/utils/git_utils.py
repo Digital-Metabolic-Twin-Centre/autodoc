@@ -22,6 +22,31 @@ from utils.redaction import redact_secrets
 logger = get_logger(__name__)
 
 DEFAULT_GIT_CLONE_TIMEOUT_SECONDS = 1800
+DEFAULT_HTTP_TIMEOUT_SECONDS = float(os.getenv("AUTODOC_HTTP_TIMEOUT", "30"))
+_TIMEOUT_ENFORCED_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
+
+
+class _TimeoutEnforcingRequests:
+    """Proxies the `requests` module, defaulting every call to a bounded timeout.
+
+    A GitHub/GitLab API call with no timeout can hang a job process
+    indefinitely, which is especially costly now that a small pool of
+    worker processes serves every onboarded repo concurrently.
+    """
+
+    def __getattr__(self, name: str):
+        attr = getattr(requests, name)
+        if name not in _TIMEOUT_ENFORCED_METHODS:
+            return attr
+
+        def _call_with_default_timeout(*args, **kwargs):
+            kwargs.setdefault("timeout", DEFAULT_HTTP_TIMEOUT_SECONDS)
+            return attr(*args, **kwargs)
+
+        return _call_with_default_timeout
+
+
+http = _TimeoutEnforcingRequests()
 
 
 class GitHubApiError(RuntimeError):
@@ -252,7 +277,7 @@ def clone_repository(
             git_url_with_token = clone_url
 
         clone_timeout = _git_clone_timeout_seconds()
-        subprocess.run(
+        subprocess.run(  # noqa: S603 - fixed `git clone` argv list, no shell
             _git_clone_command(git_url_with_token, branch, temp_dir),
             check=True,
             timeout=clone_timeout,
@@ -324,8 +349,8 @@ def _cleanup_old_clones(keep_count: int = 10) -> None:
                 try:
                     shutil.rmtree(old_clone, ignore_errors=True)
                     logger.debug(f"Cleaned up old clone directory: {old_clone}")
-                except Exception:
-                    pass
+                except Exception as cleanup_exc:
+                    logger.debug(f"Failed to clean up old clone directory {old_clone}: {cleanup_exc}")
     except Exception as e:
         logger.warning(f"Error during clone cleanup: {e}")
 
@@ -517,7 +542,7 @@ def fetch_content_from_github(repo_path: str, branch: str, file_path: str, acces
     """
     url = f"{GITHUB_API_URL}/repos/{repo_path}/contents/{file_path}"
     try:
-        response = requests.get(
+        response = http.get(
             url,
             headers={
                 "Authorization": f"Bearer {access_token}",
@@ -539,7 +564,7 @@ def fetch_content_bytes_from_github(repo_path: str, branch: str, file_path: str,
     """
     url = f"{GITHUB_API_URL}/repos/{repo_path}/contents/{file_path}"
     try:
-        response = requests.get(
+        response = http.get(
             url,
             headers={
                 "Authorization": f"Bearer {access_token}",
@@ -570,7 +595,7 @@ def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, priva
     file_path_encoded = urllib.parse.quote_plus(file_path)
     url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}/raw"
     try:
-        response = requests.get(
+        response = http.get(
             url,
             headers={"PRIVATE-TOKEN": private_token},
             params={"ref": branch},
@@ -636,7 +661,7 @@ def fetch_repo_tree(
                     clone_url = clone_url.replace("https://", f"https://oauth2:{access_token}@")
 
                 clone_timeout = _git_clone_timeout_seconds()
-                subprocess.run(
+                subprocess.run(  # noqa: S603 - fixed `git clone` argv list, no shell
                     _git_clone_command(clone_url, branch, temp_dir),
                     check=True,
                     timeout=clone_timeout,
@@ -770,7 +795,7 @@ def create_directory_and_add_files(
         base_api_url = GITHUB_API_URL
         # 1. Get the latest commit SHA of the branch
         ref_url = f"{base_api_url}/repos/{repo_url}/git/refs/heads/{branch}"
-        ref_resp = requests.get(ref_url, headers=_github_headers(token))
+        ref_resp = http.get(ref_url, headers=_github_headers(token))
         if ref_resp.status_code != 200:
             logger.error(f"Failed to get branch ref: {ref_resp.text}")
             return False
@@ -778,7 +803,7 @@ def create_directory_and_add_files(
 
         # 2. Get the tree SHA
         commit_url = f"{base_api_url}/repos/{repo_url}/git/commits/{latest_commit_sha}"
-        commit_resp = requests.get(commit_url, headers=_github_headers(token))
+        commit_resp = http.get(commit_url, headers=_github_headers(token))
         if commit_resp.status_code != 200:
             logger.error(f"Failed to get commit: {commit_resp.text}")
             return False
@@ -824,7 +849,7 @@ def create_directory_and_add_files(
 
         # 4. Create a new tree
         tree_url = f"{base_api_url}/repos/{repo_url}/git/trees"
-        tree_resp = requests.post(
+        tree_resp = http.post(
             tree_url,
             headers=_github_headers(token),
             json={"base_tree": base_tree_sha, "tree": tree},
@@ -837,7 +862,7 @@ def create_directory_and_add_files(
         # 5. Create a new commit
         commit_url = f"{base_api_url}/repos/{repo_url}/git/commits"
         commit_message = f"Create {dir_path} directory and added files"
-        commit_resp = requests.post(
+        commit_resp = http.post(
             commit_url,
             headers=_github_headers(token),
             json={
@@ -853,7 +878,7 @@ def create_directory_and_add_files(
 
         # 6. Update the branch reference
         update_ref_url = f"{base_api_url}/repos/{repo_url}/git/refs/heads/{branch}"
-        update_resp = requests.patch(
+        update_resp = http.patch(
             update_ref_url,
             headers=_github_headers(token),
             json={"sha": new_commit_sha},
@@ -878,7 +903,7 @@ def create_directory_and_add_files(
             check_url = (
                 f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{gitkeep_path_encoded}"
             )
-            check_resp = requests.get(
+            check_resp = http.get(
                 check_url,
                 headers={"PRIVATE-TOKEN": token},
                 params={"ref": branch},
@@ -921,7 +946,7 @@ def create_directory_and_add_files(
                 check_url = (
                     f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{target_path_encoded}"
                 )
-                check_resp = requests.get(
+                check_resp = http.get(
                     check_url,
                     headers={"PRIVATE-TOKEN": token},
                     params={"ref": branch},
@@ -946,7 +971,7 @@ def create_directory_and_add_files(
             "actions": actions,
         }
         headers = {"PRIVATE-TOKEN": token}
-        resp = requests.post(api_url, headers=headers, json=data)
+        resp = http.post(api_url, headers=headers, json=data)
         if resp.status_code not in (200, 201):
             error_msg = resp.text
             logger.error(f"GitLab commit error: {error_msg}")
@@ -998,7 +1023,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         api_url = f"{GITHUB_API_URL}/repos/{repo_url}/contents/{file_path}"
         headers = _github_headers(token)
         # Check if file exists to get its SHA
-        get_resp = requests.get(api_url, headers=headers, params={"ref": branch})
+        get_resp = http.get(api_url, headers=headers, params={"ref": branch})
         if get_resp.status_code == 200:
             sha = get_resp.json().get("sha")
         else:
@@ -1010,7 +1035,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         }
         if sha:
             data["sha"] = sha
-        resp = requests.put(api_url, headers=headers, json=data)
+        resp = http.put(api_url, headers=headers, json=data)
         if resp.status_code not in (201, 200):
             logger.error(f"GitHub create/update file error: {resp.text}")
             return False
@@ -1023,12 +1048,12 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         api_url = f"{GITLAB_API_URL}/api/v4/projects/{project_path_encoded}/repository/files/{file_path_encoded}"
         headers = {"PRIVATE-TOKEN": token}
         # Check if file exists
-        get_resp = requests.get(api_url, headers=headers, params={"ref": branch})
+        get_resp = http.get(api_url, headers=headers, params={"ref": branch})
         if get_resp.status_code == 200:
-            method = requests.put
+            method = http.put
             commit_message = f"Update {file_path}"
         else:
-            method = requests.post
+            method = http.post
             commit_message = f"Create {file_path}"
         if content_text is None:
             data = {
@@ -1059,7 +1084,7 @@ def ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, tok
     Ensures a GitHub branch exists by creating it from another branch when needed.
     """
     branch_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{new_branch}"
-    existing_resp = requests.get(branch_url, headers=_github_headers(token))
+    existing_resp = http.get(branch_url, headers=_github_headers(token))
     if existing_resp.status_code == 200:
         return True
     if existing_resp.status_code not in (404,):
@@ -1067,13 +1092,13 @@ def ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, tok
         return False
 
     source_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{source_branch}"
-    source_resp = requests.get(source_url, headers=_github_headers(token))
+    source_resp = http.get(source_url, headers=_github_headers(token))
     if source_resp.status_code != 200:
         logger.error(f"Failed to get source branch ref: {source_resp.text}")
         return False
 
     source_sha = source_resp.json()["object"]["sha"]
-    create_resp = requests.post(
+    create_resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/refs",
         headers=_github_headers(token),
         json={"ref": f"refs/heads/{new_branch}", "sha": source_sha},
@@ -1093,17 +1118,17 @@ def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: s
         "build_type": "legacy",
         "source": {"branch": pages_branch, "path": path},
     }
-    get_resp = requests.get(api_url, headers=_github_headers(token))
+    get_resp = http.get(api_url, headers=_github_headers(token))
     if get_resp.status_code == 200:
         pages_config = get_resp.json()
         current_source = pages_config.get("source") or {}
         if current_source.get("branch") == pages_branch and current_source.get("path") == path:
             logger.info("GitHub Pages is already configured for %s%s.", pages_branch, path)
             return True
-        resp = requests.put(api_url, headers=_github_headers(token), json=payload)
+        resp = http.put(api_url, headers=_github_headers(token), json=payload)
         success_codes = (204,)
     elif get_resp.status_code == 404:
-        resp = requests.post(api_url, headers=_github_headers(token), json=payload)
+        resp = http.post(api_url, headers=_github_headers(token), json=payload)
         success_codes = (201,)
     else:
         message = _parse_response_message(get_resp)
@@ -1128,7 +1153,7 @@ def request_github_pages_build(repo_url: str, token: str) -> bool:
     Requests a GitHub Pages rebuild for a legacy branch-based site.
     """
     api_url = f"{GITHUB_API_URL}/repos/{repo_url}/pages/builds"
-    resp = requests.post(api_url, headers=_github_headers(token))
+    resp = http.post(api_url, headers=_github_headers(token))
     if resp.status_code not in (201,):
         message = _parse_response_message(resp)
         logger.error(f"GitHub Pages build request failed: {resp.text}")
@@ -1145,7 +1170,7 @@ def list_github_tree(repo_url: str, ref: str, token: str, recursive: bool = True
     """
     api_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/trees/{ref}"
     params = {"recursive": "1"} if recursive else None
-    resp = requests.get(api_url, headers=_github_headers(token), params=params)
+    resp = http.get(api_url, headers=_github_headers(token), params=params)
     if resp.status_code != 200:
         logger.error(f"Failed to fetch GitHub tree for {ref}: {resp.text}")
         return []
@@ -1207,7 +1232,7 @@ def create_github_blob(repo_url: str, token: str, content: bytes) -> Optional[st
             "encoding": "base64",
         }
 
-    resp = requests.post(
+    resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/blobs",
         headers=_github_headers(token),
         json=payload,
@@ -1248,14 +1273,14 @@ def publish_github_directory_to_branch(
         return False
 
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{target_branch}"
-    ref_resp = requests.get(ref_url, headers=_github_headers(token))
+    ref_resp = http.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
         logger.error(f"Failed to get target branch ref: {ref_resp.text}")
         return False
     latest_commit_sha = ref_resp.json()["object"]["sha"]
 
     commit_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/commits/{latest_commit_sha}"
-    commit_resp = requests.get(commit_url, headers=_github_headers(token))
+    commit_resp = http.get(commit_url, headers=_github_headers(token))
     if commit_resp.status_code != 200:
         logger.error(f"Failed to get target branch commit: {commit_resp.text}")
         return False
@@ -1304,7 +1329,7 @@ def publish_github_directory_to_branch(
         )
 
     tree_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/trees"
-    tree_resp = requests.post(
+    tree_resp = http.post(
         tree_url,
         headers=_github_headers(token),
         json={"base_tree": base_tree_sha, "tree": tree},
@@ -1314,7 +1339,7 @@ def publish_github_directory_to_branch(
         return False
     new_tree_sha = tree_resp.json()["sha"]
 
-    commit_resp = requests.post(
+    commit_resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/commits",
         headers=_github_headers(token),
         json={
@@ -1328,7 +1353,7 @@ def publish_github_directory_to_branch(
         return False
     new_commit_sha = commit_resp.json()["sha"]
 
-    update_resp = requests.patch(
+    update_resp = http.patch(
         ref_url,
         headers=_github_headers(token),
         json={"sha": new_commit_sha},
@@ -1357,7 +1382,7 @@ def publish_local_directory_to_github_branch(
         )
 
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{target_branch}"
-    ref_resp = requests.get(ref_url, headers=_github_headers(token))
+    ref_resp = http.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
         logger.error(f"Failed to get target branch ref: {ref_resp.text}")
         raise GitHubApiError(
@@ -1366,7 +1391,7 @@ def publish_local_directory_to_github_branch(
         )
     latest_commit_sha = ref_resp.json()["object"]["sha"]
 
-    commit_resp = requests.get(
+    commit_resp = http.get(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/commits/{latest_commit_sha}",
         headers=_github_headers(token),
     )
@@ -1419,7 +1444,7 @@ def publish_local_directory_to_github_branch(
     for stale_path in stale_paths:
         tree.append({"path": stale_path, "mode": "100644", "type": "blob", "sha": None})
 
-    tree_resp = requests.post(
+    tree_resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/trees",
         headers=_github_headers(token),
         json={"base_tree": base_tree_sha, "tree": tree},
@@ -1432,7 +1457,7 @@ def publish_local_directory_to_github_branch(
         )
     new_tree_sha = tree_resp.json()["sha"]
 
-    new_commit_resp = requests.post(
+    new_commit_resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/commits",
         headers=_github_headers(token),
         json={
@@ -1449,7 +1474,7 @@ def publish_local_directory_to_github_branch(
         )
     new_commit_sha = new_commit_resp.json()["sha"]
 
-    update_resp = requests.patch(
+    update_resp = http.patch(
         ref_url,
         headers=_github_headers(token),
         json={"sha": new_commit_sha},
@@ -1479,13 +1504,13 @@ def commit_files_to_github_branch(
         return False
 
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{branch}"
-    ref_resp = requests.get(ref_url, headers=_github_headers(token))
+    ref_resp = http.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
         logger.error(f"Failed to get target branch ref: {ref_resp.text}")
         return False
     latest_commit_sha = ref_resp.json()["object"]["sha"]
 
-    commit_resp = requests.get(
+    commit_resp = http.get(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/commits/{latest_commit_sha}",
         headers=_github_headers(token),
     )
@@ -1504,7 +1529,7 @@ def commit_files_to_github_branch(
         for file_path, content in files.items()
     ]
 
-    tree_resp = requests.post(
+    tree_resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/trees",
         headers=_github_headers(token),
         json={"base_tree": base_tree_sha, "tree": tree},
@@ -1513,7 +1538,7 @@ def commit_files_to_github_branch(
         logger.error(f"Failed to create suggestion tree: {tree_resp.text}")
         return False
 
-    new_commit_resp = requests.post(
+    new_commit_resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/git/commits",
         headers=_github_headers(token),
         json={
@@ -1526,7 +1551,7 @@ def commit_files_to_github_branch(
         logger.error(f"Failed to create suggestion commit: {new_commit_resp.text}")
         return False
 
-    update_resp = requests.patch(
+    update_resp = http.patch(
         ref_url,
         headers=_github_headers(token),
         json={"sha": new_commit_resp.json()["sha"]},
@@ -1549,7 +1574,7 @@ def create_github_pull_request(
     """
     Opens a GitHub pull request and returns its URL.
     """
-    resp = requests.post(
+    resp = http.post(
         f"{GITHUB_API_URL}/repos/{repo_url}/pulls",
         headers=_github_headers(token),
         json={
@@ -1579,7 +1604,7 @@ def list_open_github_pull_requests(repo_url: str, base_branch: str, token: str) 
     """
     Lists open GitHub pull requests targeting the provided base branch.
     """
-    resp = requests.get(
+    resp = http.get(
         f"{GITHUB_API_URL}/repos/{repo_url}/pulls",
         headers=_github_headers(token),
         params={"state": "open", "base": base_branch, "per_page": 100},
@@ -1595,7 +1620,7 @@ def list_github_pull_request_files(repo_url: str, pull_number: int, token: str) 
     """
     Lists files changed in a GitHub pull request.
     """
-    resp = requests.get(
+    resp = http.get(
         f"{GITHUB_API_URL}/repos/{repo_url}/pulls/{pull_number}/files",
         headers=_github_headers(token),
         params={"per_page": 100},

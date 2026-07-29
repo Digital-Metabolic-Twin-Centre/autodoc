@@ -1,10 +1,19 @@
 import json
+import os
+import time
 from datetime import UTC, datetime
+from multiprocessing import Process
 
+import admin.jobs as jobs
 from admin.database import SessionLocal, redact_leaked_secrets_from_run_records, scrub_sensitive_run_payloads
 from admin.jobs import _execute_endpoint, _execute_run_process, reconcile_interrupted_runs, request_run_cancellation
 from admin.models import RepositoryConfig, RunRecord
 from services.workflow_service import WorkflowRunResult
+
+
+def _isolated_sleep_target(seconds: float) -> None:
+    os.setsid()
+    time.sleep(seconds)
 
 
 def test_request_run_cancellation_marks_queued_run_cancelled():
@@ -50,6 +59,65 @@ def test_request_run_cancellation_marks_running_run_cancelled():
         assert stored_run is not None
         assert stored_run.status == "cancelled"
         assert stored_run.error_message is not None
+
+
+def test_request_run_cancellation_targets_only_the_specified_concurrent_run():
+    with SessionLocal() as session:
+        run_a = RunRecord(
+            endpoint="/generate",
+            status="running",
+            created_at=datetime.now(UTC),
+            started_at=datetime.now(UTC),
+        )
+        run_b = RunRecord(
+            endpoint="/generate",
+            status="running",
+            created_at=datetime.now(UTC),
+            started_at=datetime.now(UTC),
+        )
+        session.add_all([run_a, run_b])
+        session.commit()
+        session.refresh(run_a)
+        session.refresh(run_b)
+        run_a_id, run_b_id = run_a.id, run_b.id
+
+    process_a = Process(target=_isolated_sleep_target, args=(5,), daemon=True)
+    process_b = Process(target=_isolated_sleep_target, args=(5,), daemon=True)
+    process_a.start()
+    process_b.start()
+
+    with jobs.PROCESS_LOCK:
+        jobs.RUNNING_PROCESSES[run_a_id] = process_a
+        jobs.RUNNING_PROCESSES[run_b_id] = process_b
+
+    try:
+        outcome = request_run_cancellation(run_a_id)
+
+        assert outcome == "cancelled"
+        assert process_b.is_alive()
+        with jobs.PROCESS_LOCK:
+            assert run_a_id not in jobs.RUNNING_PROCESSES
+            assert run_b_id in jobs.RUNNING_PROCESSES
+
+        with SessionLocal() as session:
+            stored_run_a = session.get(RunRecord, run_a_id)
+            stored_run_b = session.get(RunRecord, run_b_id)
+            assert stored_run_a is not None and stored_run_a.status == "cancelled"
+            assert stored_run_b is not None and stored_run_b.status == "running"
+    finally:
+        with jobs.PROCESS_LOCK:
+            jobs.RUNNING_PROCESSES.pop(run_a_id, None)
+            jobs.RUNNING_PROCESSES.pop(run_b_id, None)
+        process_b.terminate()
+        process_a.join(timeout=2)
+        process_b.join(timeout=2)
+
+
+def test_ensure_dispatchers_starts_up_to_the_configured_pool_size():
+    jobs._ensure_dispatchers()
+
+    alive_dispatchers = [thread for thread in jobs.DISPATCHER_THREADS if thread.is_alive()]
+    assert len(alive_dispatchers) == jobs.MAX_CONCURRENT_JOBS
 
 
 def test_reconcile_interrupted_runs_marks_stale_running_run_failed():

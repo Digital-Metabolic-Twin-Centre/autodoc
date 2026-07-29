@@ -38,10 +38,13 @@ class QueuedJob:
 
 JOB_QUEUE: deque[QueuedJob] = deque()
 QUEUE_CONDITION = Condition()
-DISPATCHER_THREAD: Thread | None = None
+# Bounds how many runs (each its own git clone + Sphinx build + LLM calls) execute at
+# once across all onboarded repos. Raise via ADMIN_MAX_CONCURRENT_JOBS once disk/CPU/
+# OpenAI-budget headroom is confirmed for a given deployment.
+MAX_CONCURRENT_JOBS = max(1, int(os.getenv("ADMIN_MAX_CONCURRENT_JOBS", "2")))
+DISPATCHER_THREADS: list[Thread] = []
 DISPATCHER_LOCK = Lock()
-CURRENT_PROCESS: Process | None = None
-CURRENT_RUN_ID: int | None = None
+RUNNING_PROCESSES: dict[int, Process] = {}
 PROCESS_LOCK = Lock()
 UNEXPECTED_EXIT_MESSAGE = "Job process exited unexpectedly before the run could finish."
 RESTART_EXIT_MESSAGE = (
@@ -172,9 +175,9 @@ def _terminate_process_tree(process: Process) -> bool:
     return not process.is_alive()
 
 
-def _ensure_dispatcher() -> None:
+def _ensure_dispatchers() -> None:
     """
-    Ensure the background admin dispatcher thread is running.
+    Ensure up to MAX_CONCURRENT_JOBS background dispatcher threads are running.
 
     Args:
         None.
@@ -182,21 +185,21 @@ def _ensure_dispatcher() -> None:
         None: This function does not return a value.
 
     """
-    global DISPATCHER_THREAD
     with DISPATCHER_LOCK:
-        if DISPATCHER_THREAD and DISPATCHER_THREAD.is_alive():
-            return
-        DISPATCHER_THREAD = Thread(
-            target=_dispatch_loop,
-            name="autodoc-admin-dispatcher",
-            daemon=True,
-        )
-        DISPATCHER_THREAD.start()
+        DISPATCHER_THREADS[:] = [thread for thread in DISPATCHER_THREADS if thread.is_alive()]
+        while len(DISPATCHER_THREADS) < MAX_CONCURRENT_JOBS:
+            thread = Thread(
+                target=_dispatch_loop,
+                name=f"autodoc-admin-dispatcher-{len(DISPATCHER_THREADS) + 1}",
+                daemon=True,
+            )
+            DISPATCHER_THREADS.append(thread)
+            thread.start()
 
 
 def enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
     """
-    Enqueue a run job and notify the dispatcher.
+    Enqueue a run job and notify the dispatcher pool.
 
     Args:
         run_id (int): Unique run identifier. endpoint (str): Target endpoint. payload (dict[str,
@@ -208,18 +211,20 @@ def enqueue_run(run_id: int, endpoint: str, payload: dict[str, Any]) -> None:
     with QUEUE_CONDITION:
         JOB_QUEUE.append(QueuedJob(run_id=run_id, endpoint=endpoint, payload=payload))
         QUEUE_CONDITION.notify()
-    _ensure_dispatcher()
+    _ensure_dispatchers()
 
 
 def _dispatch_loop() -> None:
     """
     Continuously dispatch queued jobs into isolated worker processes.
 
+    Runs as one of a small pool of worker threads (MAX_CONCURRENT_JOBS) all
+    pulling from the shared queue, so up to that many runs execute at once
+    instead of fully serializing every onboarded repo behind a single job.
+
     Args: None.
     Returns: None; runs indefinitely and updates run state after process completion.
     """
-    global CURRENT_PROCESS, CURRENT_RUN_ID
-
     while True:
         with QUEUE_CONDITION:
             while not JOB_QUEUE:
@@ -237,15 +242,13 @@ def _dispatch_loop() -> None:
             daemon=True,
         )
         with PROCESS_LOCK:
-            CURRENT_PROCESS = process
-            CURRENT_RUN_ID = job.run_id
+            RUNNING_PROCESSES[job.run_id] = process
 
         process.start()
         process.join()
 
         with PROCESS_LOCK:
-            CURRENT_PROCESS = None
-            CURRENT_RUN_ID = None
+            RUNNING_PROCESSES.pop(job.run_id, None)
 
         with SessionLocal() as session:
             run = session.get(RunRecord, job.run_id)
@@ -281,16 +284,13 @@ def request_run_cancellation(run_id: int) -> str:
                 return "cancelled"
 
     with PROCESS_LOCK:
-        active_process = CURRENT_PROCESS
-        active_run_id = CURRENT_RUN_ID
+        active_process = RUNNING_PROCESSES.get(run_id)
 
-    if (
-        active_run_id == run_id
-        and active_process is not None
-        and active_process.is_alive()
-    ):
+    if active_process is not None and active_process.is_alive():
         terminated = _terminate_process_tree(active_process)
         if terminated:
+            with PROCESS_LOCK:
+                RUNNING_PROCESSES.pop(run_id, None)
             _mark_cancelled(
                 run_id, "Run was cancelled while execution was in progress."
             )
