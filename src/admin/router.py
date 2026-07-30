@@ -356,6 +356,20 @@ def _artifact_entries(run: RunRecord) -> list[dict[str, str]]:
     return entries
 
 
+def _load_docstring_suggestions(run: RunRecord) -> list[dict[str, Any]]:
+    if run.endpoint != "/generate" or not run.artifact_dir:
+        return []
+    suggestions_path = os.path.join(run.artifact_dir, "suggested_docstrings.json")
+    if not os.path.exists(suggestions_path):
+        return []
+    try:
+        with open(suggestions_path, "r", encoding="utf-8") as file_handle:
+            payload = json.load(file_handle)
+    except (OSError, json.JSONDecodeError):
+        return []
+    return payload.get("suggestions", [])
+
+
 def _run_log_entries(run: RunRecord) -> list[dict[str, str]]:
     artifact_entries = _artifact_entries(run)
     entries_by_name = {entry["name"]: dict(entry) for entry in artifact_entries}
@@ -930,6 +944,7 @@ async def run_detail(
         "artifacts": _artifact_entries(run),
         "run_logs": _run_log_entries(run),
         "log_snippet": _log_snippet(run.log_path),
+        "docstring_suggestions": _load_docstring_suggestions(run),
         "admin_user": admin_user,
     }
     return _template_response(request, "admin/runs/detail.html", context)
@@ -950,6 +965,7 @@ async def run_status_fragment(
         "run": run,
         "endpoint_labels": ENDPOINT_LABELS,
         "admin_user": admin_user,
+        "is_status_poll": True,
     }
     return _template_response(request, "admin/partials/run_status.html", context)
 

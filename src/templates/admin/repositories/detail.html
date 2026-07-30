@@ -125,7 +125,7 @@
         draft run</button>
     </form>
     
-    <form method="post" action="/admin/repositories/{{ repository.id }}/suggest-pr"
+    <form id="suggest-pr" method="post" action="/admin/repositories/{{ repository.id }}/suggest-pr"
       class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <h3 class="text-lg font-semibold">3. Docstring suggestion PR</h3>

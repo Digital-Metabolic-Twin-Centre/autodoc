@@ -75,3 +75,6 @@
   </div>
   {% endif %}
 </div>
+{% if is_status_poll and run.status not in ['queued', 'running'] %}
+<script>window.location.reload();</script>
+{% endif %}

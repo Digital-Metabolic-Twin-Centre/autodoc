@@ -15,6 +15,7 @@ from admin.router import (
     _default_suggestion_branch,
     _fmt_duration,
     _json_loads,
+    _load_docstring_suggestions,
     _log_snippet,
     _parse_target_folders,
     _queue_payload_with_repository_secret,
@@ -767,6 +768,57 @@ def test_run_detail_renders_for_existing_run(monkeypatch):
             session.commit()
 
 
+def test_run_detail_renders_docstring_suggestions_preview(monkeypatch, tmp_path):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    artifact_dir = tmp_path / "artifacts"
+    artifact_dir.mkdir()
+    (artifact_dir / "suggested_docstrings.json").write_text(
+        json.dumps(
+            {
+                "provider": "github",
+                "repo_path": "example/project",
+                "branch": "main",
+                "suggestions": [
+                    {
+                        "file_path": "src/app.py",
+                        "file_name": "app.py",
+                        "function_name": "run",
+                        "block_type": "function",
+                        "line_number": 10,
+                        "language": "python",
+                        "generated_docstring": "Runs the app.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="completed",
+            artifact_dir=str(artifact_dir),
+            created_at=datetime.now(UTC),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(run_detail(run_id=run_id, request=_fake_request(), admin_user="tester"))
+        assert response.status_code == 200
+        body = response.body.decode("utf-8")
+        assert "Docstring suggestions preview" in body
+        assert "src/app.py" in body
+        assert "Runs the app." in body
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
 def test_run_detail_raises_404_for_missing_run():
     _assert_raises_http_exception(run_detail(run_id=999_999_999, request=_fake_request(), admin_user="tester"), 404)
 
@@ -784,6 +836,7 @@ def test_run_status_fragment_renders_and_404s(monkeypatch):
     try:
         response = run(run_status_fragment(run_id=run_id, request=_fake_request(), admin_user="tester"))
         assert response.status_code == 200
+        assert "window.location.reload()" in response.body.decode("utf-8")
     finally:
         with SessionLocal() as session:
             session.query(RunRecord).filter(RunRecord.id == run_id).delete()
@@ -792,6 +845,46 @@ def test_run_status_fragment_renders_and_404s(monkeypatch):
     _assert_raises_http_exception(
         run_status_fragment(run_id=999_999_999, request=_fake_request(), admin_user="tester"), 404
     )
+
+
+def test_run_status_fragment_omits_reload_script_while_in_progress(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(endpoint="/generate", status="running", created_at=datetime.now(UTC))
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(run_status_fragment(run_id=run_id, request=_fake_request(), admin_user="tester"))
+        assert response.status_code == 200
+        assert "window.location.reload()" not in response.body.decode("utf-8")
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
+def test_run_detail_full_page_never_includes_reload_script(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    with SessionLocal() as session:
+        run_record = RunRecord(endpoint="/generate", status="completed", created_at=datetime.now(UTC))
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(run_detail(run_id=run_id, request=_fake_request(), admin_user="tester"))
+        assert response.status_code == 200
+        assert "window.location.reload()" not in response.body.decode("utf-8")
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
 
 
 def test_run_row_fragment_renders_and_404s(monkeypatch):
@@ -850,6 +943,69 @@ def test_run_log_entries_includes_non_prioritized_log_and_txt_files(tmp_path):
     entries = _run_log_entries(run)
 
     assert [entry["name"] for entry in entries] == ["extra_debug.log"]
+
+
+def test_load_docstring_suggestions_reads_generate_artifact(tmp_path):
+    artifact_dir = tmp_path / "artifacts"
+    artifact_dir.mkdir()
+    (artifact_dir / "suggested_docstrings.json").write_text(
+        json.dumps(
+            {
+                "provider": "github",
+                "repo_path": "example/project",
+                "branch": "main",
+                "suggestions": [
+                    {
+                        "file_path": "src/app.py",
+                        "file_name": "app.py",
+                        "function_name": "run",
+                        "block_type": "function",
+                        "line_number": 10,
+                        "language": "python",
+                        "generated_docstring": "Runs the app.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    run = RunRecord(endpoint="/generate", artifact_dir=str(artifact_dir))
+
+    suggestions = _load_docstring_suggestions(run)
+
+    assert suggestions == [
+        {
+            "file_path": "src/app.py",
+            "file_name": "app.py",
+            "function_name": "run",
+            "block_type": "function",
+            "line_number": 10,
+            "language": "python",
+            "generated_docstring": "Runs the app.",
+        }
+    ]
+
+
+def test_load_docstring_suggestions_returns_empty_for_non_generate_endpoint(tmp_path):
+    artifact_dir = tmp_path / "artifacts"
+    artifact_dir.mkdir()
+    (artifact_dir / "suggested_docstrings.json").write_text(
+        json.dumps({"suggestions": [{"file_path": "src/app.py"}]}), encoding="utf-8"
+    )
+
+    run = RunRecord(endpoint="/publish-pages", artifact_dir=str(artifact_dir))
+
+    assert _load_docstring_suggestions(run) == []
+
+
+def test_load_docstring_suggestions_returns_empty_when_artifact_missing(tmp_path):
+    artifact_dir = tmp_path / "artifacts"
+    artifact_dir.mkdir()
+
+    run = RunRecord(endpoint="/generate", artifact_dir=str(artifact_dir))
+
+    assert _load_docstring_suggestions(run) == []
 
 
 def test_log_snippet_returns_tail_of_file(tmp_path):
