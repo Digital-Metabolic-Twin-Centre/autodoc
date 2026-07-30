@@ -34,11 +34,19 @@
               <div class="text-slate-500 dark:text-slate-400">{{ repository.preferred_model or 'default model' }}</div>
             </td>
             <td class="px-4 py-4 text-slate-500 dark:text-slate-400">••••{{ repository.token_last4 }}</td>
-            <td class="px-4 py-4 text-right">
-              <form method="post" action="/admin/repositories/{{ repository.id }}/duplicate">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white">Duplicate</button>
-              </form>
+            <td class="px-4 py-4">
+              <div class="flex justify-end gap-2">
+                <form method="post" action="/admin/repositories/{{ repository.id }}/duplicate"
+                  onsubmit="return confirm('Duplicate repository configuration \'{{ repository.name }}\'?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-teal-500 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:text-slate-200 dark:hover:border-teal-400 dark:hover:text-white">Duplicate</button>
+                </form>
+                <form method="post" action="/admin/repositories/{{ repository.id }}/delete"
+                  onsubmit="return confirm('Delete repository configuration \'{{ repository.name }}\'? This cannot be undone.');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                  <button class="rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:border-rose-500 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-500/20 dark:border-rose-500/40 dark:text-rose-200 dark:hover:border-rose-300 dark:hover:bg-rose-500/10">Delete</button>
+                </form>
+              </div>
             </td>
           </tr>
           {% else %}
