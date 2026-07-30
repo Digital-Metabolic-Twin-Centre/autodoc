@@ -58,7 +58,7 @@ def test_execute_generate_request_raises_permission_error_when_sphinx_setup_fail
     req = RepoRequest(provider="github", repo_url="octo/example", token="tok", branch="main")
     monkeypatch.setattr(
         "services.workflow_service.analyse_repo",
-        lambda *args, **kwargs: ("/tmp/octo-example/analysis.json", []),
+        lambda *args, **kwargs: ("/tmp/octo-example/analysis.json", [], []),
     )
     monkeypatch.setattr("services.workflow_service.create_sphinx_setup", lambda *args, **kwargs: False)
 

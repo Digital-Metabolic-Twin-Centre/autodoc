@@ -141,7 +141,7 @@ def execute_generate_request(
         )
 
     _notify_progress(progress_callback, 25.0, "Analyzing repository")
-    analysis_file, docstring_analysis = analyse_repo(
+    analysis_file, docstring_analysis, language_summary = analyse_repo(
         req.provider,
         req.repo_url,
         req.token,
@@ -173,6 +173,7 @@ def execute_generate_request(
         "status": "success",
         "sphinx_setup_created": sphinx_setup_created,
         "Docstring_analysis": docstring_analysis,
+        "languages_detected": language_summary,
     }
     artifact_dir = os.path.dirname(analysis_file)
     log_path = os.path.join(artifact_dir, "app.log")

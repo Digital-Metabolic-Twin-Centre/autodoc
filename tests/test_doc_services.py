@@ -7,6 +7,8 @@ import services.doc_services as doc_services_module
 from services.architecture_services import ArchitectureAnalysisError
 from services.doc_services import (
     RepoAnalysisError,
+    _build_language_summary,
+    _detect_reporting_language,
     _file_matches_target_folders,
     _load_reusable_suggestions,
     _normalize_target_folders,
@@ -20,6 +22,23 @@ def test_normalize_target_folders_trims_whitespace_and_slashes():
         "src",
         "docs",
         "nested/path",
+    ]
+
+
+def test_detect_reporting_language_recognizes_supported_and_unsupported_extensions():
+    assert _detect_reporting_language("app.py") == "python"
+    assert _detect_reporting_language("Main.java") == "java"
+    assert _detect_reporting_language("README.md") is None
+    assert _detect_reporting_language("package.json") is None
+
+
+def test_build_language_summary_flags_supported_languages_and_sorts_by_count():
+    summary = _build_language_summary({"python": 5, "java": 2, "go": 2})
+
+    assert summary == [
+        {"language": "python", "display_name": "Python", "file_count": 5, "supported": True},
+        {"language": "go", "display_name": "Go", "file_count": 2, "supported": False},
+        {"language": "java", "display_name": "Java", "file_count": 2, "supported": False},
     ]
 
 

@@ -370,6 +370,16 @@ def _load_docstring_suggestions(run: RunRecord) -> list[dict[str, Any]]:
     return payload.get("suggestions", [])
 
 
+def _load_language_summary(run: RunRecord) -> list[dict[str, Any]]:
+    if run.endpoint != "/generate" or not run.result_payload:
+        return []
+    try:
+        payload = json.loads(run.result_payload)
+    except json.JSONDecodeError:
+        return []
+    return payload.get("languages_detected", [])
+
+
 def _run_log_entries(run: RunRecord) -> list[dict[str, str]]:
     artifact_entries = _artifact_entries(run)
     entries_by_name = {entry["name"]: dict(entry) for entry in artifact_entries}
@@ -945,6 +955,7 @@ async def run_detail(
         "run_logs": _run_log_entries(run),
         "log_snippet": _log_snippet(run.log_path),
         "docstring_suggestions": _load_docstring_suggestions(run),
+        "language_summary": _load_language_summary(run),
         "admin_user": admin_user,
     }
     return _template_response(request, "admin/runs/detail.html", context)

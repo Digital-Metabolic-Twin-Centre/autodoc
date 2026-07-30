@@ -58,6 +58,96 @@ class RepoAnalysisError(RuntimeError):
         self.status_code = status_code
 
 
+SUPPORTED_DOCSTRING_LANGUAGES = {"python", "javascript", "typescript", "matlab"}
+
+_LANGUAGE_EXTENSIONS = {
+    ".py": "python",
+    ".pyw": "python",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".m": "matlab",
+    ".matlab": "matlab",
+    ".java": "java",
+    ".go": "go",
+    ".rb": "ruby",
+    ".php": "php",
+    ".c": "c",
+    ".h": "c",
+    ".cpp": "c++",
+    ".cc": "c++",
+    ".cxx": "c++",
+    ".hpp": "c++",
+    ".cs": "c#",
+    ".rs": "rust",
+    ".swift": "swift",
+    ".kt": "kotlin",
+    ".kts": "kotlin",
+    ".scala": "scala",
+    ".dart": "dart",
+    ".sh": "shell",
+    ".bash": "shell",
+    ".pl": "perl",
+    ".r": "r",
+    ".lua": "lua",
+    ".ex": "elixir",
+    ".exs": "elixir",
+    ".hs": "haskell",
+    ".clj": "clojure",
+}
+
+_LANGUAGE_DISPLAY_NAMES = {
+    "python": "Python",
+    "javascript": "JavaScript",
+    "typescript": "TypeScript",
+    "matlab": "MATLAB",
+    "java": "Java",
+    "go": "Go",
+    "ruby": "Ruby",
+    "php": "PHP",
+    "c": "C",
+    "c++": "C++",
+    "c#": "C#",
+    "rust": "Rust",
+    "swift": "Swift",
+    "kotlin": "Kotlin",
+    "scala": "Scala",
+    "dart": "Dart",
+    "shell": "Shell",
+    "perl": "Perl",
+    "r": "R",
+    "lua": "Lua",
+    "elixir": "Elixir",
+    "haskell": "Haskell",
+    "clojure": "Clojure",
+}
+
+
+def _detect_reporting_language(file_name: str) -> str | None:
+    """
+    Classify a file by extension for the repo-wide language summary.
+
+    Unlike the docstring-generation language check, this recognizes a broader
+    set of programming languages purely for reporting which ones Auto Doc does
+    and does not support in a given repository.
+    """
+    _, ext = os.path.splitext(file_name.lower())
+    return _LANGUAGE_EXTENSIONS.get(ext)
+
+
+def _build_language_summary(language_counts: dict[str, int]) -> list[dict]:
+    return [
+        {
+            "language": language,
+            "display_name": _LANGUAGE_DISPLAY_NAMES.get(language, language.title()),
+            "file_count": count,
+            "supported": language in SUPPORTED_DOCSTRING_LANGUAGES,
+        }
+        for language, count in sorted(language_counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+
+
 def _normalize_target_folders(target_folders):
     """
     Normalize a list of target folder paths by stripping whitespace, quotes, and leading/trailing slashes.
@@ -265,14 +355,17 @@ def analyse_repo(
 
     Returns:
         tuple:
-            - files_missing_docstring (list): List of dicts for files/items missing docstring.
-            - file_present_docstring (list): List of dicts for files/items with docstring.
+            - output_path (str): Path to the written block analysis CSV report.
+            - block_analysis_list (list): List of dicts with per-file docstring analysis.
+            - language_summary (list): Per-language file counts detected in scope, each flagged
+              with whether Auto Doc supports docstring generation for that language.
     """
     block_analysis_list = []
     normalized_target_folders = _normalize_target_folders(target_folders)
     supported_files_found = 0
     supported_files_in_scope = 0
     unreadable_supported_files = 0
+    language_counts: dict[str, int] = {}
     logger.info(f"Analyzing repo: provider={provider}, url={repo_url}, branch={branch}")
     if normalized_target_folders:
         logger.info("Limiting analysis to target folders: %s", normalized_target_folders)
@@ -311,6 +404,10 @@ def analyse_repo(
                 if file.get("type", "") != file_type_key:
                     continue
                 file_name = file.get("name", "")
+                if _file_matches_target_folders(file.get("path", ""), normalized_target_folders):
+                    reporting_language = _detect_reporting_language(file_name)
+                    if reporting_language:
+                        language_counts[reporting_language] = language_counts.get(reporting_language, 0) + 1
                 language = None
                 if file_name.endswith((".py", ".pyw")):
                     language = "python"
@@ -570,4 +667,4 @@ def analyse_repo(
             f"from the supported files on branch '{branch}'.",
             status_code=422,
         )
-    return output_path, block_analysis_list
+    return output_path, block_analysis_list, _build_language_summary(language_counts)

@@ -16,6 +16,7 @@ from admin.router import (
     _fmt_duration,
     _json_loads,
     _load_docstring_suggestions,
+    _load_language_summary,
     _log_snippet,
     _parse_target_folders,
     _queue_payload_with_repository_secret,
@@ -819,6 +820,38 @@ def test_run_detail_renders_docstring_suggestions_preview(monkeypatch, tmp_path)
             session.commit()
 
 
+def test_run_detail_renders_language_summary(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    languages = [
+        {"language": "python", "display_name": "Python", "file_count": 12, "supported": True},
+        {"language": "java", "display_name": "Java", "file_count": 3, "supported": False},
+    ]
+    with SessionLocal() as session:
+        run_record = RunRecord(
+            endpoint="/generate",
+            status="completed",
+            result_payload=json.dumps({"status": "success", "languages_detected": languages}),
+            created_at=datetime.now(UTC),
+        )
+        session.add(run_record)
+        session.commit()
+        session.refresh(run_record)
+        run_id = run_record.id
+
+    try:
+        response = run(run_detail(run_id=run_id, request=_fake_request(), admin_user="tester"))
+        assert response.status_code == 200
+        body = response.body.decode("utf-8")
+        assert "Languages detected" in body
+        assert "Python" in body
+        assert "Java" in body
+    finally:
+        with SessionLocal() as session:
+            session.query(RunRecord).filter(RunRecord.id == run_id).delete()
+            session.commit()
+
+
 def test_run_detail_raises_404_for_missing_run():
     _assert_raises_http_exception(run_detail(run_id=999_999_999, request=_fake_request(), admin_user="tester"), 404)
 
@@ -1006,6 +1039,34 @@ def test_load_docstring_suggestions_returns_empty_when_artifact_missing(tmp_path
     run = RunRecord(endpoint="/generate", artifact_dir=str(artifact_dir))
 
     assert _load_docstring_suggestions(run) == []
+
+
+def test_load_language_summary_reads_generate_result_payload():
+    languages = [
+        {"language": "python", "display_name": "Python", "file_count": 12, "supported": True},
+        {"language": "java", "display_name": "Java", "file_count": 3, "supported": False},
+    ]
+    run = RunRecord(
+        endpoint="/generate",
+        result_payload=json.dumps({"status": "success", "languages_detected": languages}),
+    )
+
+    assert _load_language_summary(run) == languages
+
+
+def test_load_language_summary_returns_empty_for_non_generate_endpoint():
+    run = RunRecord(
+        endpoint="/publish-pages",
+        result_payload=json.dumps({"languages_detected": [{"language": "python"}]}),
+    )
+
+    assert _load_language_summary(run) == []
+
+
+def test_load_language_summary_returns_empty_when_result_payload_missing():
+    run = RunRecord(endpoint="/generate", result_payload=None)
+
+    assert _load_language_summary(run) == []
 
 
 def test_log_snippet_returns_tail_of_file(tmp_path):

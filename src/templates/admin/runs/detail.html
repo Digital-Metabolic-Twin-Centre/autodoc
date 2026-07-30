@@ -217,6 +217,23 @@
         </dl>
       </div>
 
+      {% if language_summary %}
+      <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
+        <h3 class="text-lg font-semibold">Languages detected</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400">File types found while analyzing this repository.
+          Auto Doc generates docstrings for supported languages only.</p>
+        <div class="mt-4 flex flex-wrap gap-2">
+          {% for lang in language_summary %}
+          <span
+            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium {% if lang.supported %}bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200{% else %}bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200{% endif %}">
+            {% if lang.supported %}✓{% else %}✗{% endif %} {{ lang.display_name }}
+            <span class="opacity-70">({{ lang.file_count }})</span>
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
       <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-shell-900 dark:ring-slate-800">
         <h3 class="text-lg font-semibold">Run logs</h3>
         <p class="text-sm text-slate-500 dark:text-slate-400">Open the key logs and fallback reports captured for this run.</p>

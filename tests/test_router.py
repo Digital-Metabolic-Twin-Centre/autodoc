@@ -65,6 +65,7 @@ def test_generate_endpoint_returns_success_when_services_succeed(monkeypatch):
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             captured.update({"model": model, "reuse_doc": reuse_doc}) or "analysis.csv",
             [{"file_name": "a.py"}],
+            [],
         ),
     )
     monkeypatch.setattr(
@@ -129,7 +130,7 @@ def test_generate_endpoint_uses_provided_model(monkeypatch):
     def fake_analyse_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
         captured["model"] = model
         captured["reuse_doc"] = reuse_doc
-        return "analysis.csv", [{"file_name": "a.py"}]
+        return "analysis.csv", [{"file_name": "a.py"}], []
 
     monkeypatch.setattr("services.workflow_service.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
@@ -159,7 +160,7 @@ def test_generate_endpoint_uses_reuse_doc_flag(monkeypatch):
 
     def fake_analyse_repo(provider, repo_url, token, branch, target_folders, model, reuse_doc):
         captured["reuse_doc"] = reuse_doc
-        return "analysis.csv", [{"file_name": "a.py"}]
+        return "analysis.csv", [{"file_name": "a.py"}], []
 
     monkeypatch.setattr("services.workflow_service.analyse_repo", fake_analyse_repo)
     monkeypatch.setattr(
@@ -201,6 +202,7 @@ def test_generate_endpoint_uses_provided_docstring_threshold(monkeypatch):
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             "analysis.csv",
             [{"file_name": "a.py"}],
+            [],
         ),
     )
     monkeypatch.setattr(
@@ -241,6 +243,7 @@ def test_generate_endpoint_uses_provided_low_content_min_lines(monkeypatch):
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             "analysis.csv",
             [{"file_name": "a.py"}],
+            [],
         ),
     )
     monkeypatch.setattr(
@@ -1365,6 +1368,7 @@ def test_generate_endpoint_enforces_rate_limit(monkeypatch):
         lambda provider, repo_url, token, branch, target_folders, model, reuse_doc: (
             "analysis.csv",
             [{"file_name": "a.py"}],
+            [],
         ),
     )
     monkeypatch.setattr(
