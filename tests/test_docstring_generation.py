@@ -40,6 +40,12 @@ def test_format_python_docstring_wraps_long_lines():
     assert '\n\n    """' in formatted
 
 
+def test_format_julia_docstring_uses_unindented_triple_quotes():
+    formatted = format_docstring_for_language("Adds one to value.", "julia")
+
+    assert formatted == '"""\nAdds one to value.\n"""'
+
+
 def test_resolve_ai_provider_uses_codex_when_openai_key_is_missing(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("AUTODOC_AI_PROVIDER", raising=False)

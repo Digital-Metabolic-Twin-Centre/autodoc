@@ -183,3 +183,95 @@ function bar(x)
 
     assert len(blocks) == 1
     assert "function foo(a, b)" in blocks[0]
+
+
+def test_julia_source_extension_is_detected_as_julia():
+    extractor = GenericCodeBlockExtractor("function foo(x)\nend\n", "sample.jl")
+
+    assert extractor.language == "julia"
+
+
+def test_julia_function_block_is_extracted():
+    content = """
+function add_one(value)
+    return value + 1
+end
+""".strip()
+
+    extractor = GenericCodeBlockExtractor(content, "sample.jl")
+
+    blocks = extractor.code_block_extractor()
+
+    assert len(blocks) == 1
+    assert "function add_one(value)" in blocks[0]
+
+
+def test_julia_struct_block_is_extracted():
+    content = """
+mutable struct Point
+    x
+    y
+end
+""".strip()
+
+    extractor = GenericCodeBlockExtractor(content, "sample.jl")
+
+    blocks = extractor.code_block_extractor()
+
+    assert len(blocks) == 1
+    assert "mutable struct Point" in blocks[0]
+
+
+def test_julia_function_tracks_nested_control_flow_blocks():
+    content = """
+function foo(x)
+if x > 0
+    y = 1
+end
+end
+""".strip()
+
+    extractor = GenericCodeBlockExtractor(content, "sample.jl")
+
+    blocks = extractor.code_block_extractor()
+
+    assert len(blocks) == 1
+    end_lines = [line for line in blocks[0].splitlines() if line.strip() == "end"]
+    assert len(end_lines) == 2
+
+
+def test_julia_extraction_includes_preceding_docstring():
+    content = '''
+"""
+    add_one(value)
+
+Add one to value.
+"""
+function add_one(value)
+    return value + 1
+end
+'''.strip()
+
+    extractor = GenericCodeBlockExtractor(content, "sample.jl")
+
+    blocks = extractor.code_block_extractor()
+
+    assert len(blocks) == 1
+    assert "Add one to value." in blocks[0]
+    assert "function add_one(value)" in blocks[0]
+
+
+def test_julia_extraction_handles_single_line_preceding_docstring():
+    content = '''
+""" Adds one to value. """
+function add_one(value)
+    return value + 1
+end
+'''.strip()
+
+    extractor = GenericCodeBlockExtractor(content, "sample.jl")
+
+    blocks = extractor.code_block_extractor()
+
+    assert len(blocks) == 1
+    assert "Adds one to value." in blocks[0]

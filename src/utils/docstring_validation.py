@@ -165,6 +165,11 @@ def analyse_docstring_in_blocks(
                 "class": r"classdef\s+(\w+)",
                 "docstring": [r"%\s+(.*?)(?=\n\s*(?:%|\w))", r"%{(.*?)%}"],
             },
+            "julia": {
+                "function": r"function\s+(\w+)\s*\(",
+                "class": r"(?:mutable\s+)?struct\s+(\w+)",
+                "docstring": [r'"""(.*?)"""'],
+            },
         }
 
         if language not in patterns:
@@ -361,5 +366,12 @@ def analyse_docstring_in_module(content: str, language: str | None = None) -> Op
                 break
         if docstring_lines:
             return "\n".join(docstring_lines).strip()
+
+    elif language == "julia":
+        # Look for a leading triple-quoted docstring, same convention as Python
+        pattern = r'^\s*"""(.*?)"""'
+        match = re.search(pattern, content, re.MULTILINE | re.DOTALL)
+        if match:
+            return match.group(1).strip()
 
     return None

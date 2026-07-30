@@ -58,7 +58,7 @@ class RepoAnalysisError(RuntimeError):
         self.status_code = status_code
 
 
-SUPPORTED_DOCSTRING_LANGUAGES = {"python", "javascript", "typescript", "matlab"}
+SUPPORTED_DOCSTRING_LANGUAGES = {"python", "javascript", "typescript", "matlab", "julia"}
 
 _LANGUAGE_EXTENSIONS = {
     ".py": "python",
@@ -69,6 +69,7 @@ _LANGUAGE_EXTENSIONS = {
     ".tsx": "typescript",
     ".m": "matlab",
     ".matlab": "matlab",
+    ".jl": "julia",
     ".java": "java",
     ".go": "go",
     ".rb": "ruby",
@@ -102,6 +103,7 @@ _LANGUAGE_DISPLAY_NAMES = {
     "javascript": "JavaScript",
     "typescript": "TypeScript",
     "matlab": "MATLAB",
+    "julia": "Julia",
     "java": "Java",
     "go": "Go",
     "ruby": "Ruby",
@@ -417,6 +419,8 @@ def analyse_repo(
                     language = "typescript"
                 elif file_name.endswith((".m", ".matlab")):
                     language = "matlab"
+                elif file_name.endswith(".jl"):
+                    language = "julia"
                 # File type not supported
                 else:
                     logger.warning(f"File {file_name} is not supported for docstring validation. Skipping...")
@@ -646,7 +650,7 @@ def analyse_repo(
         if supported_files_found == 0:
             raise RepoAnalysisError(
                 "Repository was reachable, but no supported source files were found. "
-                "Auto Doc currently analyses .py, .pyw, .js, .jsx, .ts, .tsx, .m, and .matlab source files.",
+                "Auto Doc currently analyses .py, .pyw, .js, .jsx, .ts, .tsx, .m, .matlab, and .jl source files.",
                 status_code=404,
             )
         if normalized_target_folders and supported_files_in_scope == 0:

@@ -405,6 +405,10 @@ def format_docstring_for_language(docstring: str, language: str | None) -> str:
         formatted_lines = [f"% {line}" for line in lines]
         return "\n".join(formatted_lines)
 
+    elif language.lower() == "julia":
+        # Julia triple-quote format, placed directly above the definition (not indented)
+        return f'"""\n{docstring}\n"""'
+
     else:
         return docstring
 

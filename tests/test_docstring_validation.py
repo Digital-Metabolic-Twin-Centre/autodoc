@@ -12,6 +12,56 @@ def test_analyse_docstring_in_module_returns_python_module_docstring():
     assert result == "Module summary."
 
 
+def test_analyse_docstring_in_module_returns_julia_module_docstring():
+    content = '"""\nModule summary.\n"""\n\nfunction run()\nend\n'
+
+    result = analyse_docstring_in_module(content, "julia")
+
+    assert result == "Module summary."
+
+
+def test_analyse_docstring_in_blocks_flags_missing_julia_docstrings(monkeypatch):
+    monkeypatch.setattr(
+        "utils.docstring_validation.generate_docstring",
+        lambda code, language, model=None: None,
+    )
+
+    blocks = [
+        "# --- Code Block starts at line 1 ---\nfunction run_task(x)\n    return x\nend\n"
+        "# --- Code Block ends at line 3 ---"
+    ]
+
+    result = analyse_docstring_in_blocks(
+        blocks,
+        file_name="worker.jl",
+        file_path="worker.jl",
+        language="julia",
+    )
+
+    assert result["blocks_without_docstring"] == 1
+    assert result["docstring_analysis"][0]["function_name"] == "run_task"
+    assert result["docstring_analysis"][0]["block_type"] == "function"
+    assert result["docstring_analysis"][0]["missing_docstring"] is True
+
+
+def test_analyse_docstring_in_blocks_detects_existing_julia_docstrings():
+    blocks = [
+        "# --- Code Block starts at line 1 ---\n"
+        '"""\nRun the task.\n"""\nfunction run_task(x)\n    return x\nend\n'
+        "# --- Code Block ends at line 5 ---"
+    ]
+
+    result = analyse_docstring_in_blocks(
+        blocks,
+        file_name="worker.jl",
+        file_path="worker.jl",
+        language="julia",
+    )
+
+    assert result["blocks_with_docstring"] == 1
+    assert result["docstring_analysis"][0]["docstring_content"] == "Run the task."
+
+
 def test_analyse_docstring_in_blocks_flags_missing_python_docstrings(monkeypatch):
     monkeypatch.setattr(
         "utils.docstring_validation.generate_docstring",

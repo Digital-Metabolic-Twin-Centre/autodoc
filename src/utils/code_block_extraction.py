@@ -35,6 +35,10 @@ class GenericCodeBlockExtractor:
             r"^\s*function\s+\w+",  # MATLAB function (no output)
             r"^\s*classdef\s+\w+",  # MATLAB class
         ],
+        "julia": [
+            r"^\s*function\s+\w+\s*\(",  # Julia function
+            r"^\s*(mutable\s+)?struct\s+\w+",  # Julia struct
+        ],
     }
 
     EXT_LANGUAGE_MAP = {
@@ -45,6 +49,7 @@ class GenericCodeBlockExtractor:
         ".tsx": "typescript",
         ".m": "matlab",
         ".matlab": "matlab",
+        ".jl": "julia",
     }
 
     def __init__(self, file_content: str, file_name: str):
@@ -155,6 +160,9 @@ class GenericCodeBlockExtractor:
                 return self._extract_matlab_function(lines, start_idx)
             elif line.strip().startswith("classdef"):
                 return self._extract_matlab_class(lines, start_idx)
+        elif self.language == "julia":
+            if line.strip().startswith("function") or re.match(r"^\s*(mutable\s+)?struct\b", line):
+                return self._extract_julia_block(lines, start_idx)
         return None
 
     def _extract_python_function_complete(self, lines: List[str], start_idx: int) -> dict:
@@ -289,6 +297,76 @@ class GenericCodeBlockExtractor:
             if re.match(r"^\s*end\b", line):
                 i += 1
                 break
+            i += 1
+        footer = f"# --- Code Block ends at line {i} ---"
+        full_block = header + "\n" + "\n".join(block) + "\n" + footer
+        return {"block": full_block, "end_line": i}
+
+    def _collect_preceding_julia_docstring(self, lines: List[str], start_idx: int) -> List[str]:
+        """
+        Collects a Julia triple-quoted docstring immediately preceding a definition.
+
+        Julia places docstrings directly above the `function`/`struct` line they document
+        (unlike Python, JS, or MATLAB, where documentation lives inside the block), so this
+        looks backward from start_idx instead of forward.
+
+            Args:
+                lines (List[str]): The list of code lines.
+                start_idx (int): The index of the function/struct definition line.
+
+            Returns:
+                List[str]: The docstring's lines (in order), or an empty list if none precedes it.
+
+        """
+        prev_idx = start_idx - 1
+        if prev_idx < 0:
+            return []
+        closing_line = lines[prev_idx].rstrip()
+        if not closing_line.endswith('"""'):
+            return []
+        stripped = closing_line.strip()
+        if stripped.startswith('"""') and stripped.count('"""') == 2:
+            return [lines[prev_idx].rstrip()]
+        j = prev_idx - 1
+        while j >= 0:
+            if lines[j].strip().startswith('"""'):
+                return [line.rstrip() for line in lines[j : prev_idx + 1]]
+            j -= 1
+        return []
+
+    def _extract_julia_block(self, lines: List[str], start_idx: int) -> dict:
+        """
+        Extracts a Julia function or struct block from a list of lines starting at a given index.
+
+            Args:
+                lines (List[str]): The list of code lines.
+                start_idx (int): The index to start extraction from.
+
+            Returns:
+                dict: A dictionary containing the extracted code block and the ending line index.
+
+        """
+        block = self._collect_preceding_julia_docstring(lines, start_idx)
+        header = f"# --- Code Block starts at line {start_idx + 1} ---"
+        line = lines[start_idx]
+        block.append(line.rstrip())
+        nested_level = 0
+        block_opener = re.compile(
+            r"^\s*(function\b|if\b|for\b|while\b|try\b|let\b|do\b|begin\b|quote\b|module\s|macro\s|"
+            r"(mutable\s+)?struct\b)"
+        )
+        i = start_idx + 1
+        while i < len(lines):
+            line = lines[i]
+            block.append(line.rstrip())
+            if block_opener.match(line):
+                nested_level += 1
+            elif re.match(r"^\s*end\b", line):
+                if nested_level == 0:
+                    i += 1
+                    break
+                else:
+                    nested_level -= 1
             i += 1
         footer = f"# --- Code Block ends at line {i} ---"
         full_block = header + "\n" + "\n".join(block) + "\n" + footer

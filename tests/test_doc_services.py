@@ -28,6 +28,7 @@ def test_normalize_target_folders_trims_whitespace_and_slashes():
 def test_detect_reporting_language_recognizes_supported_and_unsupported_extensions():
     assert _detect_reporting_language("app.py") == "python"
     assert _detect_reporting_language("Main.java") == "java"
+    assert _detect_reporting_language("solver.jl") == "julia"
     assert _detect_reporting_language("README.md") is None
     assert _detect_reporting_language("package.json") is None
 
@@ -39,6 +40,14 @@ def test_build_language_summary_flags_supported_languages_and_sorts_by_count():
         {"language": "python", "display_name": "Python", "file_count": 5, "supported": True},
         {"language": "go", "display_name": "Go", "file_count": 2, "supported": False},
         {"language": "java", "display_name": "Java", "file_count": 2, "supported": False},
+    ]
+
+
+def test_build_language_summary_flags_julia_as_supported():
+    summary = _build_language_summary({"julia": 4})
+
+    assert summary == [
+        {"language": "julia", "display_name": "Julia", "file_count": 4, "supported": True},
     ]
 
 
