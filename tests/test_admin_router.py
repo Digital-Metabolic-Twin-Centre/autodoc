@@ -30,6 +30,7 @@ from admin.router import (
     dashboard,
     delete_repository,
     download_artifact,
+    duplicate_repository,
     login_page,
     login_submit,
     logout,
@@ -423,6 +424,69 @@ def test_delete_repository_raises_404_for_missing_repository(monkeypatch):
 
     _assert_raises_http_exception(
         delete_repository(repository_id=999_999_999, request=_fake_request(), admin_user="tester", _=None), 404
+    )
+
+
+def test_duplicate_repository_copies_config_with_unique_name(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    repository_id = _make_repository(
+        "Duplicate Source Repo",
+        preferred_model="gpt-4o-mini",
+        reuse_doc=True,
+        docstring_threshold=0.75,
+        low_content_min_lines=8,
+    )
+
+    with SessionLocal() as session:
+        session.query(RepositoryConfig).filter(RepositoryConfig.name == "Duplicate Source Repo (copy)").delete()
+        session.commit()
+
+    duplicate_ids = []
+    try:
+        response = run(
+            duplicate_repository(repository_id=repository_id, request=_fake_request(), admin_user="tester", _=None)
+        )
+        assert response.status_code == 303
+        location = response.headers.get("location")
+        assert location is not None
+        assert location.endswith("/edit")
+        new_id = int(location.rsplit("/", 2)[-2])
+        duplicate_ids.append(new_id)
+
+        with SessionLocal() as session:
+            source = session.get(RepositoryConfig, repository_id)
+            duplicate = session.get(RepositoryConfig, new_id)
+            assert duplicate is not None
+            assert duplicate.name == "Duplicate Source Repo (copy)"
+            assert duplicate.repo_url == source.repo_url
+            assert duplicate.target_folders == source.target_folders
+            assert duplicate.preferred_model == source.preferred_model
+            assert duplicate.reuse_doc == source.reuse_doc
+            assert duplicate.docstring_threshold == source.docstring_threshold
+            assert duplicate.low_content_min_lines == source.low_content_min_lines
+            assert duplicate.encrypted_token == source.encrypted_token
+            assert duplicate.token_last4 == source.token_last4
+
+        second_response = run(
+            duplicate_repository(repository_id=repository_id, request=_fake_request(), admin_user="tester", _=None)
+        )
+        second_id = int(second_response.headers.get("location").rsplit("/", 2)[-2])
+        duplicate_ids.append(second_id)
+
+        with SessionLocal() as session:
+            second_duplicate = session.get(RepositoryConfig, second_id)
+            assert second_duplicate.name == "Duplicate Source Repo (copy 2)"
+    finally:
+        _delete_repository_and_runs(repository_id)
+        for duplicate_id in duplicate_ids:
+            _delete_repository_and_runs(duplicate_id)
+
+
+def test_duplicate_repository_raises_404_for_missing_repository(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+
+    _assert_raises_http_exception(
+        duplicate_repository(repository_id=999_999_999, request=_fake_request(), admin_user="tester", _=None), 404
     )
 
 

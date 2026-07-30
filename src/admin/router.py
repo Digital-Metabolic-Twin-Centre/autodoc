@@ -647,6 +647,47 @@ async def delete_repository(
     return _redirect("/admin/repositories", request)
 
 
+def _unique_repository_name(session: Any, base_name: str) -> str:
+    candidate = f"{base_name} (copy)"
+    suffix = 2
+    while session.scalar(select(RepositoryConfig).where(RepositoryConfig.name == candidate)) is not None:
+        candidate = f"{base_name} (copy {suffix})"
+        suffix += 1
+    return candidate
+
+
+@router.post("/repositories/{repository_id}/duplicate", response_class=HTMLResponse)
+async def duplicate_repository(
+    repository_id: int,
+    request: Request,
+    admin_user: str = Depends(require_admin),
+    _: None = Depends(verify_csrf),
+) -> Response:
+    with SessionLocal() as session:
+        source = session.get(RepositoryConfig, repository_id)
+        if source is None:
+            raise HTTPException(status_code=404, detail="Repository not found.")
+        duplicate = RepositoryConfig(
+            name=_unique_repository_name(session, source.name),
+            provider=source.provider,
+            repo_url=source.repo_url,
+            repo_path=source.repo_path,
+            default_branch=source.default_branch,
+            preferred_model=source.preferred_model,
+            reuse_doc=source.reuse_doc,
+            docstring_threshold=source.docstring_threshold,
+            low_content_min_lines=source.low_content_min_lines,
+            encrypted_token=source.encrypted_token,
+            token_last4=source.token_last4,
+        )
+        duplicate.target_folders = source.target_folders
+        session.add(duplicate)
+        session.commit()
+        session.refresh(duplicate)
+
+    return _redirect(f"/admin/repositories/{duplicate.id}/edit", request)
+
+
 def _create_run_record(
     repository_id: int | None,
     endpoint: str,
