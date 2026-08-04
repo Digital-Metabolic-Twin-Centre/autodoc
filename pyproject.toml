@@ -53,6 +53,17 @@ select = ["E", "F", "I", "S", "B"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
+filterwarnings = [
+    # multiprocessing.Process(...).start() forks a process that also runs
+    # background dispatcher threads (see admin/jobs.py). CPython warns on this
+    # unconditionally, but the forked target (_execute_run_process) is a
+    # self-contained top-level function that opens its own fresh DB session
+    # rather than relying on inherited thread/lock state, so this is safe here.
+    # Switching to the "spawn" start method would avoid the warning, but spawn
+    # re-imports modules fresh in the child, which breaks the test suite's
+    # strategy of monkeypatching job-execution functions for fault injection.
+    "ignore:This process .* is multi-threaded, use of fork\\(\\) may lead to deadlocks in the child.:DeprecationWarning",
+]
 
 [tool.pyright]
 extraPaths = ["src"]

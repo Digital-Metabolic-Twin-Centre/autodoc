@@ -86,7 +86,7 @@ async def generate_docs(req: RepoRequest):
         raise HTTPException(status_code=rae.status_code, detail=str(rae)) from rae
     except ValueError as ve:
         logger.error(f"ValueError: {ve}")
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(ve)) from ve
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(ve)) from ve
     except PermissionError as pe:
         logger.error(f"PermissionError: {pe}")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(pe)) from pe
@@ -118,7 +118,7 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
     try:
         return execute_docstring_pr_request(req.model_copy(update={"suggestion_branch": suggestion_branch})).response
     except DocstringPullRequestError as dpe:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(dpe)) from dpe
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(dpe)) from dpe
     except Exception as e:
         logger.exception("Unhandled exception during /suggest-python-docstrings-pr")
         raise HTTPException(
