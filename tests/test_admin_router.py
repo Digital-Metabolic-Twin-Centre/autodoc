@@ -9,23 +9,10 @@ from fastapi import HTTPException, Request
 from admin.database import SessionLocal
 from admin.models import RepositoryConfig, RunRecord
 from admin.router import (
-    _build_architecture_generation_request,
-    _build_pr_request,
     _database_label,
-    _default_suggestion_branch,
     _fmt_duration,
     _json_loads,
-    _load_docstring_suggestions,
-    _load_language_summary,
-    _log_snippet,
-    _parse_target_folders,
-    _queue_payload_with_repository_secret,
-    _read_artifact_preview,
-    _run_log_entries,
-    _safe_request_payload,
     _status_badge_classes,
-    _validate_provider,
-    _validate_repo_form,
     cancel_run,
     clear_runs,
     create_repository,
@@ -55,6 +42,21 @@ from admin.router import (
     update_repository,
 )
 from admin.security import create_admin_session, encrypt_token
+from admin.services import (
+    build_architecture_generation_request,
+    build_pr_request,
+    default_suggestion_branch,
+    load_docstring_suggestions,
+    load_language_summary,
+    log_snippet,
+    parse_target_folders,
+    queue_payload_with_repository_secret,
+    read_artifact_preview,
+    run_log_entries,
+    safe_request_payload,
+    validate_provider,
+    validate_repo_form,
+)
 
 
 class _FakeRequest:
@@ -956,7 +958,7 @@ def test_run_log_entries_prioritize_key_logs(tmp_path):
         log_path=str(artifact_dir / "app.log"),
     )
 
-    entries = _run_log_entries(run)
+    entries = run_log_entries(run)
 
     assert [entry["name"] for entry in entries] == [
         "app.log",
@@ -973,7 +975,7 @@ def test_run_log_entries_includes_non_prioritized_log_and_txt_files(tmp_path):
 
     run = RunRecord(artifact_dir=str(artifact_dir), log_path=None)
 
-    entries = _run_log_entries(run)
+    entries = run_log_entries(run)
 
     assert [entry["name"] for entry in entries] == ["extra_debug.log"]
 
@@ -1005,7 +1007,7 @@ def test_load_docstring_suggestions_reads_generate_artifact(tmp_path):
 
     run = RunRecord(endpoint="/generate", artifact_dir=str(artifact_dir))
 
-    suggestions = _load_docstring_suggestions(run)
+    suggestions = load_docstring_suggestions(run)
 
     assert suggestions == [
         {
@@ -1029,7 +1031,7 @@ def test_load_docstring_suggestions_returns_empty_for_non_generate_endpoint(tmp_
 
     run = RunRecord(endpoint="/publish-pages", artifact_dir=str(artifact_dir))
 
-    assert _load_docstring_suggestions(run) == []
+    assert load_docstring_suggestions(run) == []
 
 
 def test_load_docstring_suggestions_returns_empty_when_artifact_missing(tmp_path):
@@ -1038,7 +1040,7 @@ def test_load_docstring_suggestions_returns_empty_when_artifact_missing(tmp_path
 
     run = RunRecord(endpoint="/generate", artifact_dir=str(artifact_dir))
 
-    assert _load_docstring_suggestions(run) == []
+    assert load_docstring_suggestions(run) == []
 
 
 def test_load_language_summary_reads_generate_result_payload():
@@ -1051,7 +1053,7 @@ def test_load_language_summary_reads_generate_result_payload():
         result_payload=json.dumps({"status": "success", "languages_detected": languages}),
     )
 
-    assert _load_language_summary(run) == languages
+    assert load_language_summary(run) == languages
 
 
 def test_load_language_summary_returns_empty_for_non_generate_endpoint():
@@ -1060,34 +1062,34 @@ def test_load_language_summary_returns_empty_for_non_generate_endpoint():
         result_payload=json.dumps({"languages_detected": [{"language": "python"}]}),
     )
 
-    assert _load_language_summary(run) == []
+    assert load_language_summary(run) == []
 
 
 def test_load_language_summary_returns_empty_when_result_payload_missing():
     run = RunRecord(endpoint="/generate", result_payload=None)
 
-    assert _load_language_summary(run) == []
+    assert load_language_summary(run) == []
 
 
 def test_log_snippet_returns_tail_of_file(tmp_path):
     log_path = tmp_path / "app.log"
     log_path.write_text("\n".join(f"line {i}" for i in range(1, 11)) + "\n", encoding="utf-8")
 
-    snippet = _log_snippet(str(log_path), limit=3)
+    snippet = log_snippet(str(log_path), limit=3)
 
     assert snippet == "line 8\nline 9\nline 10\n"
 
 
 def test_log_snippet_returns_empty_string_when_path_missing():
-    assert _log_snippet(None) == ""
-    assert _log_snippet("/nonexistent/path/app.log") == ""
+    assert log_snippet(None) == ""
+    assert log_snippet("/nonexistent/path/app.log") == ""
 
 
 def test_read_artifact_preview_truncates_large_files(tmp_path):
     artifact_path = tmp_path / "sphinx_build.log"
     artifact_path.write_text("x" * 20, encoding="utf-8")
 
-    content, truncated = _read_artifact_preview(artifact_path, max_chars=10)
+    content, truncated = read_artifact_preview(artifact_path, max_chars=10)
 
     assert content == "x" * 10
     assert truncated is True
@@ -1355,7 +1357,7 @@ def test_preview_artifact_shows_truncated_note_for_large_file(tmp_path, monkeypa
     artifact_dir = tmp_path / "run1"
     artifact_dir.mkdir()
     (artifact_dir / "report.txt").write_text("x" * 50, encoding="utf-8")
-    monkeypatch.setattr("admin.router._read_artifact_preview", lambda path: ("x" * 10, True))
+    monkeypatch.setattr("admin.router.read_artifact_preview", lambda path: ("x" * 10, True))
 
     with SessionLocal() as session:
         run_record = RunRecord(
@@ -1404,7 +1406,7 @@ def test_build_architecture_generation_request_uses_repository_defaults(monkeypa
     )
     repository.target_folders = ["src"]
 
-    req = _build_architecture_generation_request(repository)
+    req = build_architecture_generation_request(repository)
 
     assert req.provider == "github"
     assert req.repo_url == "example/project"
@@ -1432,7 +1434,7 @@ def test_build_pr_request_falls_back_to_repository_defaults(monkeypatch):
         token_last4="oken",
     )
 
-    req = _build_pr_request(repository, base_branch=None, suggestion_branch=None, title=None, max_docstrings=50)
+    req = build_pr_request(repository, base_branch=None, suggestion_branch=None, title=None, max_docstrings=50)
 
     assert req.base_branch == "main"
     assert req.title == "Add suggested docstrings"
@@ -1441,7 +1443,7 @@ def test_build_pr_request_falls_back_to_repository_defaults(monkeypatch):
 
 
 def test_default_suggestion_branch_has_expected_prefix():
-    assert _default_suggestion_branch().startswith("autodocs-docstring-suggestions-")
+    assert default_suggestion_branch().startswith("autodocs-docstring-suggestions-")
 
 
 def test_safe_request_payload_excludes_token():
@@ -1451,7 +1453,7 @@ def test_safe_request_payload_excludes_token():
         "branch": "main",
     }
 
-    assert _safe_request_payload(payload) == {
+    assert safe_request_payload(payload) == {
         "repo_url": "example/project",
         "branch": "main",
     }
@@ -1472,7 +1474,7 @@ def test_json_loads_parses_non_empty_string():
 def test_queue_payload_with_repository_secret_passes_through_non_token_endpoints():
     payload = {"draft_id": "abc"}
 
-    result = _queue_payload_with_repository_secret("/approve-architecture-docs-not-real", payload, None)
+    result = queue_payload_with_repository_secret("/approve-architecture-docs-not-real", payload, None)
 
     assert result == payload
     assert result is not payload
@@ -1480,7 +1482,7 @@ def test_queue_payload_with_repository_secret_passes_through_non_token_endpoints
 
 def test_queue_payload_with_repository_secret_raises_without_repository():
     try:
-        _queue_payload_with_repository_secret("/generate", {}, None)
+        queue_payload_with_repository_secret("/generate", {}, None)
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1511,7 +1513,7 @@ def test_status_badge_classes_covers_all_states():
 
 def test_parse_target_folders_rejects_path_traversal():
     try:
-        _parse_target_folders("src, ../outside")
+        parse_target_folders("src, ../outside")
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1519,7 +1521,7 @@ def test_parse_target_folders_rejects_path_traversal():
 
 def test_validate_provider_rejects_unknown_provider():
     try:
-        _validate_provider("bitbucket")
+        validate_provider("bitbucket")
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1527,7 +1529,7 @@ def test_validate_provider_rejects_unknown_provider():
 
 def test_validate_repo_form_rejects_missing_name():
     try:
-        _validate_repo_form("", "github", "example/project", "main", "", "", False, 0.5, 4)
+        validate_repo_form("", "github", "example/project", "main", "", "", False, 0.5, 4)
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1535,7 +1537,7 @@ def test_validate_repo_form_rejects_missing_name():
 
 def test_validate_repo_form_rejects_missing_repo_url():
     try:
-        _validate_repo_form("Name", "github", "", "main", "", "", False, 0.5, 4)
+        validate_repo_form("Name", "github", "", "main", "", "", False, 0.5, 4)
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1543,7 +1545,7 @@ def test_validate_repo_form_rejects_missing_repo_url():
 
 def test_validate_repo_form_rejects_missing_default_branch():
     try:
-        _validate_repo_form("Name", "github", "example/project", "", "", "", False, 0.5, 4)
+        validate_repo_form("Name", "github", "example/project", "", "", "", False, 0.5, 4)
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1551,7 +1553,7 @@ def test_validate_repo_form_rejects_missing_default_branch():
 
 def test_validate_repo_form_rejects_out_of_range_docstring_threshold():
     try:
-        _validate_repo_form("Name", "github", "example/project", "main", "", "", False, 1.5, 4)
+        validate_repo_form("Name", "github", "example/project", "main", "", "", False, 1.5, 4)
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1559,7 +1561,7 @@ def test_validate_repo_form_rejects_out_of_range_docstring_threshold():
 
 def test_validate_repo_form_rejects_negative_low_content_min_lines():
     try:
-        _validate_repo_form("Name", "github", "example/project", "main", "", "", False, 0.5, -1)
+        validate_repo_form("Name", "github", "example/project", "main", "", "", False, 0.5, -1)
         raise AssertionError("expected HTTPException")
     except HTTPException as exc:
         assert exc.status_code == 422
@@ -1958,7 +1960,7 @@ def test_retry_run_raises_422_when_payload_unavailable():
 
 
 def test_retry_run_raises_422_for_non_retryable_endpoint():
-    # An endpoint outside TOKEN_REQUIRED_ENDPOINTS so `_queue_payload_with_repository_secret`
+    # An endpoint outside TOKEN_REQUIRED_ENDPOINTS so `queue_payload_with_repository_secret`
     # passes the payload through untouched and we actually reach retry_run's final `else`.
     with SessionLocal() as session:
         run_record = RunRecord(

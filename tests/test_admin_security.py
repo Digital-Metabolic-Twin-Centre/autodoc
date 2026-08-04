@@ -5,7 +5,6 @@ import pytest
 from fastapi import HTTPException, Response
 from starlette.requests import Request
 
-from admin.router import _validate_repo_form
 from admin.security import (
     _sign_value,
     admin_auth_config_error,
@@ -19,6 +18,7 @@ from admin.security import (
     validate_admin_credentials,
     verify_csrf,
 )
+from admin.services import validate_repo_form
 
 
 def _request_with_cookies_and_headers(cookies=None, headers=None):
@@ -234,7 +234,7 @@ def test_verify_csrf_prefers_header_token_over_form_token():
 
 
 def test_validate_repo_form_normalizes_target_folders():
-    result = _validate_repo_form(
+    result = validate_repo_form(
         name="Example Repo",
         provider="github",
         repo_url="https://github.com/example/project",
