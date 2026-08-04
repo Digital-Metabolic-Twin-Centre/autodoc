@@ -28,6 +28,7 @@ from utils.output_paths import (
     build_repo_output_file,
     find_latest_repo_run_dir,
 )
+from utils.redaction import redact_secrets
 
 logger = get_logger(__name__)
 
@@ -571,7 +572,7 @@ def analyse_repo(
         logger.error("Repository access failed: %s", exc)
         raise RepoAnalysisError(str(exc), status_code=exc.status_code or 404) from exc
     except Exception as e:
-        logger.error(f"Error fetching repo tree: {e}")
+        logger.error(f"Error fetching repo tree: {redact_secrets(str(e))}")
         raise
 
     # save details in csv

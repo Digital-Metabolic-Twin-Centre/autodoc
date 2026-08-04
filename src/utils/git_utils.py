@@ -122,8 +122,8 @@ def _parse_response_message(response) -> str:
     except Exception:
         payload = None
     if isinstance(payload, dict) and payload.get("message"):
-        return str(payload["message"])
-    return response.text.strip() or "Unknown error"
+        return redact_secrets(str(payload["message"])) or "Unknown error"
+    return redact_secrets(response.text.strip()) or "Unknown error"
 
 
 def _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = "") -> None:
@@ -637,7 +637,7 @@ def fetch_content_from_github(repo_path: str, branch: str, file_path: str, acces
         response.raise_for_status()
         return response.text
     except Exception as e:
-        logger.error(f"GitHub fetch error: {e}")
+        logger.error(f"GitHub fetch error: {redact_secrets(str(e))}")
     return None
 
 
@@ -659,7 +659,7 @@ def fetch_content_bytes_from_github(repo_path: str, branch: str, file_path: str,
         response.raise_for_status()
         return response.content
     except Exception as e:
-        logger.error(f"GitHub byte fetch error: {e}")
+        logger.error(f"GitHub byte fetch error: {redact_secrets(str(e))}")
     return None
 
 
@@ -687,7 +687,7 @@ def fetch_content_from_gitlab(repo_path: str, branch: str, file_path: str, priva
         response.raise_for_status()
         return response.text
     except Exception as e:
-        logger.error(f"GitLab fetch error: {e}")
+        logger.error(f"GitLab fetch error: {redact_secrets(str(e))}")
     return None
 
 
@@ -884,7 +884,7 @@ def create_directory_and_add_files(
         ref_url = f"{base_api_url}/repos/{repo_url}/git/refs/heads/{branch}"
         ref_resp = http.get(ref_url, headers=_github_headers(token))
         if ref_resp.status_code != 200:
-            logger.error(f"Failed to get branch ref: {ref_resp.text}")
+            logger.error(f"Failed to get branch ref: {redact_secrets(ref_resp.text)}")
             return False
         latest_commit_sha = ref_resp.json()["object"]["sha"]
 
@@ -892,7 +892,7 @@ def create_directory_and_add_files(
         commit_url = f"{base_api_url}/repos/{repo_url}/git/commits/{latest_commit_sha}"
         commit_resp = http.get(commit_url, headers=_github_headers(token))
         if commit_resp.status_code != 200:
-            logger.error(f"Failed to get commit: {commit_resp.text}")
+            logger.error(f"Failed to get commit: {redact_secrets(commit_resp.text)}")
             return False
         base_tree_sha = commit_resp.json()["tree"]["sha"]
 
@@ -942,7 +942,7 @@ def create_directory_and_add_files(
             json={"base_tree": base_tree_sha, "tree": tree},
         )
         if tree_resp.status_code not in (200, 201):
-            logger.error(f"Failed to create tree: {tree_resp.text}")
+            logger.error(f"Failed to create tree: {redact_secrets(tree_resp.text)}")
             return False
         new_tree_sha = tree_resp.json()["sha"]
 
@@ -959,7 +959,7 @@ def create_directory_and_add_files(
             },
         )
         if commit_resp.status_code not in (200, 201):
-            logger.error(f"Failed to create commit: {commit_resp.text}")
+            logger.error(f"Failed to create commit: {redact_secrets(commit_resp.text)}")
             return False
         new_commit_sha = commit_resp.json()["sha"]
 
@@ -971,7 +971,7 @@ def create_directory_and_add_files(
             json={"sha": new_commit_sha},
         )
         if update_resp.status_code not in (200, 201):
-            logger.error(f"Failed to update branch ref: {update_resp.text}")
+            logger.error(f"Failed to update branch ref: {redact_secrets(update_resp.text)}")
             return False
 
         return True
@@ -1060,7 +1060,7 @@ def create_directory_and_add_files(
         headers = {"PRIVATE-TOKEN": token}
         resp = http.post(api_url, headers=headers, json=data)
         if resp.status_code not in (200, 201):
-            error_msg = resp.text
+            error_msg = redact_secrets(resp.text)
             logger.error(f"GitLab commit error: {error_msg}")
             if "insufficient_scope" in error_msg.lower():
                 logger.error(
@@ -1124,7 +1124,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
             data["sha"] = sha
         resp = http.put(api_url, headers=headers, json=data)
         if resp.status_code not in (201, 200):
-            logger.error(f"GitHub create/update file error: {resp.text}")
+            logger.error(f"GitHub create/update file error: {redact_secrets(resp.text)}")
             return False
         return True
 
@@ -1157,7 +1157,7 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
             }
         resp = method(api_url, headers=headers, json=data)
         if resp.status_code not in (201, 200):
-            logger.error(f"GitLab create/update file error: {resp.text}")
+            logger.error(f"GitLab create/update file error: {redact_secrets(resp.text)}")
             return False
         return True
 
@@ -1175,13 +1175,13 @@ def ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, tok
     if existing_resp.status_code == 200:
         return True
     if existing_resp.status_code not in (404,):
-        logger.error(f"Failed to check branch {new_branch}: {existing_resp.text}")
+        logger.error(f"Failed to check branch {new_branch}: {redact_secrets(existing_resp.text)}")
         return False
 
     source_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{source_branch}"
     source_resp = http.get(source_url, headers=_github_headers(token))
     if source_resp.status_code != 200:
-        logger.error(f"Failed to get source branch ref: {source_resp.text}")
+        logger.error(f"Failed to get source branch ref: {redact_secrets(source_resp.text)}")
         return False
 
     source_sha = source_resp.json()["object"]["sha"]
@@ -1191,7 +1191,7 @@ def ensure_github_branch(repo_url: str, source_branch: str, new_branch: str, tok
         json={"ref": f"refs/heads/{new_branch}", "sha": source_sha},
     )
     if create_resp.status_code not in (200, 201, 422):
-        logger.error(f"Failed to create branch {new_branch}: {create_resp.text}")
+        logger.error(f"Failed to create branch {new_branch}: {redact_secrets(create_resp.text)}")
         return False
     return True
 
@@ -1219,7 +1219,7 @@ def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: s
         success_codes = (201,)
     else:
         message = _parse_response_message(get_resp)
-        logger.error(f"Failed to inspect GitHub Pages settings: {get_resp.text}")
+        logger.error(f"Failed to inspect GitHub Pages settings: {redact_secrets(get_resp.text)}")
         raise GitHubApiError(
             f"GitHub Pages inspection failed for '{repo_url}': {message}",
             status_code=get_resp.status_code,
@@ -1227,7 +1227,7 @@ def configure_github_pages(repo_url: str, pages_branch: str, token: str, path: s
 
     if resp.status_code not in success_codes:
         message = _parse_response_message(resp)
-        logger.error(f"Failed to configure GitHub Pages: {resp.text}")
+        logger.error(f"Failed to configure GitHub Pages: {redact_secrets(resp.text)}")
         raise GitHubApiError(
             f"GitHub Pages configuration failed for '{repo_url}': {message}",
             status_code=resp.status_code,
@@ -1243,7 +1243,7 @@ def request_github_pages_build(repo_url: str, token: str) -> bool:
     resp = http.post(api_url, headers=_github_headers(token))
     if resp.status_code not in (201,):
         message = _parse_response_message(resp)
-        logger.error(f"GitHub Pages build request failed: {resp.text}")
+        logger.error(f"GitHub Pages build request failed: {redact_secrets(resp.text)}")
         raise GitHubApiError(
             f"GitHub Pages rebuild request failed for '{repo_url}': {message}",
             status_code=resp.status_code,
@@ -1259,7 +1259,7 @@ def list_github_tree(repo_url: str, ref: str, token: str, recursive: bool = True
     params = {"recursive": "1"} if recursive else None
     resp = http.get(api_url, headers=_github_headers(token), params=params)
     if resp.status_code != 200:
-        logger.error(f"Failed to fetch GitHub tree for {ref}: {resp.text}")
+        logger.error(f"Failed to fetch GitHub tree for {ref}: {redact_secrets(resp.text)}")
         return []
     data = resp.json()
     return data.get("tree", [])
@@ -1325,7 +1325,7 @@ def create_github_blob(repo_url: str, token: str, content: bytes) -> Optional[st
         json=payload,
     )
     if resp.status_code not in (200, 201):
-        logger.error(f"Failed to create blob: {resp.text}")
+        logger.error(f"Failed to create blob: {redact_secrets(resp.text)}")
         return None
     return resp.json().get("sha")
 
@@ -1362,14 +1362,14 @@ def publish_github_directory_to_branch(
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{target_branch}"
     ref_resp = http.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
-        logger.error(f"Failed to get target branch ref: {ref_resp.text}")
+        logger.error(f"Failed to get target branch ref: {redact_secrets(ref_resp.text)}")
         return False
     latest_commit_sha = ref_resp.json()["object"]["sha"]
 
     commit_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/commits/{latest_commit_sha}"
     commit_resp = http.get(commit_url, headers=_github_headers(token))
     if commit_resp.status_code != 200:
-        logger.error(f"Failed to get target branch commit: {commit_resp.text}")
+        logger.error(f"Failed to get target branch commit: {redact_secrets(commit_resp.text)}")
         return False
     base_tree_sha = commit_resp.json()["tree"]["sha"]
 
@@ -1422,7 +1422,7 @@ def publish_github_directory_to_branch(
         json={"base_tree": base_tree_sha, "tree": tree},
     )
     if tree_resp.status_code not in (200, 201):
-        logger.error(f"Failed to create publish tree: {tree_resp.text}")
+        logger.error(f"Failed to create publish tree: {redact_secrets(tree_resp.text)}")
         return False
     new_tree_sha = tree_resp.json()["sha"]
 
@@ -1436,7 +1436,7 @@ def publish_github_directory_to_branch(
         },
     )
     if commit_resp.status_code not in (200, 201):
-        logger.error(f"Failed to create publish commit: {commit_resp.text}")
+        logger.error(f"Failed to create publish commit: {redact_secrets(commit_resp.text)}")
         return False
     new_commit_sha = commit_resp.json()["sha"]
 
@@ -1446,7 +1446,7 @@ def publish_github_directory_to_branch(
         json={"sha": new_commit_sha},
     )
     if update_resp.status_code not in (200, 201):
-        logger.error(f"Failed to update publish branch ref: {update_resp.text}")
+        logger.error(f"Failed to update publish branch ref: {redact_secrets(update_resp.text)}")
         return False
 
     return True
@@ -1471,7 +1471,7 @@ def publish_local_directory_to_github_branch(
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{target_branch}"
     ref_resp = http.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
-        logger.error(f"Failed to get target branch ref: {ref_resp.text}")
+        logger.error(f"Failed to get target branch ref: {redact_secrets(ref_resp.text)}")
         raise GitHubApiError(
             f"GitHub publish failed for '{repo_url}': {_parse_response_message(ref_resp)}",
             status_code=ref_resp.status_code,
@@ -1483,7 +1483,7 @@ def publish_local_directory_to_github_branch(
         headers=_github_headers(token),
     )
     if commit_resp.status_code != 200:
-        logger.error(f"Failed to get target branch commit: {commit_resp.text}")
+        logger.error(f"Failed to get target branch commit: {redact_secrets(commit_resp.text)}")
         raise GitHubApiError(
             f"GitHub publish failed for '{repo_url}': {_parse_response_message(commit_resp)}",
             status_code=commit_resp.status_code,
@@ -1537,7 +1537,7 @@ def publish_local_directory_to_github_branch(
         json={"base_tree": base_tree_sha, "tree": tree},
     )
     if tree_resp.status_code not in (200, 201):
-        logger.error(f"Failed to create publish tree: {tree_resp.text}")
+        logger.error(f"Failed to create publish tree: {redact_secrets(tree_resp.text)}")
         raise GitHubApiError(
             f"GitHub publish failed for '{repo_url}': {_parse_response_message(tree_resp)}",
             status_code=tree_resp.status_code,
@@ -1554,7 +1554,7 @@ def publish_local_directory_to_github_branch(
         },
     )
     if new_commit_resp.status_code not in (200, 201):
-        logger.error(f"Failed to create publish commit: {new_commit_resp.text}")
+        logger.error(f"Failed to create publish commit: {redact_secrets(new_commit_resp.text)}")
         raise GitHubApiError(
             f"GitHub publish failed for '{repo_url}': {_parse_response_message(new_commit_resp)}",
             status_code=new_commit_resp.status_code,
@@ -1567,7 +1567,7 @@ def publish_local_directory_to_github_branch(
         json={"sha": new_commit_sha},
     )
     if update_resp.status_code not in (200, 201):
-        logger.error(f"Failed to update publish branch ref: {update_resp.text}")
+        logger.error(f"Failed to update publish branch ref: {redact_secrets(update_resp.text)}")
         raise GitHubApiError(
             f"GitHub publish failed for '{repo_url}': {_parse_response_message(update_resp)}",
             status_code=update_resp.status_code,
@@ -1593,7 +1593,7 @@ def commit_files_to_github_branch(
     ref_url = f"{GITHUB_API_URL}/repos/{repo_url}/git/refs/heads/{branch}"
     ref_resp = http.get(ref_url, headers=_github_headers(token))
     if ref_resp.status_code != 200:
-        logger.error(f"Failed to get target branch ref: {ref_resp.text}")
+        logger.error(f"Failed to get target branch ref: {redact_secrets(ref_resp.text)}")
         return False
     latest_commit_sha = ref_resp.json()["object"]["sha"]
 
@@ -1602,7 +1602,7 @@ def commit_files_to_github_branch(
         headers=_github_headers(token),
     )
     if commit_resp.status_code != 200:
-        logger.error(f"Failed to get target branch commit: {commit_resp.text}")
+        logger.error(f"Failed to get target branch commit: {redact_secrets(commit_resp.text)}")
         return False
     base_tree_sha = commit_resp.json()["tree"]["sha"]
 
@@ -1622,7 +1622,7 @@ def commit_files_to_github_branch(
         json={"base_tree": base_tree_sha, "tree": tree},
     )
     if tree_resp.status_code not in (200, 201):
-        logger.error(f"Failed to create suggestion tree: {tree_resp.text}")
+        logger.error(f"Failed to create suggestion tree: {redact_secrets(tree_resp.text)}")
         return False
 
     new_commit_resp = http.post(
@@ -1635,7 +1635,7 @@ def commit_files_to_github_branch(
         },
     )
     if new_commit_resp.status_code not in (200, 201):
-        logger.error(f"Failed to create suggestion commit: {new_commit_resp.text}")
+        logger.error(f"Failed to create suggestion commit: {redact_secrets(new_commit_resp.text)}")
         return False
 
     update_resp = http.patch(
@@ -1644,7 +1644,7 @@ def commit_files_to_github_branch(
         json={"sha": new_commit_resp.json()["sha"]},
     )
     if update_resp.status_code not in (200, 201):
-        logger.error(f"Failed to update suggestion branch ref: {update_resp.text}")
+        logger.error(f"Failed to update suggestion branch ref: {redact_secrets(update_resp.text)}")
         return False
 
     return True
@@ -1672,7 +1672,7 @@ def create_github_pull_request(
         },
     )
     if resp.status_code not in (200, 201):
-        logger.error(f"Failed to create GitHub pull request: {resp.text}")
+        logger.error(f"Failed to create GitHub pull request: {redact_secrets(resp.text)}")
         if resp.status_code == 403:
             raise GitHubApiError(
                 "GitHub rejected pull request creation. Check that the token has "
@@ -1681,7 +1681,7 @@ def create_github_pull_request(
                 status_code=resp.status_code,
             )
         raise GitHubApiError(
-            f"GitHub pull request creation failed: {resp.text}",
+            f"GitHub pull request creation failed: {redact_secrets(resp.text)}",
             status_code=resp.status_code,
         )
     return resp.json().get("html_url")
@@ -1697,7 +1697,7 @@ def list_open_github_pull_requests(repo_url: str, base_branch: str, token: str) 
         params={"state": "open", "base": base_branch, "per_page": 100},
     )
     if resp.status_code != 200:
-        logger.error(f"Failed to list GitHub pull requests: {resp.text}")
+        logger.error(f"Failed to list GitHub pull requests: {redact_secrets(resp.text)}")
         return []
     payload = resp.json()
     return payload if isinstance(payload, list) else []
@@ -1713,7 +1713,7 @@ def list_github_pull_request_files(repo_url: str, pull_number: int, token: str) 
         params={"per_page": 100},
     )
     if resp.status_code != 200:
-        logger.error(f"Failed to list GitHub pull request files: {resp.text}")
+        logger.error(f"Failed to list GitHub pull request files: {redact_secrets(resp.text)}")
         return []
     payload = resp.json()
     return payload if isinstance(payload, list) else []

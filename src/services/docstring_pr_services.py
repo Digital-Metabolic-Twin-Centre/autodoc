@@ -25,6 +25,7 @@ from utils.git_utils import (
     read_file_content_from_local,
 )
 from utils.output_paths import build_repo_output_file, find_latest_repo_run_dir
+from utils.redaction import redact_secrets
 
 logger = get_logger(__name__)
 
@@ -709,5 +710,5 @@ def create_python_docstring_pull_request(
         logger.error("Repository access failed: %s", exc)
         raise DocstringPullRequestError(str(exc)) from exc
     except Exception as e:
-        logger.error(f"Error creating docstring PR: {e}")
+        logger.error(f"Error creating docstring PR: {redact_secrets(str(e))}")
         raise

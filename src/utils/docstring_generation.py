@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from tqdm import tqdm
 
 from config.log_config import get_logger
+from utils.redaction import redact_secrets
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -305,7 +306,7 @@ def generate_docstring(
             logger.warning("No response from OpenAI API")
             return None
     except Exception as e:
-        logger.error(f"Error generating docstring: {e}")
+        logger.error(f"Error generating docstring: {redact_secrets(str(e))}")
         return None
 
 
@@ -352,9 +353,10 @@ def generate_docstrings_for_code_blocks_openai(
                 code_blocks_data[i]["generated_docstring"] = "Failed to generate"
             time.sleep(1.5)
         except Exception as e:
+            error_message = redact_secrets(str(e))
             logger.error(f"Error processing code block {i}: {function_name}")
-            logger.error(f"Exception: {e}")
-            code_blocks_data[i]["generated_docstring"] = f"Error: {str(e)}"
+            logger.error(f"Exception: {error_message}")
+            code_blocks_data[i]["generated_docstring"] = f"Error: {error_message}"
 
     return code_blocks_data
 

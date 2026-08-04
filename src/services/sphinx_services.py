@@ -50,6 +50,7 @@ from utils.git_utils import (
     publish_local_directory_to_github_branch,
     request_github_pages_build,
 )
+from utils.redaction import redact_secrets
 from utils.update_conf_content import update_conf
 
 logger = get_logger(__name__)
@@ -1969,11 +1970,11 @@ def trigger_gitlab_pipeline(
             return True
         else:
             logger.error(
-                f"Failed to trigger pipeline: {response.text} (Status: {response.status_code})"
+                f"Failed to trigger pipeline: {redact_secrets(response.text)} (Status: {response.status_code})"
             )
             return False
     except Exception as e:
-        logger.error(f"Exception while triggering pipeline: {e}")
+        logger.error(f"Exception while triggering pipeline: {redact_secrets(str(e))}")
         return False
 
 

@@ -261,6 +261,46 @@ def test_download_github_branch_snapshot_prefers_clone(monkeypatch, tmp_path):
     assert not (destination_dir / ".git").exists()
 
 
+def test_ensure_github_branch_redacts_token_leaked_in_provider_response_body(monkeypatch, caplog):
+    """
+    Defends against a provider echoing request data (including the token embedded in
+    the Authorization header by some other layer) back in an error response body -
+    every logged provider response must go through the same redaction as clone errors.
+    """
+    leaked_token = "ghp_abcdefghijklmnopqrstuvwxyz123456"
+
+    def fake_get(url, headers=None, **kwargs):
+        return DummyResponse(500, text=f"Internal error while validating token {leaked_token}")
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    with caplog.at_level("ERROR"):
+        result = ensure_github_branch("example/project", "main", "gh-pages", "secret")
+
+    assert result is False
+    assert leaked_token not in caplog.text
+    assert "***REDACTED-TOKEN***" in caplog.text
+
+
+def test_configure_github_pages_redacts_token_leaked_in_json_error_message(monkeypatch):
+    leaked_token = "ghp_abcdefghijklmnopqrstuvwxyz123456"
+
+    def fake_get(url, headers=None, **kwargs):
+        return DummyResponse(
+            403,
+            {"message": f"Bad credentials for token {leaked_token}"},
+            text=f'{{"message":"Bad credentials for token {leaked_token}"}}',
+        )
+
+    monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
+
+    with pytest.raises(GitHubApiError) as exc_info:
+        configure_github_pages("example/project", "gh-pages", "secret")
+
+    assert leaked_token not in str(exc_info.value)
+    assert "***REDACTED-TOKEN***" in str(exc_info.value)
+
+
 def test_configure_github_pages_raises_exact_github_error(monkeypatch):
     def fake_get(url, headers=None, **kwargs):
         return DummyResponse(404, {"message": "Not Found"}, text='{"message":"Not Found"}')
