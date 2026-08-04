@@ -1140,6 +1140,21 @@ def test_suggest_python_docstrings_pr_requires_base_branch():
     assert response.status_code == 400
 
 
+def test_suggest_python_docstrings_pr_rejects_repo_url_outside_provider_allowlist():
+    response = request(
+        "POST",
+        "/suggest-python-docstrings-pr",
+        json={
+            "provider": "github",
+            "repo_url": "https://attacker.example/example/project.git",
+            "token": "secret",
+            "base_branch": "main",
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_generate_architecture_docs_returns_draft_and_never_publishes(monkeypatch):
     monkeypatch.setattr(
         "services.workflow_service.generate_architecture_draft",
@@ -1194,7 +1209,22 @@ def test_generate_architecture_docs_requires_repo_url():
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 422
+
+
+def test_generate_architecture_docs_rejects_repo_url_outside_provider_allowlist():
+    response = request(
+        "POST",
+        "/generate-architecture-docs",
+        json={
+            "provider": "github",
+            "repo_url": "https://169.254.169.254/latest/meta-data/",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_generate_architecture_docs_returns_analysis_error_status(monkeypatch):
@@ -1397,7 +1427,22 @@ def test_generate_endpoint_rejects_missing_required_fields():
         json={"provider": "github", "repo_url": "", "token": "secret", "branch": "main"},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 422
+
+
+def test_generate_endpoint_rejects_repo_url_outside_provider_allowlist():
+    response = request(
+        "POST",
+        "/generate",
+        json={
+            "provider": "github",
+            "repo_url": "https://attacker.example/octo/example.git",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_generate_endpoint_reraises_http_exception_from_service(monkeypatch):
@@ -1681,7 +1726,21 @@ def test_publish_pages_rejects_missing_required_fields():
         json={"repo_url": "", "token": "secret", "branch": "main"},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 422
+
+
+def test_publish_pages_rejects_repo_url_outside_provider_allowlist():
+    response = request(
+        "POST",
+        "/publish-pages",
+        json={
+            "repo_url": "https://gitlab.com/octo/example.git",
+            "token": "secret",
+            "branch": "main",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_publish_pages_reraises_http_exception_from_service(monkeypatch):

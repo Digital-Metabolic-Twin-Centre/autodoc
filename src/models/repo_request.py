@@ -1,7 +1,8 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
+from utils.git_utils import check_repo_url_host
 from utils.output_paths import validate_architecture_output_path
 
 
@@ -34,6 +35,23 @@ class RepoRequest(BaseModel):
     docstring_threshold: float = Field(default=0.50, ge=0.0, le=1.0)
     low_content_min_lines: int = Field(default=4, ge=0)
 
+    @field_validator("repo_url")
+    @classmethod
+    def _validate_repo_url(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Reject repo_url values outside the provider's allowed host list.
+
+        Args:
+            value (str): Repository URL or "owner/repo" path to validate.
+            info (ValidationInfo): Validation context, used to read the sibling
+                provider field.
+
+        Returns:
+            str: The validated repo_url.
+
+        """
+        return check_repo_url_host(value, info.data.get("provider", ""))
+
 
 class PublishPagesRequest(BaseModel):
     """
@@ -53,6 +71,21 @@ class PublishPagesRequest(BaseModel):
     token: str
     branch: str
     low_content_min_lines: int = Field(default=4, ge=0)
+
+    @field_validator("repo_url")
+    @classmethod
+    def _validate_repo_url(cls, value: str) -> str:
+        """
+        Reject repo_url values outside GitHub's allowed host list.
+
+        Args:
+            value (str): Repository URL or "owner/repo" path to validate.
+
+        Returns:
+            str: The validated repo_url.
+
+        """
+        return check_repo_url_host(value, "github")
 
 
 class DocstringPullRequestRequest(BaseModel):
@@ -80,6 +113,23 @@ class DocstringPullRequestRequest(BaseModel):
     suggestion_branch: Optional[str] = None
     title: str = "Add suggested docstrings"
     max_docstrings: int = 50
+
+    @field_validator("repo_url")
+    @classmethod
+    def _validate_repo_url(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Reject repo_url values outside the provider's allowed host list.
+
+        Args:
+            value (str): Repository URL or "owner/repo" path to validate.
+            info (ValidationInfo): Validation context, used to read the sibling
+                provider field.
+
+        Returns:
+            str: The validated repo_url.
+
+        """
+        return check_repo_url_host(value, info.data.get("provider", ""))
 
 
 class ArchitectureGenerationRequest(BaseModel):
@@ -114,6 +164,23 @@ class ArchitectureGenerationRequest(BaseModel):
     include_diagrams: bool = True
     reuse_existing_docs: bool = True
     model: Optional[str] = None
+
+    @field_validator("repo_url")
+    @classmethod
+    def _validate_repo_url(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Reject repo_url values outside the provider's allowed host list.
+
+        Args:
+            value (str): Repository URL or "owner/repo" path to validate.
+            info (ValidationInfo): Validation context, used to read the sibling
+                provider field.
+
+        Returns:
+            str: The validated repo_url.
+
+        """
+        return check_repo_url_host(value, info.data.get("provider", ""))
 
     @field_validator("output_path")
     @classmethod
@@ -159,6 +226,23 @@ class ArchitectureApprovalRequest(BaseModel):
     output_path: str
     overwrite_existing: bool
     approval_note: Optional[str] = None
+
+    @field_validator("repo_url")
+    @classmethod
+    def _validate_repo_url(cls, value: str, info: ValidationInfo) -> str:
+        """
+        Reject repo_url values outside the provider's allowed host list.
+
+        Args:
+            value (str): Repository URL or "owner/repo" path to validate.
+            info (ValidationInfo): Validation context, used to read the sibling
+                provider field.
+
+        Returns:
+            str: The validated repo_url.
+
+        """
+        return check_repo_url_host(value, info.data.get("provider", ""))
 
     @field_validator("output_path")
     @classmethod

@@ -3,6 +3,7 @@ import pytest
 from utils.git_utils import (
     GitHubApiError,
     RepositoryAccessError,
+    check_repo_url_host,
     configure_github_pages,
     create_a_file,
     create_directory_and_add_files,
@@ -21,6 +22,7 @@ from utils.git_utils import (
     publish_local_directory_to_github_branch,
     request_github_pages_build,
     should_ignore,
+    validate_repo_url,
 )
 from utils.update_conf_content import _append_extension
 
@@ -31,6 +33,76 @@ def test_extract_repo_path_strips_protocol_and_git_suffix():
 
 def test_extract_repo_path_accepts_short_form():
     assert extract_repo_path("group/project") == "group/project"
+
+
+def test_check_repo_url_host_accepts_short_form_regardless_of_host_config():
+    assert check_repo_url_host("octo/example", "github") == "octo/example"
+
+
+def test_check_repo_url_host_accepts_matching_provider_host():
+    url = "https://github.com/octo/example.git"
+    assert check_repo_url_host(url, "github") == url
+
+
+@pytest.mark.parametrize(
+    "repo_url,provider",
+    [
+        ("https://gitlab.com/octo/example.git", "github"),
+        ("https://internal-metadata.evil/octo/example.git", "github"),
+        ("https://169.254.169.254/latest/meta-data/", "github"),
+        ("https://github.com/octo/example.git", "gitlab"),
+    ],
+)
+def test_check_repo_url_host_rejects_urls_outside_provider_allowlist(repo_url, provider):
+    with pytest.raises(ValueError, match="not an allowed"):
+        check_repo_url_host(repo_url, provider)
+
+
+def test_check_repo_url_host_rejects_non_https_scheme():
+    with pytest.raises(ValueError, match="https"):
+        check_repo_url_host("http://github.com/octo/example.git", "github")
+
+
+def test_check_repo_url_host_rejects_embedded_credentials():
+    with pytest.raises(ValueError, match="credentials"):
+        check_repo_url_host("https://attacker:token@github.com/octo/example.git", "github")
+
+
+def test_check_repo_url_host_rejects_empty_repo_url():
+    with pytest.raises(ValueError, match="must not be empty"):
+        check_repo_url_host("", "github")
+
+
+def test_check_repo_url_host_rejects_unsupported_provider_for_absolute_url():
+    with pytest.raises(ValueError, match="Unsupported provider"):
+        check_repo_url_host("https://bitbucket.org/octo/example.git", "bitbucket")
+
+
+def test_check_repo_url_host_honors_configured_allowlist_for_self_hosted(monkeypatch):
+    monkeypatch.setenv("AUTODOC_ALLOWED_GITHUB_HOSTS", "git.internal.example.com")
+    url = "https://git.internal.example.com/octo/example.git"
+    assert check_repo_url_host(url, "github") == url
+    with pytest.raises(ValueError, match="not an allowed"):
+        check_repo_url_host("https://github.com/octo/example.git", "github")
+
+
+def test_validate_repo_url_wraps_host_check_failure_as_repository_access_error():
+    with pytest.raises(RepositoryAccessError) as exc_info:
+        validate_repo_url("https://attacker.example/octo/example.git", "github")
+    assert exc_info.value.status_code == 422
+
+
+def test_clone_repository_rejects_disallowed_host_before_shelling_out(monkeypatch):
+    from utils import git_utils
+
+    def _fail_if_called(*args, **kwargs):
+        raise AssertionError("subprocess.run should not be invoked for a disallowed host")
+
+    monkeypatch.setattr(git_utils.subprocess, "run", _fail_if_called)
+
+    with pytest.raises(RepositoryAccessError, match="not an allowed"):
+        with git_utils.clone_repository("https://attacker.example/octo/example.git", "tok", "main", "github"):
+            pass
 
 
 def test_should_ignore_matches_file_and_directory_patterns():

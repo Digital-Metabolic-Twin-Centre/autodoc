@@ -184,6 +184,85 @@ def extract_repo_path(repo_url: str, provider: str = "github") -> str:
     return repo_url
 
 
+def _allowed_git_hosts(provider: str) -> set[str]:
+    """
+    Resolve the hostnames permitted for a provider's repo_url.
+
+    Defaults to the public provider host. Operators running against a
+    self-hosted GitHub/GitLab instance can extend this via the
+    AUTODOC_ALLOWED_GITHUB_HOSTS / AUTODOC_ALLOWED_GITLAB_HOSTS environment
+    variables (comma-separated hostnames).
+    """
+    provider_key = str(provider or "").strip().lower()
+    if provider_key == "github":
+        default_hosts, env_var = "github.com", "AUTODOC_ALLOWED_GITHUB_HOSTS"
+    elif provider_key == "gitlab":
+        default_hosts, env_var = "gitlab.com", "AUTODOC_ALLOWED_GITLAB_HOSTS"
+    else:
+        raise ValueError(f"Unsupported provider: {provider}")
+    configured = os.getenv(env_var, default_hosts)
+    return {host.strip().lower() for host in configured.split(",") if host.strip()}
+
+
+def check_repo_url_host(repo_url: str, provider: str) -> str:
+    """
+    Guard against repo_url redirecting cloning/token delivery to an
+    arbitrary host (SSRF and credential-exfiltration prevention).
+
+    The shorthand "owner/repo" form is always safe: it is later rewritten
+    onto the fixed provider host, never used as-is. Only absolute URLs are
+    checked against the provider's host allowlist.
+
+    Args:
+        repo_url (str): Caller-supplied repository URL or "owner/repo" path.
+        provider (str): Git provider ("github" or "gitlab").
+
+    Returns:
+        str: The unchanged repo_url, once validated.
+
+    Raises:
+        ValueError: If repo_url is empty, uses a disallowed scheme, embeds
+            credentials, or targets a host outside the configured allowlist.
+    """
+    candidate = str(repo_url or "").strip()
+    if not candidate:
+        raise ValueError("repo_url must not be empty.")
+    if not candidate.startswith(("http://", "https://")):
+        return candidate
+
+    parsed = urllib.parse.urlparse(candidate)
+    if parsed.scheme != "https":
+        raise ValueError(f"repo_url must use https, got '{parsed.scheme or 'none'}'.")
+    if parsed.username or parsed.password:
+        raise ValueError("repo_url must not embed credentials.")
+
+    host = (parsed.hostname or "").lower()
+    allowed_hosts = _allowed_git_hosts(provider)
+    if host not in allowed_hosts:
+        raise ValueError(
+            f"repo_url host '{host}' is not an allowed {provider} host "
+            f"(allowed: {', '.join(sorted(allowed_hosts))})."
+        )
+    return candidate
+
+
+def validate_repo_url(repo_url: str, provider: str) -> str:
+    """
+    Validate repo_url before it is used to clone a repository.
+
+    Defense-in-depth wrapper around check_repo_url_host() for the actual
+    clone call sites, so an SSRF-unsafe repo_url is rejected even if a
+    caller bypassed request-model validation.
+
+    Raises:
+        RepositoryAccessError: If repo_url fails the host/scheme/credential check.
+    """
+    try:
+        return check_repo_url_host(repo_url, provider)
+    except ValueError as e:
+        raise RepositoryAccessError(str(e), status_code=422) from e
+
+
 def _git_clone_timeout_seconds() -> int:
     raw_timeout = os.getenv("AUTODOC_GIT_CLONE_TIMEOUT")
     if not raw_timeout:
@@ -248,6 +327,10 @@ def clone_repository(
     Raises:
         RepositoryAccessError: If clone fails.
     """
+    # Reject repo_url values that would redirect cloning/token delivery to a
+    # host outside the provider's allowlist (SSRF / credential exfiltration).
+    repo_url = validate_repo_url(repo_url, provider)
+
     # Convert repo path/URL to full clone URL
     if repo_url.startswith(("http://", "https://")):
         clone_url = repo_url
@@ -642,6 +725,10 @@ def fetch_repo_tree(
             logger.info(f"Fetched repo tree from local path, {len(files)} files found.")
             return files
         else:
+            # Reject repo_url values that would redirect cloning/token delivery to a
+            # host outside the provider's allowlist (SSRF / credential exfiltration).
+            repo_url = validate_repo_url(repo_url, provider)
+
             # Clone and fetch (caller is responsible for cleanup)
             temp_dir = tempfile.mkdtemp(prefix="autodoc_repo_")
             try:
