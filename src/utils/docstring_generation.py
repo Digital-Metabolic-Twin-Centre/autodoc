@@ -20,7 +20,30 @@ DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 DEFAULT_CODEX_COMMAND = "codex exec --skip-git-repo-check -"
 DEFAULT_CLAUDE_COMMAND = "claude -p --output-format text"
 CLI_TIMEOUT_SECONDS = 120
+DEFAULT_OPENAI_REQUEST_TIMEOUT_SECONDS = 60
 SUPPORTED_AI_PROVIDERS = {"openai", "codex", "claude"}
+
+
+def _openai_request_timeout_seconds() -> int:
+    raw_timeout = os.getenv("AUTODOC_OPENAI_TIMEOUT")
+    if not raw_timeout:
+        return DEFAULT_OPENAI_REQUEST_TIMEOUT_SECONDS
+    try:
+        timeout = int(raw_timeout)
+    except ValueError:
+        logger.warning(
+            "Invalid AUTODOC_OPENAI_TIMEOUT=%r; using %s seconds",
+            raw_timeout,
+            DEFAULT_OPENAI_REQUEST_TIMEOUT_SECONDS,
+        )
+        return DEFAULT_OPENAI_REQUEST_TIMEOUT_SECONDS
+    if timeout <= 0:
+        logger.warning(
+            "AUTODOC_OPENAI_TIMEOUT must be positive; using %s seconds",
+            DEFAULT_OPENAI_REQUEST_TIMEOUT_SECONDS,
+        )
+        return DEFAULT_OPENAI_REQUEST_TIMEOUT_SECONDS
+    return timeout
 
 
 def _normalize_ai_provider(provider: str | None) -> str | None:
@@ -297,17 +320,49 @@ def generate_docstring(
             ],
             temperature=0.0,
             max_tokens=512,
+            timeout=_openai_request_timeout_seconds(),
         )
-        if response and response.choices:
-            response_text = (response.choices[0].message.content or "").strip()
-            response_json = _extract_json_object(response_text)
-            return response_json.get("docstring", "")
-        else:
-            logger.warning("No response from OpenAI API")
-            return None
-    except Exception as e:
-        logger.error(f"Error generating docstring: {redact_secrets(str(e))}")
+    except openai.AuthenticationError as exc:
+        logger.error(
+            "OpenAI authentication failed while generating a docstring; check OPENAI_API_KEY: %s",
+            redact_secrets(str(exc)),
+        )
         return None
+    except openai.RateLimitError as exc:
+        logger.warning("OpenAI rate limit hit while generating a docstring: %s", redact_secrets(str(exc)))
+        return None
+    except openai.APITimeoutError as exc:
+        logger.warning("OpenAI request timed out while generating a docstring: %s", redact_secrets(str(exc)))
+        return None
+    except openai.APIConnectionError as exc:
+        logger.warning("Could not reach OpenAI while generating a docstring: %s", redact_secrets(str(exc)))
+        return None
+    except openai.APIError as exc:
+        logger.error("OpenAI API error while generating a docstring: %s", redact_secrets(str(exc)))
+        return None
+    except ValueError as exc:
+        # resolve_ai_provider()/configure_openai() raise ValueError for an
+        # unsupported provider or a missing API key.
+        logger.error("Docstring generation configuration error: %s", redact_secrets(str(exc)))
+        return None
+    except Exception as exc:
+        logger.error(f"Unexpected error generating docstring: {redact_secrets(str(exc))}")
+        return None
+
+    if not response or not response.choices:
+        logger.warning("No response from OpenAI API")
+        return None
+
+    try:
+        response_text = (response.choices[0].message.content or "").strip()
+        response_json = _extract_json_object(response_text)
+    except ValueError as exc:
+        # json.JSONDecodeError is a ValueError subclass; _extract_json_object raises it
+        # when the model's response doesn't contain a parseable JSON object.
+        logger.error("Failed to parse OpenAI docstring response as JSON: %s", redact_secrets(str(exc)))
+        return None
+
+    return response_json.get("docstring", "")
 
 
 def generate_docstring_with_openai(
