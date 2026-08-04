@@ -13,6 +13,43 @@ from utils.output_paths import (
 )
 
 
+def test_make_unique_run_dir_returns_distinct_dirs_for_back_to_back_calls(tmp_path):
+    first = output_paths._make_unique_run_dir(str(tmp_path))
+    second = output_paths._make_unique_run_dir(str(tmp_path))
+
+    assert first != second
+    assert Path(first).is_dir()
+    assert Path(second).is_dir()
+
+
+def test_make_unique_run_dir_retries_when_two_runs_land_on_the_same_timestamp(monkeypatch, tmp_path):
+    """Simulates two concurrent runs whose clocks resolve to the identical microsecond."""
+    fixed_timestamp = "20260804_120000_000000"
+
+    class _FixedDateTime:
+        @staticmethod
+        def now():
+            class _Instant:
+                @staticmethod
+                def strftime(_fmt):
+                    return fixed_timestamp
+
+            return _Instant()
+
+    monkeypatch.setattr(output_paths, "datetime", _FixedDateTime)
+    suffixes = iter(["aaaaaa", "aaaaaa", "bbbbbb"])
+    monkeypatch.setattr(output_paths.secrets, "token_hex", lambda _n: next(suffixes))
+
+    base_dir = tmp_path / "github" / "octo-org__example-repo"
+    # A prior "run" already claimed the directory the first attempt will try.
+    (base_dir / f"app_{fixed_timestamp}_aaaaaa").mkdir(parents=True)
+
+    result = output_paths._make_unique_run_dir(str(base_dir))
+
+    assert result == str(base_dir / f"app_{fixed_timestamp}_bbbbbb")
+    assert Path(result).is_dir()
+
+
 def test_build_repo_output_dir_creates_provider_and_repo_scoped_folder():
     output_dir = build_repo_output_dir("octo-org/example-repo", "GitHub")
 

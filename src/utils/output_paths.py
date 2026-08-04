@@ -1,5 +1,6 @@
 import os
 import re
+import secrets
 import shutil
 from datetime import datetime
 
@@ -85,6 +86,28 @@ def _copy_previous_run_artifacts(previous_run_dir: str | None, output_dir: str) 
         shutil.copy2(source_path, target_path)
 
 
+def _make_unique_run_dir(base_dir: str) -> str:
+    """
+    Atomically create a fresh, collision-proof run directory under base_dir.
+
+    Concurrent runs for the same repo (e.g. two admin jobs started in the
+    same wall-clock second) must never resolve to the same `app_<...>`
+    directory, or one run's artifacts/logs silently clobber the other's.
+    A microsecond timestamp makes collisions unlikely; the random suffix and
+    `os.makedirs(..., exist_ok=False)` retry make them impossible, since
+    directory creation is atomic at the OS level.
+    """
+    for _ in range(5):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        candidate = os.path.join(base_dir, f"app_{timestamp}_{secrets.token_hex(3)}")
+        try:
+            os.makedirs(candidate, exist_ok=False)
+            return candidate
+        except FileExistsError:
+            continue
+    raise RuntimeError(f"Could not allocate a unique run directory under {base_dir}")
+
+
 def build_repo_output_dir(repo_path: str, provider: str) -> str:
     """
     Returns the repo-scoped output directory for the current run.
@@ -92,8 +115,7 @@ def build_repo_output_dir(repo_path: str, provider: str) -> str:
     repo_key = (str(provider or "unknown").lower(), str(repo_path or "unknown").strip("/"))
     output_dir = _ACTIVE_RUN_DIRS.get(repo_key)
     if not output_dir:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = os.path.join(_repo_base_dir(repo_path, provider), f"app_{timestamp}")
+        output_dir = _make_unique_run_dir(_repo_base_dir(repo_path, provider))
         _ACTIVE_RUN_DIRS[repo_key] = output_dir
     os.makedirs(output_dir, exist_ok=True)
     # Clean up old logs, keeping only the last 6
@@ -131,8 +153,7 @@ def bind_repo_run_log_dir(repo_path: str, provider: str) -> str:
     """
     repo_key = (str(provider or "unknown").lower(), str(repo_path or "unknown").strip("/"))
     previous_run_dir = find_latest_repo_run_dir(repo_path, provider)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = os.path.join(_repo_base_dir(repo_path, provider), f"app_{timestamp}")
+    output_dir = _make_unique_run_dir(_repo_base_dir(repo_path, provider))
     _copy_previous_run_artifacts(previous_run_dir, output_dir)
     _ACTIVE_RUN_DIRS[repo_key] = output_dir
     # Clean up old logs, keeping only the last 6
