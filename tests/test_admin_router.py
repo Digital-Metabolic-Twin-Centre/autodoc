@@ -674,7 +674,7 @@ def test_trigger_suggest_pr_enqueues_run_for_github_repository(monkeypatch):
         )
 
         assert response.status_code == 303
-        assert captured["endpoint"] == "/suggest-python-docstrings-pr"
+        assert captured["endpoint"] == "/suggest-docstrings-pr"
         assert captured["payload"]["token"] == "secret-token"
     finally:
         _delete_repository_and_runs(repository_id)
@@ -2074,7 +2074,7 @@ def test_retry_run_replays_suggest_python_docstrings_pr_endpoint(monkeypatch):
         response = run(retry_run(run_id=run_id, request=_fake_request(), admin_user="tester", _=None))
 
         assert response.status_code == 303
-        assert captured["endpoint"] == "/suggest-python-docstrings-pr"
+        assert captured["endpoint"] == "/suggest-docstrings-pr"
         assert captured["payload"]["token"] == "secret-token"
     finally:
         _delete_repository_and_runs(repository_id)

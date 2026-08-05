@@ -17,6 +17,7 @@ from services.docstring_pr_services import (
     _run_ruff_on_patched_files,
     _suggestion_generator,
     create_python_docstring_pull_request,
+    patch_line_based_docstrings,
     patch_python_docstrings,
 )
 from utils.git_utils import GitHubApiError, RepositoryAccessError
@@ -120,6 +121,32 @@ def test_format_python_docstring_falls_back_to_todo_when_empty():
     formatted = _format_python_docstring("   ", "    ")
 
     assert formatted == ['    """TODO: Add documentation."""']
+
+
+def test_patch_line_based_docstrings_inserts_matlab_help_after_function_line():
+    source = textwrap.dedent(
+        """
+        function result = add(left, right)
+            result = left + right;
+        end
+        """
+    ).lstrip()
+
+    patched = patch_line_based_docstrings(
+        source,
+        [
+            {
+                "function_name": "add",
+                "block_type": "function",
+                "line_number": 1,
+                "language": "matlab",
+                "generated_docstring": "Add two values.",
+            }
+        ],
+    )
+
+    assert patched.inserted[0].name == "add"
+    assert "function result = add(left, right)\n% Add two values." in patched.content
 
 
 def test_patch_python_docstrings_handles_async_function():
@@ -236,7 +263,7 @@ def test_build_pull_request_body_summarizes_changed_files():
 
     body = _build_pull_request_body("main", files_changed)
 
-    assert "Adds 1 generated Python docstring suggestion(s)" in body
+    assert "Adds 1 generated docstring suggestion(s)" in body
     assert "`src/example.py`: 1 docstring(s)" in body
     assert "Base branch: `main`" in body
 
@@ -304,7 +331,7 @@ def test_load_generated_suggestions_raises_when_repo_or_branch_mismatch(tmp_path
         _load_generated_suggestions("example/project", "main")
 
 
-def test_load_generated_suggestions_skips_non_python_suggestions(tmp_path, monkeypatch):
+def test_load_generated_suggestions_keeps_supported_non_python_suggestions(tmp_path, monkeypatch):
     repo_dir = tmp_path / "github" / "example__project"
     run_dir = repo_dir / "app_20260429_120000"
     run_dir.mkdir(parents=True)
@@ -331,7 +358,17 @@ def test_load_generated_suggestions_skips_non_python_suggestions(tmp_path, monke
 
     suggestions = _load_generated_suggestions("example/project", "main")
 
-    assert suggestions == {}
+    assert suggestions == {
+        "src/example.js": [
+            {
+                "file_path": "src/example.js",
+                "function_name": "add",
+                "block_type": "function",
+                "language": "javascript",
+                "generated_docstring": "Add two values.",
+            }
+        ]
+    }
 
 
 def test_load_generated_suggestions_skips_newer_run_dirs_without_suggestion_file(tmp_path, monkeypatch):
@@ -564,7 +601,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_nothing_to
     assert result["status"] == "no_changes"
     assert result["pull_request_url"] is None
     assert result["files_changed"] == 0
-    assert result["message"] == "No new Python docstring suggestions are available for this branch."
+    assert result["message"] == "No new docstring suggestions are available for this branch."
     assert result["detail"] == result["message"]
 
 
@@ -646,7 +683,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_branch_is_
     assert result["status"] == "no_changes"
     assert result["pull_request_url"] is None
     assert result["files_changed"] == 0
-    assert result["message"] == "No new Python docstring suggestions are available for this branch."
+    assert result["message"] == "No new docstring suggestions are available for this branch."
     assert result["detail"] == result["message"]
 
 
@@ -728,7 +765,7 @@ def test_create_python_docstring_pull_request_returns_no_changes_when_matching_p
     assert result["status"] == "no_changes"
     assert result["pull_request_url"] is None
     assert result["existing_pull_request_url"] == "https://github.com/example/project/pull/17"
-    assert result["message"] == "A matching Python docstring suggestion pull request is already open for this branch."
+    assert result["message"] == "A matching docstring suggestion pull request is already open for this branch."
 
 
 def test_create_python_docstring_pull_request_rejects_non_github_provider():
@@ -744,7 +781,7 @@ def test_create_python_docstring_pull_request_raises_when_no_suggestions(monkeyp
         lambda repo_path, branch: {},
     )
 
-    with pytest.raises(DocstringPullRequestError, match="No generated Python docstring suggestions"):
+    with pytest.raises(DocstringPullRequestError, match="No generated docstring suggestions"):
         create_python_docstring_pull_request(
             "github", "example/project", "secret", "main", "autodocs/suggestions", "Add suggested docstrings"
         )
@@ -766,7 +803,7 @@ def test_create_python_docstring_pull_request_raises_when_no_python_files(monkey
     )
     monkeypatch.setattr("services.docstring_pr_services.clone_repository", _fake_clone)
 
-    with pytest.raises(DocstringPullRequestError, match="No Python files found"):
+    with pytest.raises(DocstringPullRequestError, match="No files with generated docstring suggestions were found"):
         create_python_docstring_pull_request(
             "github", "example/project", "secret", "main", "autodocs/suggestions", "Add suggested docstrings"
         )
@@ -996,6 +1033,55 @@ def test_create_python_docstring_pull_request_succeeds_for_new_file(monkeypatch)
     assert result["files_changed"] == 1
     assert result["docstrings_added"] == 1
     assert result["changed_files"] == ["src/example.py"]
+
+
+def test_create_python_docstring_pull_request_succeeds_for_matlab_suggestion(monkeypatch):
+    source = "function result = add(left, right)\n    result = left + right;\nend\n"
+    committed = {}
+    monkeypatch.setattr(
+        "services.docstring_pr_services._load_generated_suggestions",
+        lambda repo_path, branch: {
+            "src/add.m": [
+                {
+                    "function_name": "add",
+                    "block_type": "function",
+                    "line_number": 1,
+                    "language": "matlab",
+                    "generated_docstring": "Add two values.",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(
+        "services.docstring_pr_services.fetch_repo_tree",
+        lambda repo_path, token, branch, provider: [{"type": "file", "path": "src/add.m"}],
+    )
+    monkeypatch.setattr("services.docstring_pr_services.clone_repository", _fake_clone)
+    monkeypatch.setattr(
+        "services.docstring_pr_services.read_file_content_from_local",
+        lambda temp_dir, file_path: source,
+    )
+    monkeypatch.setattr("services.docstring_pr_services.list_open_github_pull_requests", lambda *args, **kwargs: [])
+    monkeypatch.setattr("services.docstring_pr_services.ensure_github_branch", lambda *args, **kwargs: True)
+    monkeypatch.setattr("services.docstring_pr_services.fetch_content_from_github", lambda *args, **kwargs: None)
+
+    def fake_commit(repo_path, branch, files, token, message):
+        committed.update(files)
+        return True
+
+    monkeypatch.setattr("services.docstring_pr_services.commit_files_to_github_branch", fake_commit)
+    monkeypatch.setattr(
+        "services.docstring_pr_services.create_github_pull_request",
+        lambda *args, **kwargs: "https://github.com/example/project/pull/42",
+    )
+
+    result = create_python_docstring_pull_request(
+        "github", "example/project", "secret", "main", "autodocs/suggestions", "Add suggested docstrings"
+    )
+
+    assert result["status"] == "success"
+    assert result["changed_files"] == ["src/add.m"]
+    assert "function result = add(left, right)\n% Add two values." in committed["src/add.m"]
 
 
 def test_create_python_docstring_pull_request_succeeds_when_fetch_raises(monkeypatch):

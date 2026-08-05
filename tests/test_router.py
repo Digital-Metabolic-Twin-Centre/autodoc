@@ -1072,7 +1072,7 @@ def test_run_sphinx_build_with_autoapi_filters_writes_full_sphinx_build_log(tmp_
     assert "*/api/broken.py" in log_text
 
 
-def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
+def test_suggest_docstrings_pr_returns_success(monkeypatch):
     captured = {}
 
     def fake_create_pr(provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings):
@@ -1093,7 +1093,7 @@ def test_suggest_python_docstrings_pr_returns_success(monkeypatch):
 
     response = request(
         "POST",
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         json={
             "provider": "github",
             "repo_url": "example/project",
@@ -1150,8 +1150,8 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
             "files_changed": 0,
             "docstrings_added": 0,
             "changed_files": [],
-            "message": "No new Python docstring suggestions are available for this branch.",
-            "detail": "No new Python docstring suggestions are available for this branch.",
+            "message": "No new docstring suggestions are available for this branch.",
+            "detail": "No new docstring suggestions are available for this branch.",
         },
     )
 
@@ -1169,7 +1169,7 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
     assert response.status_code == 200
     assert response.json()["status"] == "no_changes"
     assert response.json()["pull_request_url"] is None
-    assert response.json()["message"] == ("No new Python docstring suggestions are available for this branch.")
+    assert response.json()["message"] == ("No new docstring suggestions are available for this branch.")
 
 
 def test_suggest_python_docstrings_pr_requires_base_branch():

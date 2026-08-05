@@ -27,7 +27,9 @@ from admin.security import (
 )
 from admin.services import (
     DEFAULT_ARCHITECTURE_OUTPUT_PATH,
+    DOCSTRING_PR_ENDPOINT,
     ENDPOINT_LABELS,
+    LEGACY_DOCSTRING_PR_ENDPOINT,
     artifact_entries,
     build_architecture_generation_request,
     build_pr_request,
@@ -484,8 +486,8 @@ async def trigger_suggest_pr(
             title=title,
             max_docstrings=max_docstrings,
         )
-    run_id = create_run_record(repository_id, "/suggest-python-docstrings-pr", admin_user, pr_request.model_dump())
-    enqueue_run(run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
+    run_id = create_run_record(repository_id, DOCSTRING_PR_ENDPOINT, admin_user, pr_request.model_dump())
+    enqueue_run(run_id, DOCSTRING_PR_ENDPOINT, pr_request.model_dump())
     return _redirect(f"/admin/runs/{run_id}", request)
 
 
@@ -697,9 +699,9 @@ async def retry_run(
     elif endpoint == "/publish-pages":
         publish_request = PublishPagesRequest(**queue_payload)
         enqueue_run(new_run_id, "/publish-pages", publish_request.model_dump())
-    elif endpoint == "/suggest-python-docstrings-pr":
+    elif endpoint in {DOCSTRING_PR_ENDPOINT, LEGACY_DOCSTRING_PR_ENDPOINT}:
         pr_request = DocstringPullRequestRequest(**queue_payload)
-        enqueue_run(new_run_id, "/suggest-python-docstrings-pr", pr_request.model_dump())
+        enqueue_run(new_run_id, DOCSTRING_PR_ENDPOINT, pr_request.model_dump())
     else:
         raise HTTPException(status_code=422, detail="Run type is not retryable.")
     return _redirect(f"/admin/runs/{new_run_id}", request)

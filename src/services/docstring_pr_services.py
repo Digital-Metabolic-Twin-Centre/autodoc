@@ -30,6 +30,18 @@ from utils.redaction import redact_secrets
 logger = get_logger(__name__)
 
 DocstringNode = Union[ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef]
+LINE_BASED_DOCSTRING_LANGUAGES = {"javascript", "typescript", "matlab", "julia"}
+DOCSTRING_LANGUAGE_BY_EXTENSION = {
+    ".py": "python",
+    ".pyw": "python",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".m": "matlab",
+    ".matlab": "matlab",
+    ".jl": "julia",
+}
 
 
 @dataclass
@@ -78,6 +90,16 @@ class PatchedPythonFile:
 
 class DocstringPullRequestError(RuntimeError):
     """Raised when creating a docstring suggestion pull request fails."""
+
+
+def _language_for_file(file_path: str, suggested_language: str | None = None) -> str:
+    """
+    Resolve a suggestion language, falling back to the source file extension.
+    """
+    if suggested_language:
+        return suggested_language.lower()
+    _, extension = os.path.splitext(file_path.lower())
+    return DOCSTRING_LANGUAGE_BY_EXTENSION.get(extension, "")
 
 
 def _format_python_docstring(docstring: str, indent: str) -> List[str]:
@@ -223,6 +245,109 @@ def patch_python_docstrings(
     )
 
 
+def _clean_generated_docstring(docstring: str) -> str:
+    """
+    Remove common docstring/comment wrappers from generated suggestion text.
+    """
+    cleaned = (docstring or "").strip()
+    if cleaned.startswith(('"""', "'''")) and cleaned.endswith(('"""', "'''")):
+        return cleaned[3:-3].strip()
+    if cleaned.startswith("/**") and cleaned.endswith("*/"):
+        cleaned = cleaned[3:-2].strip()
+        lines = []
+        for line in cleaned.splitlines():
+            lines.append(re.sub(r"^\s*\*\s?", "", line).rstrip())
+        return "\n".join(lines).strip()
+    if cleaned.startswith("%{") and cleaned.endswith("%}"):
+        return cleaned[2:-2].strip()
+    return "\n".join(
+        re.sub(r"^\s*(?:%|//)\s?", "", line).rstrip()
+        for line in cleaned.splitlines()
+    ).strip()
+
+
+def _format_line_based_docstring(docstring: str, language: str, indent: str) -> List[str]:
+    """
+    Format a generated docstring for languages patched by line number.
+    """
+    cleaned = _clean_generated_docstring(docstring)
+    if not cleaned:
+        cleaned = "TODO: Add documentation."
+    lines = cleaned.splitlines()
+    language = language.lower()
+
+    if language in {"javascript", "typescript"}:
+        return [f"{indent}/**", *[f"{indent} * {line}" for line in lines], f"{indent} */"]
+    if language == "matlab":
+        return [f"{indent}% {line}" if line else f"{indent}%" for line in lines]
+    if language == "julia":
+        return [f'{indent}"""', *[f"{indent}{line}" for line in lines], f'{indent}"""']
+    return [f"{indent}{line}" for line in lines]
+
+
+def patch_line_based_docstrings(
+    content: str,
+    suggestions: List[dict],
+    max_docstrings: int = 50,
+) -> PatchedPythonFile:
+    """
+    Insert generated docstring comments for supported non-Python languages using analysis line numbers.
+    """
+    lines = content.splitlines()
+    insertions: List[tuple[int, List[str], DocstringInsertion]] = []
+    remaining = max_docstrings
+
+    ordered_suggestions = sorted(
+        suggestions,
+        key=lambda suggestion: int(suggestion.get("line_number") or 0),
+        reverse=True,
+    )
+    for suggestion in ordered_suggestions:
+        if remaining <= 0:
+            break
+        language = str(suggestion.get("language") or "").lower()
+        if language not in LINE_BASED_DOCSTRING_LANGUAGES:
+            continue
+
+        line_number = int(suggestion.get("line_number") or 0)
+        if line_number < 1 or line_number > len(lines):
+            logger.warning(
+                "Skipping %s suggestion for %s because line_number=%s is outside the file.",
+                language,
+                suggestion.get("function_name") or "unknown",
+                line_number,
+            )
+            continue
+
+        target_line = lines[line_number - 1]
+        indent = target_line[: len(target_line) - len(target_line.lstrip())]
+        insert_index = line_number if language == "matlab" else line_number - 1
+        formatted = _format_line_based_docstring(
+            suggestion.get("generated_docstring") or "",
+            language,
+            indent,
+        )
+        insertion = DocstringInsertion(
+            name=suggestion.get("function_name") or "unknown",
+            kind=suggestion.get("block_type") or "unknown",
+            line_number=line_number,
+            insert_index=insert_index,
+            indent=indent,
+            code="",
+        )
+        insertions.append((insert_index, formatted, insertion))
+        remaining -= 1
+
+    inserted: List[DocstringInsertion] = []
+    for insert_index, formatted, insertion in insertions:
+        lines[insert_index:insert_index] = formatted
+        inserted.append(insertion)
+
+    if not inserted:
+        return PatchedPythonFile(content=content, inserted=[])
+    return PatchedPythonFile(content="\n".join(lines) + "\n", inserted=list(reversed(inserted)))
+
+
 def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[dict]]:
     """
     Load generated docstring suggestions from a repository.
@@ -273,10 +398,11 @@ def _load_generated_suggestions(repo_path: str, branch: str) -> Dict[str, List[d
 
     suggestions_by_file: Dict[str, List[dict]] = {}
     for suggestion in payload.get("suggestions", []):
-        if suggestion.get("language") != "python":
-            continue
         file_path = suggestion.get("file_path", "")
-        if file_path:
+        generated_docstring = suggestion.get("generated_docstring")
+        language = _language_for_file(file_path, suggestion.get("language"))
+        if file_path and generated_docstring and language:
+            suggestion["language"] = language
             suggestions_by_file.setdefault(file_path, []).append(suggestion)
     return suggestions_by_file
 
@@ -345,7 +471,7 @@ def _build_pull_request_body(
     )
     return (
         "## Summary\n\n"
-        f"Adds {docstring_count} generated Python docstring suggestion(s) for review.\n\n"
+        f"Adds {docstring_count} generated docstring suggestion(s) for review.\n\n"
         "## Changed files\n\n"
         f"{file_lines}\n\n"
         "These changes were generated by Auto Doc and should be reviewed before merge.\n\n"
@@ -547,18 +673,18 @@ def create_python_docstring_pull_request(
     max_docstrings: int = 50,
 ) -> dict:
     """
-    Creates a GitHub pull request with generated Python docstring suggestions.
+    Creates a GitHub pull request with generated docstring suggestions.
     """
     if provider.lower() != "github":
         raise DocstringPullRequestError(
-            "Python docstring pull requests currently support GitHub only."
+            "Docstring suggestion pull requests currently support GitHub only."
         )
 
     repo_path = extract_repo_path(repo_url, "github")
     suggestions_by_file = _load_generated_suggestions(repo_path, base_branch)
     if not suggestions_by_file:
         raise DocstringPullRequestError(
-            "No generated Python docstring suggestions were found. Run /generate first."
+            "No generated docstring suggestions were found. Run /generate first."
         )
 
     # Clone repository once for efficient local file reading
@@ -567,21 +693,21 @@ def create_python_docstring_pull_request(
             files = fetch_repo_tree(
                 repo_path, token, branch=base_branch, provider="github"
             )
-            python_files = [
+            repo_files = [
                 item.get("path", "")
                 for item in files
-                if item.get("type") == "file"
-                and item.get("path", "").endswith((".py", ".pyw"))
+                if item.get("type") in {"file", "blob"}
+                and item.get("path", "") in suggestions_by_file
             ]
-            if not python_files:
+            if not repo_files:
                 raise DocstringPullRequestError(
-                    "No Python files found on the selected branch."
+                    "No files with generated docstring suggestions were found on the selected branch."
                 )
 
             remaining = max_docstrings
             patched_files: Dict[str, PatchedPythonFile] = {}
             original_contents: Dict[str, str] = {}
-            for file_path in python_files:
+            for file_path in repo_files:
                 if remaining <= 0:
                     break
                 # Read file locally from cloned repository instead of GitHub API
@@ -592,15 +718,30 @@ def create_python_docstring_pull_request(
                 if not suggestions:
                     continue
                 original_contents[file_path] = content
-                try:
-                    patched = patch_python_docstrings(
+                language = _language_for_file(file_path, suggestions[0].get("language"))
+                if language == "python":
+                    try:
+                        patched = patch_python_docstrings(
+                            content,
+                            generator=_suggestion_generator(suggestions),
+                            max_docstrings=remaining,
+                        )
+                    except SyntaxError:
+                        logger.warning(
+                            "Skipping %s because Python parsing failed.", file_path
+                        )
+                        continue
+                elif language in LINE_BASED_DOCSTRING_LANGUAGES:
+                    patched = patch_line_based_docstrings(
                         content,
-                        generator=_suggestion_generator(suggestions),
+                        suggestions=suggestions,
                         max_docstrings=remaining,
                     )
-                except SyntaxError:
-                    logger.warning(
-                        "Skipping %s because Python parsing failed.", file_path
+                else:
+                    logger.info(
+                        "Skipping %s because docstring PR insertion is not supported for language %s.",
+                        file_path,
+                        language or "unknown",
                     )
                     continue
                 if patched.inserted:
@@ -611,10 +752,16 @@ def create_python_docstring_pull_request(
             return _build_no_changes_response(
                 base_branch,
                 suggestion_branch,
-                "No new Python docstring suggestions are available for this branch.",
+                "No new docstring suggestions are available for this branch.",
             )
 
-        patched_files = _run_ruff_on_patched_files(patched_files)
+        python_patched_files = {
+            file_path: patched
+            for file_path, patched in patched_files.items()
+            if file_path.endswith((".py", ".pyw"))
+        }
+        if python_patched_files:
+            patched_files.update(_run_ruff_on_patched_files(python_patched_files))
         patched_files = _filter_changed_files_against_base(
             patched_files, original_contents
         )
@@ -623,7 +770,7 @@ def create_python_docstring_pull_request(
             return _build_no_changes_response(
                 base_branch,
                 suggestion_branch,
-                "No new Python docstring suggestions are available for this branch.",
+                "No new docstring suggestions are available for this branch.",
             )
 
         existing_pr = _find_matching_open_pull_request(
@@ -633,7 +780,7 @@ def create_python_docstring_pull_request(
             return _build_no_changes_response(
                 base_branch,
                 suggestion_branch,
-                "A matching Python docstring suggestion pull request is already open for this branch.",
+                "A matching docstring suggestion pull request is already open for this branch.",
                 existing_pull_request_url=existing_pr.get("url"),
             )
 
@@ -662,7 +809,7 @@ def create_python_docstring_pull_request(
             return _build_no_changes_response(
                 base_branch,
                 suggestion_branch,
-                "No new Python docstring suggestions are available for this branch.",
+                "No new docstring suggestions are available for this branch.",
             )
 
         committed = commit_files_to_github_branch(
@@ -673,7 +820,7 @@ def create_python_docstring_pull_request(
                 for file_path, patched in changed_files.items()
             },
             token,
-            "Add generated Python docstring suggestions",
+            "Add generated docstring suggestions",
         )
         if not committed:
             raise DocstringPullRequestError(

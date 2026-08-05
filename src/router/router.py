@@ -98,12 +98,12 @@ async def generate_docs(req: RepoRequest):
         ) from e
 
 
-@router.post("/suggest-python-docstrings-pr", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
-async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
+async def _suggest_docstrings_pr(req: DocstringPullRequestRequest, endpoint_name: str):
     suggestion_branch = req.suggestion_branch or _default_docstring_suggestion_branch()
     logger.info(
-        "/suggest-python-docstrings-pr endpoint called with provider=%s, repo_url=%s, "
+        "%s endpoint called with provider=%s, repo_url=%s, "
         "base_branch=%s, suggestion_branch=%s",
+        endpoint_name,
         req.provider,
         req.repo_url,
         req.base_branch,
@@ -120,11 +120,21 @@ async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
     except DocstringPullRequestError as dpe:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(dpe)) from dpe
     except Exception as e:
-        logger.exception("Unhandled exception during /suggest-python-docstrings-pr")
+        logger.exception("Unhandled exception during %s", endpoint_name)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=_error_detail(e),
         ) from e
+
+
+@router.post("/suggest-docstrings-pr", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
+async def suggest_docstrings_pr(req: DocstringPullRequestRequest):
+    return await _suggest_docstrings_pr(req, "/suggest-docstrings-pr")
+
+
+@router.post("/suggest-python-docstrings-pr", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
+async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
+    return await _suggest_docstrings_pr(req, "/suggest-python-docstrings-pr")
 
 
 @router.post("/generate-architecture-docs", dependencies=PROTECTED_ROUTE_DEPENDENCIES)

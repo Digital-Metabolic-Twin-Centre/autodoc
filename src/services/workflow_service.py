@@ -209,7 +209,7 @@ def execute_docstring_pr_request(
     req: DocstringPullRequestRequest, progress_callback=None
 ) -> WorkflowRunResult:
     """
-    Create a pull request containing generated Python docstring suggestions.
+    Create a pull request containing generated docstring suggestions.
     Args:
         req (DocstringPullRequestRequest): Pull request configuration, repository access, and
         generation limits.

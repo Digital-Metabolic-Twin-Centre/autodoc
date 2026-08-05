@@ -90,7 +90,7 @@ class PublishPagesRequest(BaseModel):
 
 class DocstringPullRequestRequest(BaseModel):
     """
-    Represents a request for a pull request to add Python docstrings.
+    Represents a request for a pull request to add generated docstrings.
 
         Args:
             provider (str): The name of the provider (default is 'github').
@@ -98,7 +98,7 @@ class DocstringPullRequestRequest(BaseModel):
             token (str): Authentication token for the repository.
             base_branch (str): The base branch for the pull request.
             suggestion_branch (Optional[str]): The branch for suggested changes (default is None).
-            title (str): Title of the pull request (default is 'Add suggested Python docstrings').
+            title (str): Title of the pull request.
             max_docstrings (int): Maximum number of docstrings to add (default is 50).
 
         Returns:

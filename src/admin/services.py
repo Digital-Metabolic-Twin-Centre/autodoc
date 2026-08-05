@@ -30,10 +30,14 @@ from models.repo_request import (
 )
 from utils.git_utils import check_repo_url_host, extract_repo_path
 
+DOCSTRING_PR_ENDPOINT = "/suggest-docstrings-pr"
+LEGACY_DOCSTRING_PR_ENDPOINT = "/suggest-python-docstrings-pr"
+
 ENDPOINT_LABELS = {
     "/generate": "Generate Docs",
     "/publish-pages": "Publish Pages",
-    "/suggest-python-docstrings-pr": "Suggest Docstring PR",
+    DOCSTRING_PR_ENDPOINT: "Suggest Docstring PR",
+    LEGACY_DOCSTRING_PR_ENDPOINT: "Suggest Docstring PR",
     "/generate-architecture-docs": "Generate Architecture Docs",
     "/approve-architecture-docs": "Approve Architecture Docs",
 }
@@ -42,7 +46,8 @@ SENSITIVE_PAYLOAD_FIELDS = {"token"}
 TOKEN_REQUIRED_ENDPOINTS = {
     "/generate",
     "/publish-pages",
-    "/suggest-python-docstrings-pr",
+    DOCSTRING_PR_ENDPOINT,
+    LEGACY_DOCSTRING_PR_ENDPOINT,
     "/generate-architecture-docs",
     "/approve-architecture-docs",
 }
