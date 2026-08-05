@@ -29,7 +29,6 @@ from admin.services import (
     DEFAULT_ARCHITECTURE_OUTPUT_PATH,
     DOCSTRING_PR_ENDPOINT,
     ENDPOINT_LABELS,
-    LEGACY_DOCSTRING_PR_ENDPOINT,
     artifact_entries,
     build_architecture_generation_request,
     build_pr_request,
@@ -699,7 +698,7 @@ async def retry_run(
     elif endpoint == "/publish-pages":
         publish_request = PublishPagesRequest(**queue_payload)
         enqueue_run(new_run_id, "/publish-pages", publish_request.model_dump())
-    elif endpoint in {DOCSTRING_PR_ENDPOINT, LEGACY_DOCSTRING_PR_ENDPOINT}:
+    elif endpoint == DOCSTRING_PR_ENDPOINT:
         pr_request = DocstringPullRequestRequest(**queue_payload)
         enqueue_run(new_run_id, DOCSTRING_PR_ENDPOINT, pr_request.model_dump())
     else:

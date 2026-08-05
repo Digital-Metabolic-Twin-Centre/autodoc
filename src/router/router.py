@@ -132,11 +132,6 @@ async def suggest_docstrings_pr(req: DocstringPullRequestRequest):
     return await _suggest_docstrings_pr(req, "/suggest-docstrings-pr")
 
 
-@router.post("/suggest-python-docstrings-pr", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
-async def suggest_python_docstrings_pr(req: DocstringPullRequestRequest):
-    return await _suggest_docstrings_pr(req, "/suggest-python-docstrings-pr")
-
-
 @router.post("/generate-architecture-docs", dependencies=PROTECTED_ROUTE_DEPENDENCIES)
 async def generate_architecture_docs(req: ArchitectureGenerationRequest):
     logger.info(

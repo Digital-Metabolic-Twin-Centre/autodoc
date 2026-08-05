@@ -11,7 +11,7 @@ from typing import Any
 
 from admin.database import SessionLocal
 from admin.models import RunRecord
-from admin.services import DOCSTRING_PR_ENDPOINT, LEGACY_DOCSTRING_PR_ENDPOINT
+from admin.services import DOCSTRING_PR_ENDPOINT
 from models.repo_request import (
     ArchitectureApprovalRequest,
     ArchitectureGenerationRequest,
@@ -407,7 +407,7 @@ def _execute_endpoint(
         return execute_publish_request(
             PublishPagesRequest(**payload), progress_callback=progress_callback
         )
-    if endpoint in {DOCSTRING_PR_ENDPOINT, LEGACY_DOCSTRING_PR_ENDPOINT}:
+    if endpoint == DOCSTRING_PR_ENDPOINT:
         return execute_docstring_pr_request(
             DocstringPullRequestRequest(**payload), progress_callback=progress_callback
         )

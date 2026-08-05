@@ -537,7 +537,7 @@ def test_execute_endpoint_dispatches_publish_pages(monkeypatch):
     assert captured["req"].repo_url == "example/project"
 
 
-def test_execute_endpoint_dispatches_suggest_python_docstrings_pr(monkeypatch):
+def test_execute_endpoint_dispatches_suggest_docstrings_pr(monkeypatch):
     captured = {}
 
     def fake_execute_docstring_pr_request(req, progress_callback=None):
@@ -547,7 +547,7 @@ def test_execute_endpoint_dispatches_suggest_python_docstrings_pr(monkeypatch):
     monkeypatch.setattr("admin.jobs.execute_docstring_pr_request", fake_execute_docstring_pr_request)
 
     result = _execute_endpoint(
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         {"provider": "github", "repo_url": "example/project", "token": "secret", "base_branch": "main"},
     )
 

@@ -1107,7 +1107,7 @@ def test_suggest_docstrings_pr_returns_success(monkeypatch):
     assert captured["suggestion_branch"] == "autodocs-docstring-suggestions-20260424-1430"
 
 
-def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatch):
+def test_suggest_docstrings_pr_uses_provided_suggestion_branch(monkeypatch):
     captured = {}
 
     def fake_create_pr(provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings):
@@ -1124,7 +1124,7 @@ def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatc
 
     response = request(
         "POST",
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         json={
             "provider": "github",
             "repo_url": "example/project",
@@ -1138,7 +1138,7 @@ def test_suggest_python_docstrings_pr_uses_provided_suggestion_branch(monkeypatc
     assert captured["suggestion_branch"] == "autodocs/custom-branch"
 
 
-def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkeypatch):
+def test_suggest_docstrings_pr_returns_standard_no_changes_payload(monkeypatch):
     monkeypatch.setattr(
         "services.workflow_service.create_python_docstring_pull_request",
         lambda provider, repo_url, token, base_branch, suggestion_branch, title, max_docstrings: {
@@ -1157,7 +1157,7 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
 
     response = request(
         "POST",
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         json={
             "provider": "github",
             "repo_url": "example/project",
@@ -1172,10 +1172,10 @@ def test_suggest_python_docstrings_pr_returns_standard_no_changes_payload(monkey
     assert response.json()["message"] == ("No new docstring suggestions are available for this branch.")
 
 
-def test_suggest_python_docstrings_pr_requires_base_branch():
+def test_suggest_docstrings_pr_requires_base_branch():
     response = request(
         "POST",
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         json={
             "provider": "github",
             "repo_url": "example/project",
@@ -1187,10 +1187,10 @@ def test_suggest_python_docstrings_pr_requires_base_branch():
     assert response.status_code == 400
 
 
-def test_suggest_python_docstrings_pr_rejects_repo_url_outside_provider_allowlist():
+def test_suggest_docstrings_pr_rejects_repo_url_outside_provider_allowlist():
     response = request(
         "POST",
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         json={
             "provider": "github",
             "repo_url": "https://attacker.example/example/project.git",
@@ -1555,7 +1555,7 @@ def test_generate_endpoint_returns_500_for_unexpected_exception(monkeypatch):
     assert response.status_code == 500
 
 
-def test_suggest_python_docstrings_pr_returns_422_for_docstring_pull_request_error(monkeypatch):
+def test_suggest_docstrings_pr_returns_422_for_docstring_pull_request_error(monkeypatch):
     from services.docstring_pr_services import DocstringPullRequestError
 
     def fail_pr(*args, **kwargs):
@@ -1565,7 +1565,7 @@ def test_suggest_python_docstrings_pr_returns_422_for_docstring_pull_request_err
 
     response = request(
         "POST",
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         json={
             "provider": "github",
             "repo_url": "example/project",
@@ -1578,7 +1578,7 @@ def test_suggest_python_docstrings_pr_returns_422_for_docstring_pull_request_err
     assert response.json()["detail"] == "no suggestions available"
 
 
-def test_suggest_python_docstrings_pr_returns_500_for_unexpected_exception(monkeypatch):
+def test_suggest_docstrings_pr_returns_500_for_unexpected_exception(monkeypatch):
     def fail_pr(*args, **kwargs):
         raise RuntimeError("boom")
 
@@ -1586,7 +1586,7 @@ def test_suggest_python_docstrings_pr_returns_500_for_unexpected_exception(monke
 
     response = request(
         "POST",
-        "/suggest-python-docstrings-pr",
+        "/suggest-docstrings-pr",
         json={
             "provider": "github",
             "repo_url": "example/project",

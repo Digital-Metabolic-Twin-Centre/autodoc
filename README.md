@@ -14,7 +14,7 @@ https://autodoc.humanmetabolism.org
 - Analyses GitHub and GitLab repositories
 - Scans Python, JavaScript, TypeScript, and MATLAB source files (`.m`/`.matlab`)
 - Generates reviewable docstring suggestions with OpenAI, Codex CLI, or Claude CLI
-- Creates Python-only docstring insertion pull requests for GitHub repositories
+- Creates multi-language docstring insertion pull requests for GitHub repositories
 - Creates Sphinx documentation with AutoAPI support
 - Supports review-first publishing to GitHub Pages
 - Provides an admin dashboard for repositories, runs, logs, and generated artifacts
@@ -47,7 +47,6 @@ AUTODOC_API_KEY=choose-a-long-random-secret
 
 `AUTODOC_API_KEY` gates the public `/generate`, `/publish-pages`, `/suggest-docstrings-pr`,
 `/generate-architecture-docs`, and `/approve-architecture-docs` endpoints in [router/router.py](src/router/router.py).
-The legacy `/suggest-python-docstrings-pr` route remains available for existing clients.
 Callers must send it as an `X-API-Key` header; requests are also rate-limited per caller
 (`AUTODOC_RATE_LIMIT_MAX_REQUESTS` per `AUTODOC_RATE_LIMIT_WINDOW_SECONDS`, default 20 requests/hour).
 Without `AUTODOC_API_KEY` configured, those endpoints respond `503` instead of running unauthenticated.

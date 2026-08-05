@@ -2037,7 +2037,7 @@ def test_retry_run_replays_publish_pages_endpoint(monkeypatch):
         _delete_repository_and_runs(repository_id)
 
 
-def test_retry_run_replays_suggest_python_docstrings_pr_endpoint(monkeypatch):
+def test_retry_run_replays_suggest_docstrings_pr_endpoint(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
     captured = {}
 
@@ -2051,7 +2051,7 @@ def test_retry_run_replays_suggest_python_docstrings_pr_endpoint(monkeypatch):
     with SessionLocal() as session:
         run_record = RunRecord(
             repository_id=repository_id,
-            endpoint="/suggest-python-docstrings-pr",
+            endpoint="/suggest-docstrings-pr",
             status="failed",
             created_at=datetime.now(UTC),
             request_payload=json.dumps(
