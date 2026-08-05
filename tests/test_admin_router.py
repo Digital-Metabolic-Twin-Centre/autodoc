@@ -220,6 +220,9 @@ def test_dashboard_sidebar_links_saved_repositories(monkeypatch):
 
         assert response.status_code == 200
         assert "Saved repos" in body
+        assert "Search repos" in body
+        assert "data-repository-link" in body
+        assert "data-search-text=" in body
         assert "Sidebar Repo" in body
         assert f"/admin/repositories/{repository_id}" in body
     finally:
