@@ -99,6 +99,11 @@ def _is_htmx(request: Request) -> bool:
     return request.headers.get("HX-Request") == "true"
 
 
+def _navigation_repositories() -> list[RepositoryConfig]:
+    with SessionLocal() as session:
+        return session.scalars(select(RepositoryConfig).order_by(RepositoryConfig.name.asc())).all()
+
+
 def _template_response(
     request: Request,
     name: str,
@@ -110,6 +115,8 @@ def _template_response(
     csrf_token = get_or_create_csrf_token(request)
     context["csrf_token"] = csrf_token
     context["database_label"] = _database_label()
+    if context.get("admin_user") and "navigation_repositories" not in context:
+        context["navigation_repositories"] = _navigation_repositories()
     content = templates.get_template(name).render(context)
     response = HTMLResponse(content=content, status_code=status_code)
     ensure_csrf_token(request, response, csrf_token)

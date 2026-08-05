@@ -210,6 +210,22 @@ def test_dashboard_renders_with_no_repositories(monkeypatch):
     assert response.status_code == 200
 
 
+def test_dashboard_sidebar_links_saved_repositories(monkeypatch):
+    monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
+    repository_id = _make_repository("Sidebar Repo", repo_path="example/sidebar-repo")
+
+    try:
+        response = run(dashboard(request=_fake_request(), admin_user="tester"))
+        body = response.body.decode()
+
+        assert response.status_code == 200
+        assert "Saved repos" in body
+        assert "Sidebar Repo" in body
+        assert f"/admin/repositories/{repository_id}" in body
+    finally:
+        _delete_repository_and_runs(repository_id)
+
+
 def test_recent_activity_fragment_renders(monkeypatch):
     monkeypatch.setattr("admin.security.ADMIN_SECRET_KEY", "test-secret-key")
 
