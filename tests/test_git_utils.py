@@ -35,6 +35,19 @@ def test_extract_repo_path_accepts_short_form():
     assert extract_repo_path("group/project") == "group/project"
 
 
+def test_check_repo_url_host_rejects_github_repo_name_starting_with_dash():
+    with pytest.raises(ValueError, match="cannot begin with '-'"):
+        check_repo_url_host("Digital-Metabolic-Twin-Centre/-test_documentaion_cobra_toolbox", "github")
+
+
+def test_check_repo_url_host_rejects_github_url_repo_name_starting_with_dash():
+    with pytest.raises(ValueError, match="cannot begin with '-'"):
+        check_repo_url_host(
+            "https://github.com/Digital-Metabolic-Twin-Centre/-test_documentaion_cobra_toolbox",
+            "github",
+        )
+
+
 def test_check_repo_url_host_accepts_short_form_regardless_of_host_config():
     assert check_repo_url_host("octo/example", "github") == "octo/example"
 
@@ -115,10 +128,11 @@ def test_should_ignore_matches_file_and_directory_patterns():
 
 
 class DummyResponse:
-    def __init__(self, status_code, payload=None, text=""):
+    def __init__(self, status_code, payload=None, text="", headers=None):
         self.status_code = status_code
         self._payload = payload or {}
         self.text = text
+        self.headers = headers or {}
         self.content = b""  # Default empty bytes
 
     def json(self):
@@ -643,17 +657,26 @@ def test_create_a_file_updates_existing_file_on_github(monkeypatch):
     assert captured["json"]["sha"] == "abc123"
 
 
-def test_create_a_file_returns_false_on_github_error(monkeypatch):
+def test_create_a_file_raises_exact_github_error(monkeypatch):
     def fake_get(url, headers=None, params=None, **kwargs):
         return DummyResponse(404)
 
     def fake_put(url, headers=None, json=None, **kwargs):
-        return DummyResponse(422, text="validation failed")
+        return DummyResponse(
+            403,
+            {"message": "Resource not accessible by personal access token"},
+            text='{"message":"Resource not accessible by personal access token"}',
+            headers={"X-Accepted-GitHub-Permissions": "contents=write"},
+        )
 
     monkeypatch.setattr("utils.git_utils.requests.get", fake_get)
     monkeypatch.setattr("utils.git_utils.requests.put", fake_put)
 
-    assert create_a_file("example/project", "main", "docs/new.rst", "content", "secret", "github") is False
+    with pytest.raises(GitHubApiError) as exc_info:
+        create_a_file("example/project", "main", "docs/new.rst", "content", "secret", "github")
+
+    assert "Resource not accessible by personal access token" in str(exc_info.value)
+    assert "contents=write" in str(exc_info.value)
 
 
 def test_create_a_file_creates_new_file_on_gitlab(monkeypatch):

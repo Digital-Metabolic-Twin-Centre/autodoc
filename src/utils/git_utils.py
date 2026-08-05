@@ -1,6 +1,7 @@
 import base64
 import fnmatch
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -24,6 +25,7 @@ logger = get_logger(__name__)
 DEFAULT_GIT_CLONE_TIMEOUT_SECONDS = 1800
 DEFAULT_HTTP_TIMEOUT_SECONDS = float(os.getenv("AUTODOC_HTTP_TIMEOUT", "30"))
 _TIMEOUT_ENFORCED_METHODS = {"get", "post", "put", "patch", "delete", "head", "options"}
+_GITHUB_REPO_PATH_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.]+[A-Za-z0-9_.-]*$")
 
 
 class _TimeoutEnforcingRequests:
@@ -126,6 +128,23 @@ def _parse_response_message(response) -> str:
     return redact_secrets(response.text.strip()) or "Unknown error"
 
 
+def _github_api_error_message(operation: str, repo_url: str, response) -> str:
+    """
+    Build an actionable GitHub API failure message while preserving GitHub's hint headers.
+    """
+    message = _parse_response_message(response)
+    parts = [f"{operation} failed for '{repo_url}': {message}"]
+    accepted_permissions = getattr(response, "headers", {}).get(
+        "X-Accepted-GitHub-Permissions"
+    )
+    if accepted_permissions:
+        parts.append(
+            "GitHub accepted permissions for this endpoint: "
+            f"{redact_secrets(accepted_permissions)}"
+        )
+    return " ".join(parts)
+
+
 def _raise_github_repository_access_error(response, repo_path: str, branch: str, path: str = "") -> None:
     """
     Raises a RepositoryAccessError based on the GitHub API response for a repository access attempt.
@@ -184,6 +203,28 @@ def extract_repo_path(repo_url: str, provider: str = "github") -> str:
     return repo_url
 
 
+def _validate_repo_path(repo_path: str, provider: str) -> str:
+    """
+    Validate the owner/project path used in provider API URLs.
+    """
+    normalized = str(repo_path or "").strip().strip("/")
+    if normalized != repo_path:
+        raise ValueError("repo_url must not contain leading or trailing whitespace or slashes.")
+
+    parts = normalized.split("/")
+    if len(parts) != 2 or not all(parts):
+        raise ValueError("repo_url must identify exactly one repository as 'owner/repo'.")
+
+    provider_key = str(provider or "").strip().lower()
+    if provider_key == "github" and not _GITHUB_REPO_PATH_RE.fullmatch(normalized):
+        raise ValueError(
+            "GitHub repo_url must be a valid 'owner/repo' path; repository names "
+            "cannot begin with '-'."
+        )
+
+    return normalized
+
+
 def _allowed_git_hosts(provider: str) -> set[str]:
     """
     Resolve the hostnames permitted for a provider's repo_url.
@@ -228,7 +269,7 @@ def check_repo_url_host(repo_url: str, provider: str) -> str:
     if not candidate:
         raise ValueError("repo_url must not be empty.")
     if not candidate.startswith(("http://", "https://")):
-        return candidate
+        return _validate_repo_path(candidate, provider)
 
     parsed = urllib.parse.urlparse(candidate)
     if parsed.scheme != "https":
@@ -243,6 +284,7 @@ def check_repo_url_host(repo_url: str, provider: str) -> str:
             f"repo_url host '{host}' is not an allowed {provider} host "
             f"(allowed: {', '.join(sorted(allowed_hosts))})."
         )
+    _validate_repo_path(extract_repo_path(candidate, provider), provider)
     return candidate
 
 
@@ -885,7 +927,10 @@ def create_directory_and_add_files(
         ref_resp = http.get(ref_url, headers=_github_headers(token))
         if ref_resp.status_code != 200:
             logger.error(f"Failed to get branch ref: {redact_secrets(ref_resp.text)}")
-            return False
+            raise GitHubApiError(
+                _github_api_error_message("GitHub branch ref lookup", repo_url, ref_resp),
+                status_code=ref_resp.status_code,
+            )
         latest_commit_sha = ref_resp.json()["object"]["sha"]
 
         # 2. Get the tree SHA
@@ -893,7 +938,10 @@ def create_directory_and_add_files(
         commit_resp = http.get(commit_url, headers=_github_headers(token))
         if commit_resp.status_code != 200:
             logger.error(f"Failed to get commit: {redact_secrets(commit_resp.text)}")
-            return False
+            raise GitHubApiError(
+                _github_api_error_message("GitHub commit lookup", repo_url, commit_resp),
+                status_code=commit_resp.status_code,
+            )
         base_tree_sha = commit_resp.json()["tree"]["sha"]
 
         desired_paths = {f"{dir_path}/{file_path}" for file_path in file_paths}
@@ -943,7 +991,10 @@ def create_directory_and_add_files(
         )
         if tree_resp.status_code not in (200, 201):
             logger.error(f"Failed to create tree: {redact_secrets(tree_resp.text)}")
-            return False
+            raise GitHubApiError(
+                _github_api_error_message("GitHub documentation tree creation", repo_url, tree_resp),
+                status_code=tree_resp.status_code,
+            )
         new_tree_sha = tree_resp.json()["sha"]
 
         # 5. Create a new commit
@@ -960,7 +1011,10 @@ def create_directory_and_add_files(
         )
         if commit_resp.status_code not in (200, 201):
             logger.error(f"Failed to create commit: {redact_secrets(commit_resp.text)}")
-            return False
+            raise GitHubApiError(
+                _github_api_error_message("GitHub documentation commit creation", repo_url, commit_resp),
+                status_code=commit_resp.status_code,
+            )
         new_commit_sha = commit_resp.json()["sha"]
 
         # 6. Update the branch reference
@@ -972,7 +1026,10 @@ def create_directory_and_add_files(
         )
         if update_resp.status_code not in (200, 201):
             logger.error(f"Failed to update branch ref: {redact_secrets(update_resp.text)}")
-            return False
+            raise GitHubApiError(
+                _github_api_error_message("GitHub branch update", repo_url, update_resp),
+                status_code=update_resp.status_code,
+            )
 
         return True
 
@@ -1125,7 +1182,14 @@ def create_a_file(repo_url, branch, file_path, content, token, provider):
         resp = http.put(api_url, headers=headers, json=data)
         if resp.status_code not in (201, 200):
             logger.error(f"GitHub create/update file error: {redact_secrets(resp.text)}")
-            return False
+            raise GitHubApiError(
+                _github_api_error_message(
+                    f"GitHub create/update file '{file_path}'",
+                    repo_url,
+                    resp,
+                ),
+                status_code=resp.status_code,
+            )
         return True
 
     elif provider == "gitlab":

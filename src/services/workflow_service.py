@@ -29,7 +29,7 @@ from services.sphinx_services import (
     publish_github_pages,
 )
 from utils.docstring_generation import DEFAULT_OPENAI_MODEL
-from utils.git_utils import extract_repo_path
+from utils.git_utils import GitHubApiError, extract_repo_path
 from utils.output_paths import bind_repo_run_log_dir
 
 
@@ -151,20 +151,30 @@ def execute_generate_request(
         req.reuse_doc,
     )
     _notify_progress(progress_callback, 70.0, "Building documentation")
-    sphinx_setup_created = create_sphinx_setup(
-        req.provider,
-        req.repo_url,
-        req.token,
-        req.branch,
-        analysis_file,
-        req.docstring_threshold,
-        req.low_content_min_lines,
-    )
-    if not sphinx_setup_created:
+    try:
+        sphinx_setup_created = create_sphinx_setup(
+            req.provider,
+            req.repo_url,
+            req.token,
+            req.branch,
+            analysis_file,
+            req.docstring_threshold,
+            req.low_content_min_lines,
+        )
+    except GitHubApiError as error:
         raise PermissionError(
-            "Sphinx setup creation failed. Token may lack 'write_repository' scope, "
+            "Sphinx setup creation failed. GitHub rejected the repository write: "
+            f"{error}"
+        ) from error
+    if not sphinx_setup_created:
+        provider_hint = (
+            "Check that the token has 'Contents: Read and write' for this repository "
+            f"and that branch '{req.branch}' allows API commits."
+            if req.provider == "github"
+            else "Token may lack 'write_repository' scope, "
             f"or branch '{req.branch}' is protected."
         )
+        raise PermissionError(f"Sphinx setup creation failed. {provider_hint}")
     _notify_progress(progress_callback, 90.0, "Finalizing results")
     files_analyzed, docstrings_generated, skipped_files = _summarize_generate(
         docstring_analysis

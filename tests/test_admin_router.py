@@ -1543,6 +1543,25 @@ def test_validate_repo_form_rejects_missing_repo_url():
         assert exc.status_code == 422
 
 
+def test_validate_repo_form_rejects_malformed_github_repo_slug():
+    try:
+        validate_repo_form(
+            "Name",
+            "github",
+            "Digital-Metabolic-Twin-Centre/-test_documentaion_cobra_toolbox",
+            "main",
+            "",
+            "",
+            False,
+            0.5,
+            4,
+        )
+        raise AssertionError("expected HTTPException")
+    except HTTPException as exc:
+        assert exc.status_code == 422
+        assert "cannot begin with '-'" in exc.detail
+
+
 def test_validate_repo_form_rejects_missing_default_branch():
     try:
         validate_repo_form("Name", "github", "example/project", "", "", "", False, 0.5, 4)

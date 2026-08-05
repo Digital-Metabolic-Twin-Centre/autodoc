@@ -28,7 +28,7 @@ from models.repo_request import (
     PublishPagesRequest,
     RepoRequest,
 )
-from utils.git_utils import extract_repo_path
+from utils.git_utils import check_repo_url_host, extract_repo_path
 
 ENDPOINT_LABELS = {
     "/generate": "Generate Docs",
@@ -85,7 +85,11 @@ def validate_repo_form(
     if not default_branch.strip():
         raise HTTPException(status_code=422, detail="Default branch is required.")
     normalized_provider = validate_provider(provider)
-    repo_path = extract_repo_path(repo_url.strip(), normalized_provider)
+    try:
+        validated_repo_url = check_repo_url_host(repo_url.strip(), normalized_provider)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    repo_path = extract_repo_path(validated_repo_url, normalized_provider)
     if docstring_threshold < 0 or docstring_threshold > 1:
         raise HTTPException(status_code=422, detail="Docstring threshold must be between 0 and 1.")
     if low_content_min_lines < 0:
@@ -93,7 +97,7 @@ def validate_repo_form(
     return {
         "name": name.strip(),
         "provider": normalized_provider,
-        "repo_url": repo_url.strip(),
+        "repo_url": validated_repo_url,
         "repo_path": repo_path,
         "default_branch": default_branch.strip(),
         "target_folders": parse_target_folders(target_folders),

@@ -648,6 +648,53 @@ def test_create_sphinx_setup_mirrors_all_analyzed_python_files(tmp_path, monkeyp
     assert created_files == ["update_conf.py"]
 
 
+def test_create_sphinx_setup_handles_non_python_repository(tmp_path, monkeypatch):
+    analysis_path = tmp_path / "analysis.csv"
+    analysis_path.write_text(
+        "file_path,missing_docstring\n"
+        "src/toyOptimizeLinearFlux.m,False\n"
+        "src/toyBuildModel.m,False\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "services.sphinx_services.extract_repo_path",
+        lambda repo_url, provider="github": "Digital-Metabolic-Twin-Centre/test_documentaion_cobra_toolbox",
+    )
+    monkeypatch.setattr(
+        "services.sphinx_services.create_directory_and_add_files",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("non-Python repos should not mirror AutoAPI sources")
+        ),
+    )
+
+    scaffold_calls = []
+    monkeypatch.setattr(
+        "services.sphinx_services._create_sample_sphinx_scaffold",
+        lambda repo_path, branch, token, provider, project_name: scaffold_calls.append(project_name) or True,
+    )
+    created_files = []
+
+    def fake_create_a_file(repo_path, branch, file_path, content, token, provider):
+        created_files.append(file_path)
+        return True
+
+    monkeypatch.setattr("services.sphinx_services.create_a_file", fake_create_a_file)
+
+    result = create_sphinx_setup(
+        "github",
+        "https://github.com/Digital-Metabolic-Twin-Centre/test_documentaion_cobra_toolbox",
+        "secret",
+        "main",
+        str(analysis_path),
+        0.50,
+    )
+
+    assert result is True
+    assert scaffold_calls == ["Test Documentaion Cobra Toolbox"]
+    assert created_files == ["update_conf.py"]
+
+
 def test_project_name_from_repo_path_humanizes_repo_name():
     assert (
         _project_name_from_repo_path("Digital-Metabolic-Twin-Centre/test_documentation_sphinx_site")

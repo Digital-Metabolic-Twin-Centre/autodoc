@@ -8,6 +8,7 @@ from services.workflow_service import (
     execute_generate_request,
     execute_publish_request,
 )
+from utils.git_utils import GitHubApiError
 
 
 def test_notify_progress_invokes_callback_when_present():
@@ -62,8 +63,34 @@ def test_execute_generate_request_raises_permission_error_when_sphinx_setup_fail
     )
     monkeypatch.setattr("services.workflow_service.create_sphinx_setup", lambda *args, **kwargs: False)
 
-    with pytest.raises(PermissionError):
+    with pytest.raises(PermissionError) as exc_info:
         execute_generate_request(req)
+
+    assert "Contents: Read and write" in str(exc_info.value)
+    assert "write_repository" not in str(exc_info.value)
+
+
+def test_execute_generate_request_preserves_github_setup_error(monkeypatch):
+    req = RepoRequest(provider="github", repo_url="octo/example", token="tok", branch="dev")
+    monkeypatch.setattr(
+        "services.workflow_service.analyse_repo",
+        lambda *args, **kwargs: ("/tmp/octo-example/analysis.json", [], []),
+    )
+    monkeypatch.setattr(
+        "services.workflow_service.create_sphinx_setup",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            GitHubApiError(
+                "GitHub create/update file 'docs/index.rst' failed for "
+                "'octo/example': Resource not accessible by personal access token"
+            )
+        ),
+    )
+
+    with pytest.raises(PermissionError) as exc_info:
+        execute_generate_request(req)
+
+    assert "Resource not accessible by personal access token" in str(exc_info.value)
+    assert "write_repository" not in str(exc_info.value)
 
 
 def test_execute_publish_request_raises_permission_error_when_publish_fails(monkeypatch):

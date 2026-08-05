@@ -1689,25 +1689,24 @@ def create_sphinx_setup(
         len(analyzed_python_files),
     )
 
-    # Skip directory creation if there are no analyzed Python files to mirror.
-    if not analyzed_python_files:
-        logger.warning(
-            "No analyzed Python files were found to mirror into AutoAPI. Skipping Sphinx setup."
+    if analyzed_python_files:
+        # CREATE DIRECTORY AND ADD ALL ANALYZED PYTHON FILES FOR API DOCUMENTATION
+        dir_created = create_directory_and_add_files(
+            repo_path,
+            AUTOAPI_DIRECTORY,
+            analyzed_python_files,
+            branch,
+            token,
+            provider,
         )
-        return False
-
-    # CREATE DIRECTORY AND ADD ALL ANALYZED PYTHON FILES FOR API DOCUMENTATION
-    dir = create_directory_and_add_files(
-        repo_path,
-        AUTOAPI_DIRECTORY,
-        analyzed_python_files,
-        branch,
-        token,
-        provider,
-    )
-    if not dir:
-        logger.error("Directory creation failed.")
-        return False
+        if not dir_created:
+            logger.error("Directory creation failed.")
+            return False
+    else:
+        logger.info(
+            "No analyzed Python files were found to mirror into AutoAPI. "
+            "Continuing with Sphinx scaffold creation."
+        )
 
     scaffold_created = _create_sample_sphinx_scaffold(
         repo_path, branch, token, provider, project_name
